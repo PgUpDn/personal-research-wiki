@@ -77,7 +77,6 @@ Relevant configuration files:
 
 This project is inspired by Andrej Karpathy's LLM Wiki workflow.
 
-## Contact
+## Author
 
-Dr. Xinyu Yang  
-`yang_xinyu@a-star.edu.sg`
+Dr. Xinyu Yang from A*STAR (yang_xinyu@a-star.edu.sg)
