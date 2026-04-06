@@ -75,7 +75,8 @@ Relevant configuration files:
 
 ## Acknowledgements
 
-This project is inspired by Andrej Karpathy's LLM Wiki workflow.
+This project is inspired by Andrej Karpathy's LLM Wiki.
+https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 
 ## Author
 
