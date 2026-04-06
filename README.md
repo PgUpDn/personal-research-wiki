@@ -2,6 +2,10 @@
 
 Open this folder directly in Obsidian. The project is structured so `raw/` stays immutable, the LLM incrementally compiles source pages and concept pages into `wiki/`, and downstream tools render answers, slides, and reports into `output/`.
 
+Inspired by Andrej Karpathy's LLM Wiki.
+
+Contact: Dr. Xinyu Yang, `yang_xinyu@a-star.edu.sg`
+
 This repository is meant to track the research vault itself:
 
 - `raw/` source material
