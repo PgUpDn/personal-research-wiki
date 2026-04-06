@@ -1,0 +1,74 @@
+---
+title: "Physics-Informed Neural Networks"
+aliases:
+  - "Physics-Informed Neural Networks"
+  - "physics-informed neural network"
+  - "physics-informed neural networks"
+  - "pinn"
+  - "pinns"
+  - "physics informed"
+note_type: "concept"
+schema_version: "research-wiki-pdf-v1"
+concept_group: "Core Methods"
+source_count: 3
+sources:
+  - "raw/Boya and Subramani - 2024 - A physics-informed transformer neural operator for learning generalized solutions of initial boundar.pdf"
+  - "raw/Adams et al. - 2025 - GeoTransolver Learning Physics on Irregular Domains Using Multi-scale Geometry Aware Physics Attent.pdf"
+  - "raw/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.pdf"
+source_pages:
+  - "[[A physics-informed transformer neural operator for learning generalized solutions of initial boundary value problems]]"
+  - "[[GeoTransolver: Learning Physics on Irregular Domains using Multi-scale Geometry Aware Physics Attention Transformer]]"
+  - "[[Solving Maxwell's Equations with Non-Trainable Graph Neural Network Message Passing]]"
+related:
+  - "[[Partial Differential Equations]]"
+  - "[[Neural Operators]]"
+  - "[[Surrogate Models]]"
+  - "[[Computational Fluid Dynamics]]"
+  - "[[Large Language Models]]"
+  - "[[Operator Learning]]"
+tags:
+  - "research/concept"
+  - "group/core-methods"
+last_compiled: 2026-04-05
+---
+
+# Physics-Informed Neural Networks
+
+> This concept page is synthesized across the current source pages and is maintained by the wiki compiler.
+
+## Definition
+
+[[Physics-Informed Neural Networks]] appears across `raw/` as networks constrained by physical laws, residual losses, or differentiable simulators so learning stays consistent with governing equations. The strongest source cluster is in computational fluid dynamics, agents and automation, materials and chemistry. It is most often discussed alongside [[Partial Differential Equations]], [[Neural Operators]], [[Surrogate Models]].
+
+## What The Sources Emphasize
+
+- The matched sources frame Physics-Informed Neural Networks through inverse design and optimization, physics-guided learning, geometry and irregular domains.
+- Representative application areas include computational fluid dynamics, agents and automation, materials and chemistry.
+- Recurring vocabulary around this concept includes equations, initial, boundary, operator, conditions.
+
+## Coverage
+
+- Source pages: 3
+- Concept group: Core Methods
+- Top domains: computational fluid dynamics, agents and automation, materials and chemistry
+- Top themes: inverse design and optimization, physics-guided learning, geometry and irregular domains
+
+## Related Concepts
+
+- [[Partial Differential Equations]]
+- [[Neural Operators]]
+- [[Surrogate Models]]
+- [[Computational Fluid Dynamics]]
+- [[Large Language Models]]
+- [[Operator Learning]]
+
+## Representative sources
+
+- [[A physics-informed transformer neural operator for learning generalized solutions of initial boundary value problems]] from `raw/Boya and Subramani - 2024 - A physics-informed transformer neural operator for learning generalized solutions of initial boundar.pdf`
+- [[GeoTransolver: Learning Physics on Irregular Domains using Multi-scale Geometry Aware Physics Attention Transformer]] from `raw/Adams et al. - 2025 - GeoTransolver Learning Physics on Irregular Domains Using Multi-scale Geometry Aware Physics Attent.pdf`
+- [[Solving Maxwell's Equations with Non-Trainable Graph Neural Network Message Passing]] from `raw/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.pdf`
+
+## Provenance
+
+- Last compiled: 2026-04-05
+- Schema version: `research-wiki-pdf-v1`

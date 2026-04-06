@@ -1,0 +1,123 @@
+{
+  "choices": [
+    {
+      "id": "research-capture",
+      "name": "Research Capture",
+      "type": "Multi",
+      "command": true,
+      "placeholder": "Choose a capture flow for the research vault",
+      "choices": [
+        {
+          "id": "research-new-raw-source",
+          "name": "New Raw Source Note",
+          "type": "Capture",
+          "captureTo": "raw/{{DATE:YYYY-MM-DD}}-{{VALUE:title|case:kebab}}.md",
+          "createFileIfItDoesntExist": {
+            "enabled": true,
+            "createWithTemplate": false,
+            "template": ""
+          },
+          "setFileExistsBehavior": true,
+          "fileExistsMode": "Increment the file name",
+          "format": {
+            "enabled": true,
+            "format": "{{TEMPLATE:Templates/QuickAdd/Raw Source Note.md}}"
+          },
+          "openFile": true,
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "mode": "default",
+            "focus": true
+          },
+          "templater": {
+            "afterCapture": "wholeFile"
+          },
+          "onePageInput": "always"
+        },
+        {
+          "id": "research-new-derived-note",
+          "name": "New Derived Note",
+          "type": "Capture",
+          "captureTo": "wiki/derived/{{DATE:YYYY-MM-DD}}-{{VALUE:title|case:kebab}}.md",
+          "createFileIfItDoesntExist": {
+            "enabled": true,
+            "createWithTemplate": false,
+            "template": ""
+          },
+          "setFileExistsBehavior": true,
+          "fileExistsMode": "Increment the file name",
+          "format": {
+            "enabled": true,
+            "format": "{{TEMPLATE:Templates/QuickAdd/Derived Note.md}}"
+          },
+          "openFile": true,
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "mode": "default",
+            "focus": true
+          },
+          "templater": {
+            "afterCapture": "wholeFile"
+          },
+          "onePageInput": "always"
+        },
+        {
+          "id": "research-new-output-report",
+          "name": "New Output Report",
+          "type": "Capture",
+          "captureTo": "output/reports/{{DATE:YYYY-MM-DD}}-{{VALUE:title|case:kebab}}.md",
+          "createFileIfItDoesntExist": {
+            "enabled": true,
+            "createWithTemplate": false,
+            "template": ""
+          },
+          "setFileExistsBehavior": true,
+          "fileExistsMode": "Increment the file name",
+          "format": {
+            "enabled": true,
+            "format": "{{TEMPLATE:Templates/QuickAdd/Output Report.md}}"
+          },
+          "openFile": true,
+          "fileOpening": {
+            "location": "tab",
+            "direction": "vertical",
+            "mode": "default",
+            "focus": true
+          },
+          "templater": {
+            "afterCapture": "wholeFile"
+          },
+          "onePageInput": "always"
+        },
+        {
+          "id": "research-append-question",
+          "name": "Append Research Question To Current Note",
+          "type": "Capture",
+          "captureToActiveFile": true,
+          "activeFileWritePosition": "cursor",
+          "newLineCapture": {
+            "enabled": true,
+            "direction": "below"
+          },
+          "format": {
+            "enabled": true,
+            "format": "{{TEMPLATE:Templates/QuickAdd/Research Question Block.md}}"
+          },
+          "templater": {
+            "afterCapture": "wholeFile"
+          },
+          "onePageInput": "always"
+        }
+      ]
+    }
+  ],
+  "templateFolderPath": "Templates/QuickAdd",
+  "onePageInputEnabled": true,
+  "disableOnlineFeatures": true,
+  "showCaptureNotification": true,
+  "showInputCancellationNotification": false,
+  "enableRibbonIcon": false,
+  "version": "2.12.0"
+}
