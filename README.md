@@ -1,4 +1,4 @@
-# My Research Workspace
+# Personal Research Wiki
 
 Open this folder directly in Obsidian. The project is structured so `raw/` stays immutable, the LLM incrementally compiles source pages and concept pages into `wiki/`, and downstream tools render answers, slides, and reports into `output/`.
 

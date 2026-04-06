@@ -1,4 +1,4 @@
-# Research Wiki Index
+# Personal Research Wiki Index
 
 - Last compiled: 2026-04-05
 - Raw sources represented in the wiki: 19
