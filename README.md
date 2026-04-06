@@ -1,44 +1,49 @@
 # Personal Research Wiki
 
-Open this folder directly in Obsidian. The project is structured so `raw/` stays immutable, the LLM incrementally compiles source pages and concept pages into `wiki/`, and downstream tools render answers, slides, and reports into `output/`.
+Personal Research Wiki is an Obsidian-based research workspace for collecting raw source material, compiling it into a linked markdown knowledge base, and querying that knowledge base through LLM-assisted workflows.
 
-Inspired by Andrej Karpathy's LLM Wiki.
+The repository is organized around a simple idea: keep source material in `raw/`, let the compiler maintain structured knowledge in `wiki/`, and render downstream answers, slides, and reports into `output/`.
 
-Contact: Dr. Xinyu Yang, `yang_xinyu@a-star.edu.sg`
+## Overview
 
-This repository is meant to track the research vault itself:
+This project tracks the research vault itself, including:
 
-- `raw/` source material
-- `wiki/` compiled knowledge pages
-- `Templates/` capture and note templates
-- selected `.obsidian/` configuration
-- compiler code in `_meta/`
+- source material in `raw/`
+- compiled knowledge pages in `wiki/`
+- capture and note templates in `Templates/`
+- selected Obsidian configuration in `.obsidian/`
+- compiler and export tooling in `_meta/`
 
-It intentionally ignores local caches, rendered PDF page images, transient outputs, and per-device workspace state.
-Raw PDF files also stay local and are not committed to GitHub; the repository tracks the research workspace structure rather than the full document archive.
-This public version keeps `raw/` in example mode while retaining example compiled wiki pages and tooling.
+The public version of this repository is intentionally lightweight. Large private PDFs, rendered page caches, transient outputs, and machine-specific workspace state are kept out of version control.
 
-## Workflow
-
-1. Ingest source material into `raw/` as-is.
-2. Use the compiler or watcher to transcribe PDFs into `_meta/converted_sources/`, then refresh `wiki/sources/`, `wiki/concepts/`, `wiki/INDEX.md`, and `wiki/LOG.md`.
-3. Ask questions against the maintained wiki and write the results back out as markdown or Marp slides.
-4. File especially useful outputs into `wiki/derived/` so the knowledge base compounds over time.
-5. Review `wiki/LINT_AND_HEAL.md` to keep the wiki healthy and spot new concept candidates.
-6. Treat [AGENTS.md](AGENTS.md) as the schema that defines how the LLM should maintain this workspace.
-
-## Key Paths
+## Repository Structure
 
 | Path | Purpose |
 | --- | --- |
-| `raw/` | immutable source documents, web clips, notes, and local images |
-| `wiki/sources/` | one wiki page per source |
-| `wiki/concepts/` | synthesized concept articles |
-| `wiki/` | index, system notes, log, lint report, and filed-back outputs |
-| `output/` | generated answers, slide decks, charts, and reports |
-| `_meta/` | compiler scripts, state, PDF caches, rendered page images, node tools, and watcher infrastructure |
+| `raw/` | source documents, notes, and local assets managed by the user |
+| `wiki/sources/` | one wiki page per source document |
+| `wiki/concepts/` | synthesized concept pages spanning multiple sources |
+| `wiki/derived/` | durable answers and outputs filed back into the wiki |
+| `wiki/` | index, system notes, log, health checks, and derived pages |
+| `output/` | generated answers, slides, charts, and reports |
+| `_meta/` | compiler scripts, state, PDF caches, and export tooling |
+| `Templates/` | QuickAdd and Templater templates for structured capture |
 
-## Useful Commands
+## Research Workflow
+
+1. Add source material to `raw/`.
+2. Run the compiler or watcher to convert PDFs, refresh source pages, update concept pages, and keep the wiki index current.
+3. Query the compiled wiki to generate notes, comparisons, reports, or presentations.
+4. File valuable outputs back into `wiki/derived/` so the knowledge base compounds over time.
+5. Review `wiki/LINT_AND_HEAL.md` to identify broken links, low-coverage areas, and opportunities for refinement.
+
+The schema and maintenance rules for the vault are documented in [AGENTS.md](AGENTS.md).
+
+## Quick Start
+
+Open the repository root directly in Obsidian so that `raw/`, `wiki/`, `_meta/`, and `output/` remain visible within a single vault.
+
+Common commands:
 
 ```bash
 .venv/bin/python _meta/scripts/wiki_cli.py compile --root .
@@ -48,19 +53,31 @@ This public version keeps `raw/` in example mode while retaining example compile
 .venv/bin/python _meta/scripts/wiki_cli.py export-html --root .
 ```
 
-## Obsidian Setup
+## Obsidian Integration
 
-- Open the repository root as the vault.
-- Community plugin IDs are tracked in `.obsidian/community-plugins.json`.
-- QuickAdd and Templater workflow configuration is tracked in:
-  - `.obsidian/plugins/quickadd/data.json`
-  - `.obsidian/plugins/templater-obsidian/data.json`
-- The template library lives in `Templates/`.
-- Local plugin bundles and workspace state are not part of the repository.
+- Graph view is enabled for browsing the wiki structure visually.
+- Dataview and Marp are included in the tracked vault configuration.
+- QuickAdd and Templater are configured for structured capture workflows.
+- A starter Dataview page is available at [wiki/DASHBOARD.md](wiki/DASHBOARD.md).
 
-## Obsidian Features
+Relevant configuration files:
 
-- Graph view is already enabled in this vault.
-- Dataview and Marp are installed as community plugins.
-- A starter Dataview page lives at [DASHBOARD.md](wiki/DASHBOARD.md).
-- Git is intended to track `raw/`, `wiki/`, and selected config, while ignoring local caches and transient outputs.
+- `.obsidian/community-plugins.json`
+- `.obsidian/core-plugins.json`
+- `.obsidian/plugins/quickadd/data.json`
+- `.obsidian/plugins/templater-obsidian/data.json`
+
+## Public Repository Notes
+
+- `raw/` is kept in example mode in the public repository.
+- Private PDFs and other large local research assets are stored outside the repository.
+- Local caches, rendered PDF page images, watcher state, and transient exports are ignored by Git.
+
+## Acknowledgements
+
+This project is inspired by Andrej Karpathy's LLM Wiki workflow.
+
+## Contact
+
+Dr. Xinyu Yang  
+`yang_xinyu@a-star.edu.sg`
