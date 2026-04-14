@@ -1,11 +1,11 @@
 # My Research Wiki Schema
 
-This repository follows the "LLM wiki" pattern: `raw/` is the immutable source-of-truth layer, `wiki/` is the LLM-maintained knowledge base, and this file is the schema that tells the agent how to operate on both.
+This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the immutable source-of-truth layer, `wiki/` is the LLM-maintained knowledge base, and this file is the schema that tells the agent how to operate on both.
 
 ## Core Rules
 
-1. Never modify source documents in `raw/`.
-2. Never move source documents out of `raw/`.
+1. Never modify source documents in `raw/` or `Clippings/`.
+2. Never move source documents out of `raw/` or `Clippings/`.
 3. Put PDF transcription caches, rendered page images, and other machine-generated intermediates in `_meta/`.
 4. Treat `wiki/` as fully LLM-owned. Create, revise, and link pages there freely.
 5. Keep `wiki/INDEX.md` and `wiki/LOG.md` current whenever the wiki changes.
@@ -13,7 +13,8 @@ This repository follows the "LLM wiki" pattern: `raw/` is the immutable source-o
 
 ## Directory Roles
 
-- `raw/`: immutable source documents, clipped articles, datasets, notes, and user-managed local assets.
+- `raw/`: immutable source documents, PDFs, datasets, notes, and user-managed local assets.
+- `Clippings/`: immutable Obsidian Web Clipper captures that should compile like raw source notes.
 - `wiki/sources/`: one LLM-maintained page per source document.
 - `wiki/concepts/`: synthesized concept pages spanning many sources.
 - `wiki/derived/`: answers, comparisons, and other outputs worth filing back into the knowledge base.

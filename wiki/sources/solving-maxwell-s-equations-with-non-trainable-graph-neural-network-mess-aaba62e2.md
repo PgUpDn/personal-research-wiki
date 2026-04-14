@@ -19,20 +19,16 @@ authors:
 sources:
   - "raw/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.pdf"
 concepts:
+  - "[[Graph Neural Networks]]"
   - "[[Computational Fluid Dynamics]]"
   - "[[Electromagnetics]]"
-  - "[[Graph Neural Networks]]"
-  - "[[Large Language Models]]"
+  - "[[Partial Differential Equations]]"
   - "[[Maxwell Equations]]"
   - "[[Nanophotonics]]"
-  - "[[Partial Differential Equations]]"
-  - "[[Physics-Informed Neural Networks]]"
 domains:
   - "computational fluid dynamics"
   - "electromagnetics and optics"
-themes:
-  - "inverse design and optimization"
-  - "physics-guided learning"
+themes: []
 section_index:
   - "Solving Maxwell's Equations with Non-Trainable Graph Neural Network Message Passing"
   - "I. Introduction"
@@ -46,18 +42,16 @@ tags:
   - "transcription/vision"
   - "year/2024"
 related:
+  - "[[Graph Neural Networks]]"
   - "[[Computational Fluid Dynamics]]"
   - "[[Electromagnetics]]"
-  - "[[Graph Neural Networks]]"
-  - "[[Large Language Models]]"
+  - "[[Partial Differential Equations]]"
   - "[[Maxwell Equations]]"
   - "[[Nanophotonics]]"
-  - "[[Partial Differential Equations]]"
-  - "[[Physics-Informed Neural Networks]]"
 cache_path: "_meta/converted_sources/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.md"
 page_image_dir: "_meta/source_page_images/bakirtzis-et-al-2024-solving-maxwell-s-equations-with-non-trainable-grap-1d71719d"
 page_count: 9
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Solving Maxwell's Equations with Non-Trainable Graph Neural Network Message Passing
@@ -66,17 +60,11 @@ last_compiled: 2026-04-05
 
 ## Citation & Files
 
-- Source ID: `bakirtzis2024solving`
-- Citation key: `bakirtzis2024solving`
-- Source kind: `raw_pdf`
-- Status: `compiled`
-- Raw source: `raw/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.pdf`
-- Working text cache: `_meta/converted_sources/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.md`
-- Page image directory: `_meta/source_page_images/bakirtzis-et-al-2024-solving-maxwell-s-equations-with-non-trainable-grap-1d71719d`
-- Page count: `9`
-- Year: `2024`
-- Lead author: Stefanos Bakirtzis
+- Citation: Stefanos Bakirtzis et al. · (2024) · `bakirtzis2024solving`
 - Authors: Stefanos Bakirtzis; Marco Fior; Jie Zhang; Ian Wassell
+- Identifiers: raw_pdf / compiled
+- Source: `raw/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.pdf`
+- Assets: cache `_meta/converted_sources/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.md` · 9 pages `_meta/source_page_images/bakirtzis-et-al-2024-solving-maxwell-s-equations-with-non-trainable-grap-1d71719d`
 
 ## TL;DR
 
@@ -84,23 +72,20 @@ last_compiled: 2026-04-05
 
 ## Abstract
 
-*—Computational electromagnetics (CEM) is employed to numerically solve Maxwell's equations, and it has very important and practical applications across a broad range of disciplines, including biomedical engineering, nanophotonics, wireless communications, and electrodynamics. The main limitation of existing CEM methods is that they are computationally demanding. Our work introduces a leap forward in scientific computing and CEM by proposing an original solution of Maxwell's equations that is grounded on graph neural networks (GNNs) and enables the high-performance numerical resolution of these fundamental mathematical expressions. Specifically, we demonstrate that the update equations derived by discretizing Maxwell's partial differential equations can be innately expressed as a two-layer GNN with static and pre-determined edge weights. Given this intuition, a straightforward way to numerically solve Maxwell's equations entails simple message passing between such a GNN's nodes, yielding a significant computational time gain, while preserving the same accuracy as conventional transient CEM methods. Ultimately, our work supports the efficient and precise emulation of electromagnetic wave propagation with GNNs, and more importantly, we anticipate that applying a similar treatment to systems of partial differential equations arising in other scientific disciplines, e.g., computational fluid dynamics, can benefit computational sciences. *Index Terms*—Scientific computing, computational electromagnetics, partial differential equations, graph neural networks, finite differences -
+*—Computational electromagnetics (CEM) is employed to numerically solve Maxwell's equations, and it has very important and practical applications across a broad range of disciplines, including biomedical engineering, nanophotonics, wireless communications, and electrodynamics. The main limitation of existing CEM methods is that they are computationally demanding. Our work introduces a leap forward in scientific computing and CEM by proposing an original solution of Maxwell's equations that is grounded on graph neural networks (GNNs) and enables the high-performance numerical resolution of these fundamental mathematical expressions.
 
 ## Key Concepts
 
+- [[Graph Neural Networks]]
 - [[Computational Fluid Dynamics]]
 - [[Electromagnetics]]
-- [[Graph Neural Networks]]
-- [[Large Language Models]]
+- [[Partial Differential Equations]]
 - [[Maxwell Equations]]
 - [[Nanophotonics]]
-- [[Partial Differential Equations]]
-- [[Physics-Informed Neural Networks]]
 
 ## Research Signals
 
 - Domains: computational fluid dynamics, electromagnetics and optics
-- Themes: inverse design and optimization, physics-guided learning
 - Keywords: equations, maxwell, that, graph, differential, message
 
 ## Reading Map
@@ -114,6 +99,6 @@ last_compiled: 2026-04-05
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 

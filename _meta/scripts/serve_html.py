@@ -20,13 +20,31 @@ class WikiHtmlHandler(SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         super().log_message(format, *args)
 
+    def _send_cors_headers(self) -> None:
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        requested_private_network = self.headers.get("Access-Control-Request-Private-Network")
+        if requested_private_network:
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+
     def _send_json(self, payload: dict[str, Any], status: int = 200) -> None:
         encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
+        self._send_cors_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
+
+    def do_OPTIONS(self) -> None:
+        if self.path.rstrip("/") in {"/api/health", "/api/ask"}:
+            self.send_response(204)
+            self._send_cors_headers()
+            self.end_headers()
+            return
+        self.send_response(404)
+        self.end_headers()
 
     def do_GET(self) -> None:
         if self.path.rstrip("/") == "/api/health":

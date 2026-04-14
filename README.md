@@ -2,13 +2,13 @@
 
 Personal Research Wiki is an Obsidian-based research workspace for collecting raw source material, compiling it into a linked markdown knowledge base, and querying that knowledge base through LLM-assisted workflows.
 
-The repository is organized around a simple idea: keep source material in `raw/`, let the compiler maintain structured knowledge in `wiki/`, and render downstream answers, slides, and reports into `output/`.
+The repository is organized around a simple idea: keep source material in source inboxes like `raw/` and `Clippings/`, let the compiler maintain structured knowledge in `wiki/`, and render downstream answers, slides, and reports into `output/`.
 
 ## Overview
 
 This project tracks the research vault itself, including:
 
-- source material in `raw/`
+- source material in `raw/` and `Clippings/`
 - compiled knowledge pages in `wiki/`
 - capture and note templates in `Templates/`
 - selected Obsidian configuration in `.obsidian/`
@@ -20,7 +20,8 @@ The public version of this repository is intentionally lightweight. Large privat
 
 | Path | Purpose |
 | --- | --- |
-| `raw/` | source documents, notes, and local assets managed by the user |
+| `raw/` | source documents, PDFs, and local assets managed by the user |
+| `Clippings/` | Obsidian Web Clipper captures that should be treated as raw source material |
 | `wiki/sources/` | one wiki page per source document |
 | `wiki/concepts/` | synthesized concept pages spanning multiple sources |
 | `wiki/derived/` | durable answers and outputs filed back into the wiki |
@@ -31,7 +32,7 @@ The public version of this repository is intentionally lightweight. Large privat
 
 ## Research Workflow
 
-1. Add source material to `raw/`.
+1. Add source material to `raw/` or `Clippings/`.
 2. Run the compiler or watcher to convert PDFs, refresh source pages, update concept pages, and keep the wiki index current.
 3. Query the compiled wiki to generate notes, comparisons, reports, or presentations.
 4. File valuable outputs back into `wiki/derived/` so the knowledge base compounds over time.
@@ -41,7 +42,7 @@ The schema and maintenance rules for the vault are documented in [AGENTS.md](AGE
 
 ## Quick Start
 
-Open the repository root directly in Obsidian so that `raw/`, `wiki/`, `_meta/`, and `output/` remain visible within a single vault.
+Open the repository root directly in Obsidian so that `raw/`, `Clippings/`, `wiki/`, `_meta/`, and `output/` remain visible within a single vault.
 
 Common commands:
 

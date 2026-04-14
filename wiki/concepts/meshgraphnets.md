@@ -9,22 +9,30 @@ aliases:
 note_type: "concept"
 schema_version: "research-wiki-pdf-v1"
 concept_group: "Model Families"
-source_count: 1
+source_count: 5
 sources:
-  - "raw/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.pdf"
+  - "raw/Schmöcker et al. - 2024 - Generalization capabilities of MeshGraphNets to unseen geometries for fluid dynamics.pdf"
+  - "raw/Pfaff et al. - 2021 - Learning Mesh-Based Simulation with Graph Networks.pdf"
+  - "raw/Fortunato et al. - 2022 - MultiScale MeshGraphNets.pdf"
+  - "raw/Gladstone et al. - 2024 - Mesh-based GNN surrogates for time-independent PDEs.pdf"
+  - "raw/Würth et al. - 2024 - Physics-informed MeshGraphNets (PI-MGNs) Neural finite element solvers for non-stationary and nonli.pdf"
 source_pages:
-  - "[[Physics-Learning AI Datamodel (PLAID) datasets: a collection of physics simulations for machine learning]]"
+  - "[[Generalization capabilities of MeshGraphNets to unseen geometries for fluid dynamics]]"
+  - "[[Learning Mesh-Based Simulation with Graph Networks]]"
+  - "[[MultiScale MeshGraphNets]]"
+  - "[[OPEN Mesh-based GNN surrogates for time-independent PDEs]]"
+  - "[[Physics-informed MeshGraphNets (PI-MGNs): Neural finite element solvers for non-stationary and nonlinear simulations on arbitrary meshes]]"
 related:
   - "[[Graph Neural Networks]]"
   - "[[Partial Differential Equations]]"
   - "[[Computational Fluid Dynamics]]"
+  - "[[Scientific Datasets]]"
   - "[[Benchmarks and Evaluation]]"
-  - "[[Foundation Models]]"
-  - "[[Inverse Design]]"
+  - "[[Surrogate Models]]"
 tags:
   - "research/concept"
   - "group/model-families"
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # MeshGraphNets
@@ -37,31 +45,35 @@ last_compiled: 2026-04-05
 
 ## What The Sources Emphasize
 
-- The matched sources frame MeshGraphNets through benchmarking and data curation, geometry and irregular domains, inverse design and optimization.
+- The matched sources frame MeshGraphNets through geometry and irregular domains, benchmarking and data curation, inverse design and optimization.
 - Representative application areas include computational fluid dynamics, materials and chemistry.
-- Recurring vocabulary around this concept includes plaid, datasets, physics-learning, datamodel, provide.
+- Recurring vocabulary around this concept includes this, that, complex, networks, meshgraphnets.
 
 ## Coverage
 
-- Source pages: 1
+- Source pages: 5
 - Concept group: Model Families
 - Top domains: computational fluid dynamics, materials and chemistry
-- Top themes: benchmarking and data curation, geometry and irregular domains, inverse design and optimization
+- Top themes: geometry and irregular domains, benchmarking and data curation, inverse design and optimization
 
 ## Related Concepts
 
 - [[Graph Neural Networks]]
 - [[Partial Differential Equations]]
 - [[Computational Fluid Dynamics]]
+- [[Scientific Datasets]]
 - [[Benchmarks and Evaluation]]
-- [[Foundation Models]]
-- [[Inverse Design]]
+- [[Surrogate Models]]
 
 ## Representative sources
 
-- [[Physics-Learning AI Datamodel (PLAID) datasets: a collection of physics simulations for machine learning]] from `raw/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.pdf`
+- [[Generalization capabilities of MeshGraphNets to unseen geometries for fluid dynamics]] from `raw/Schmöcker et al. - 2024 - Generalization capabilities of MeshGraphNets to unseen geometries for fluid dynamics.pdf`
+- [[Learning Mesh-Based Simulation with Graph Networks]] from `raw/Pfaff et al. - 2021 - Learning Mesh-Based Simulation with Graph Networks.pdf`
+- [[MultiScale MeshGraphNets]] from `raw/Fortunato et al. - 2022 - MultiScale MeshGraphNets.pdf`
+- [[OPEN Mesh-based GNN surrogates for time-independent PDEs]] from `raw/Gladstone et al. - 2024 - Mesh-based GNN surrogates for time-independent PDEs.pdf`
+- [[Physics-informed MeshGraphNets (PI-MGNs): Neural finite element solvers for non-stationary and nonlinear simulations on arbitrary meshes]] from `raw/Würth et al. - 2024 - Physics-informed MeshGraphNets (PI-MGNs) Neural finite element solvers for non-stationary and nonli.pdf`
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`

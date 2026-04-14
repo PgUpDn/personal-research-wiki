@@ -3,15 +3,15 @@ title: "System Overview"
 aliases:
   - "System Overview"
 note_type: "system"
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # System Overview
 
-- Last refreshed: 2026-04-05
-- Raw sources represented in the wiki: 19
-- Source pages: 19
-- Concept articles: 34
+- Last refreshed: 2026-04-14
+- Raw sources represented in the wiki: 211
+- Source pages: 211
+- Concept articles: 40
 
 ## Main Pipeline
 
@@ -30,7 +30,7 @@ last_compiled: 2026-04-05
 
 ## Support Layer
 
-- Open the repository root directly in Obsidian to browse `raw/`, `wiki/`, `_meta/`, and `output/` from one vault.
+- Open `/Users/yangx2/Documents/my-research` directly in Obsidian to browse `raw/`, `wiki/`, `_meta/`, and `output/` from one vault.
 - `LINT_AND_HEAL.md` tracks broken links, orphan pages, sparse concepts, low-coverage sources, and suggested cleanup passes.
 - `_meta/scripts/wiki_cli.py` is the unified CLI for compile, watch, search, ask, lint, and filing outputs back into the wiki.
 

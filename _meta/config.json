@@ -1,6 +1,7 @@
 {
   "project_root": ".",
   "raw_dir": "raw",
+  "source_dirs": ["raw", "Clippings"],
   "wiki_dir": "wiki",
   "concepts_dir": "wiki/concepts",
   "source_notes_dir": "wiki/sources",

@@ -16,6 +16,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VENV_SITE_PACKAGES = PROJECT_ROOT / ".venv/lib/python3.9/site-packages"
@@ -85,6 +86,7 @@ STOPWORDS = {
     "solvers",
     "study",
     "systems",
+    "the",
     "through",
     "towards",
     "using",
@@ -203,6 +205,8 @@ GENERIC_HEADER_LINES = {
     "research article",
 }
 
+WEAK_METADATA_HINTS = {"group", "lab", "inc"}
+
 CONCEPTS = [
     {
         "slug": "scientific-machine-learning",
@@ -257,7 +261,7 @@ CONCEPTS = [
         "title": "Simulation Acceleration",
         "group": "Core Methods",
         "description": "speeding up expensive numerical workflows by replacing or augmenting parts of the solver stack with learned approximations",
-        "aliases": ["accelerating scientific simulations", "accelerating", "fast approximate solver", "simulation acceleration"],
+        "aliases": ["accelerating scientific simulations", "accelerating", "fast approximate solver", "simulation acceleration", "ai physics", "accelerated computing", "gpu accelerated solver", "gpu accelerated solvers"],
         "related": ["surrogate-models", "neural-operators", "scientific-machine-learning"],
     },
     {
@@ -265,7 +269,7 @@ CONCEPTS = [
         "title": "Graph Neural Networks",
         "group": "Model Families",
         "description": "message-passing models used to represent meshes, particles, and relational scientific systems with irregular connectivity",
-        "aliases": ["graph neural network", "graph neural networks", "gnn", "gnns", "message passing"],
+        "aliases": ["graph neural network", "graph neural networks", "gnn", "gnns", "message passing", "geometric deep learning"],
         "related": ["meshgraphnets", "geometry-aware-learning", "scientific-machine-learning"],
     },
     {
@@ -321,7 +325,7 @@ CONCEPTS = [
         "title": "Large Language Models",
         "group": "Agents and Reasoning",
         "description": "language-centric models used as interfaces, planners, code generators, and scientific assistants in simulation-heavy workflows",
-        "aliases": ["large language model", "large language models", "llm", "llms", "chatgpt", "deepseek", "claude"],
+        "aliases": ["large language model", "large language models", "language model", "language models", "llm", "llms", "chatgpt", "deepseek", "claude"],
         "related": ["ai-agents", "multi-agent-systems", "foundation-models"],
     },
     {
@@ -329,7 +333,7 @@ CONCEPTS = [
         "title": "AI Agents",
         "group": "Agents and Reasoning",
         "description": "autonomous or semi-autonomous systems that use tools, memory, or planning loops to execute scientific tasks end to end",
-        "aliases": ["ai agent", "ai agents", "agentic", "autonomous", "autonomous visualization agent", "research assistants"],
+        "aliases": ["ai agent", "ai agents", "agentic", "agentic ai", "language agent", "language agents", "autonomous", "autonomous visualization agent", "research assistants"],
         "related": ["large-language-models", "multi-agent-systems", "control-and-automation"],
     },
     {
@@ -339,6 +343,25 @@ CONCEPTS = [
         "description": "coordinated collections of agents used to divide planning, coding, verification, or design responsibilities across complex tasks",
         "aliases": ["multi-agent", "multi agent", "multi-agent systems", "multi modal multi-agent", "mixture-of-agents"],
         "related": ["ai-agents", "large-language-models", "scientific-discovery"],
+    },
+    {
+        "slug": "collective-intelligence",
+        "title": "Collective Intelligence",
+        "group": "Agents and Reasoning",
+        "description": "how groups of agents, people, or animals coordinate, communicate, and solve problems through emergent cooperation rather than individual reasoning alone",
+        "aliases": [
+            "collective intelligence",
+            "collective cognition",
+            "group cognition",
+            "multi-agent collaboration",
+            "collaborative scaling law",
+            "small-world collaboration",
+            "embodied multi-agent cooperation",
+            "cooperative transport",
+            "consensus decisions",
+            "collaborative interactions",
+        ],
+        "related": ["multi-agent-systems", "ai-agents", "benchmarks-and-evaluation"],
     },
     {
         "slug": "world-models",
@@ -401,7 +424,7 @@ CONCEPTS = [
         "title": "Geometry-Aware Learning",
         "group": "Optimization and Search",
         "description": "methods that explicitly encode mesh structure, shapes, manifolds, or irregular domains so learned solvers generalize beyond regular grids",
-        "aliases": ["geometry aware", "geometry-aware", "irregular domains", "general geometries", "shape representations", "surfaces"],
+        "aliases": ["geometry aware", "geometry-aware", "geometric priors", "equivariant deep learning", "irregular domains", "general geometries", "shape representations", "surfaces"],
         "related": ["graph-neural-networks", "meshgraphnets", "neural-operators"],
     },
     {
@@ -449,7 +472,7 @@ CONCEPTS = [
         "title": "Materials Design",
         "group": "Application Domains",
         "description": "using learned representations, active learning, and generative methods to search material compositions and microstructures",
-        "aliases": ["materials design", "materials", "alloy", "material fracture", "polycrystalline", "microstructure"],
+        "aliases": ["materials design", "materials", "material science", "alloy", "material fracture", "polycrystalline", "microstructure", "inconel", "elastoplastic", "dislocation", "diffraction", "metals", "metamaterial", "metamaterials"],
         "related": ["autonomous-experimentation", "generative-models", "foundation-models"],
     },
     {
@@ -530,6 +553,15 @@ DOMAIN_PATTERNS = {
 
 THEME_PATTERNS = {
     "benchmarking and data curation": ["benchmark", "dataset", "evaluation", "comparative", "corpus"],
+    "coordination and cooperation": [
+        "collective intelligence",
+        "collective cognition",
+        "multi-agent collaboration",
+        "cooperative transport",
+        "consensus decisions",
+        "collaborative interactions",
+        "embodied multi-agent cooperation",
+    ],
     "geometry and irregular domains": ["geometry", "mesh", "surface", "irregular", "shape"],
     "inverse design and optimization": ["inverse design", "optimization", "design", "generative"],
     "scaling and transfer": ["scaling", "transfer", "pretraining", "foundation", "domain-adapted"],
@@ -546,6 +578,7 @@ def load_config(root: Path) -> dict[str, Any]:
     return {
         "project_root": ".",
         "raw_dir": "raw",
+        "source_dirs": ["raw", "Clippings"],
         "wiki_dir": "wiki",
         "concepts_dir": "wiki/concepts",
         "source_notes_dir": "wiki/sources",
@@ -588,6 +621,8 @@ def load_config(root: Path) -> dict[str, Any]:
 
 def ensure_project_dirs(root: Path) -> None:
     config = load_config(root)
+    for source_dir in configured_source_dirs(root):
+        source_dir.mkdir(parents=True, exist_ok=True)
     for key in (
         "wiki_dir",
         "concepts_dir",
@@ -666,6 +701,86 @@ def trim_summary(text: str, limit: int = 220) -> str:
     return (shortened or normalized[:limit]).rstrip(" .,;:") + "..."
 
 
+def trim_abstract_for_card(text: str, sentence_limit: int = 3, char_limit: int = 700) -> str:
+    normalized = normalize_text(text)
+    if not normalized:
+        return ""
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+", normalized) if part.strip()]
+    selected = []
+    for sentence in sentences:
+        candidate = " ".join(selected + [sentence]).strip()
+        if selected and len(candidate) > char_limit:
+            break
+        selected.append(sentence)
+        if len(selected) >= sentence_limit:
+            break
+    compact = " ".join(selected).strip() or normalized
+    if len(compact) <= char_limit:
+        return compact
+    shortened = compact[:char_limit].rsplit(" ", 1)[0].strip()
+    return (shortened or compact[:char_limit]).rstrip(" .,;:") + "..."
+
+
+def compact_author_metadata(profile: dict[str, Any]) -> tuple[str | None, list[str]]:
+    authors = list(profile.get("authors", []))
+    if not authors:
+        return None, []
+    if len(authors) <= 4:
+        return "; ".join(authors), []
+    lead_author = profile.get("lead_author") or authors[0]
+    return f"{lead_author} et al.", authors
+
+
+def compact_citation_lines(profile: dict[str, Any]) -> list[str]:
+    citation_bits = []
+    lead_author = profile.get("lead_author")
+    year = profile.get("year")
+    venue = profile.get("venue")
+    citation_key = profile.get("citation_key")
+    source_kind = profile.get("source_kind")
+    source_status = profile.get("source_status")
+
+    if lead_author:
+        author_text = lead_author if len(profile.get("authors", [])) <= 1 else f"{lead_author} et al."
+        citation_bits.append(author_text)
+    if year:
+        citation_bits.append(f"({year})")
+    if venue:
+        citation_bits.append(venue)
+    if citation_key:
+        citation_bits.append(f"`{citation_key}`")
+
+    identifier_bits = []
+    if profile.get("doi"):
+        identifier_bits.append(f"DOI `{profile['doi']}`")
+    if profile.get("arxiv_id"):
+        identifier_bits.append(f"arXiv `{profile['arxiv_id']}`")
+    if source_kind or source_status:
+        record_bits = [bit for bit in [source_kind, source_status] if bit]
+        if record_bits:
+            identifier_bits.append(" / ".join(record_bits))
+
+    asset_bits = []
+    if profile.get("content_path") and profile["content_path"] != profile["source"]:
+        asset_bits.append(f"cache `{profile['content_path']}`")
+    if profile.get("page_image_dir"):
+        page_label = f"{profile['page_count']} pages" if profile.get("page_count") else "page images"
+        asset_bits.append(f"{page_label} `{profile['page_image_dir']}`")
+
+    lines = []
+    if citation_bits:
+        lines.append(f"- Citation: {' · '.join(citation_bits)}")
+    author_summary, _ = compact_author_metadata(profile)
+    if author_summary:
+        lines.append(f"- Authors: {author_summary}")
+    if identifier_bits:
+        lines.append(f"- Identifiers: {' · '.join(identifier_bits)}")
+    lines.append(f"- Source: `{profile['source']}`")
+    if asset_bits:
+        lines.append(f"- Assets: {' · '.join(asset_bits)}")
+    return lines
+
+
 def dedupe_preserve_order(values: list[str]) -> list[str]:
     seen = set()
     ordered = []
@@ -680,7 +795,41 @@ def dedupe_preserve_order(values: list[str]) -> list[str]:
 def converted_pdf_markdown_path(root: Path, pdf_path: Path) -> Path:
     config = load_config(root)
     raw_dir = root / config["raw_dir"]
-    return (root / config["converted_sources_dir"] / pdf_path.relative_to(raw_dir)).with_suffix(".md")
+    source_dir = source_dir_for_path(root, pdf_path)
+    if source_dir == raw_dir:
+        relative = pdf_path.relative_to(raw_dir)
+    else:
+        relative = pdf_path.relative_to(root)
+    return (root / config["converted_sources_dir"] / relative).with_suffix(".md")
+
+
+def configured_source_dirs(root: Path) -> list[Path]:
+    config = load_config(root)
+    configured = config.get("source_dirs")
+    if not isinstance(configured, list) or not configured:
+        configured = [config["raw_dir"]]
+    source_dirs = []
+    seen = set()
+    for value in configured:
+        if not isinstance(value, str) or not value.strip():
+            continue
+        path = root / value
+        key = path.as_posix()
+        if key in seen:
+            continue
+        seen.add(key)
+        source_dirs.append(path)
+    return source_dirs
+
+
+def source_dir_for_path(root: Path, path: Path) -> Path:
+    for source_dir in configured_source_dirs(root):
+        try:
+            path.relative_to(source_dir)
+            return source_dir
+        except ValueError:
+            continue
+    raise ValueError(f"{path} is not inside any configured source directory")
 
 
 def source_note_page_path(root: Path, source_rel: str, title: str) -> Path:
@@ -690,18 +839,28 @@ def source_note_page_path(root: Path, source_rel: str, title: str) -> Path:
 
 
 def raw_markdown_files(root: Path) -> list[Path]:
-    raw_dir = root / load_config(root)["raw_dir"]
-    return sorted(path for path in raw_dir.rglob("*.md") if path.is_file())
+    paths = []
+    for source_dir in configured_source_dirs(root):
+        if not source_dir.exists():
+            continue
+        paths.extend(path for path in source_dir.rglob("*.md") if path.is_file())
+    return sorted(paths)
 
 
 def raw_pdf_files(root: Path) -> list[Path]:
-    raw_dir = root / load_config(root)["raw_dir"]
-    return sorted(path for path in raw_dir.rglob("*.pdf") if path.is_file())
+    paths = []
+    for source_dir in configured_source_dirs(root):
+        if not source_dir.exists():
+            continue
+        paths.extend(path for path in source_dir.rglob("*.pdf") if path.is_file())
+    return sorted(paths)
 
 
 def source_input_records(root: Path) -> list[dict[str, Any]]:
     records = []
     for path in raw_markdown_files(root):
+        if path.name.lower() == "readme.md":
+            continue
         records.append(
             {
                 "source": path.relative_to(root).as_posix(),
@@ -737,11 +896,18 @@ def paper_title_from_name(name: str) -> str:
 
 
 def clean_markdown_candidate(text: str) -> str:
-    return text.strip().lstrip("#").strip().strip("*").strip()
+    cleaned = text.strip().lstrip("#").strip().strip("*").strip().rstrip("\\").strip()
+    cleaned = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", cleaned)
+    cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cleaned)
+    return cleaned.strip()
 
 
 def title_token_set(text: str) -> set[str]:
-    return {token for token in re.findall(r"[a-z0-9]+", normalize_text(text).lower()) if len(token) >= 3}
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", normalize_text(text).lower())
+        if len(token) >= 3 and token not in STOPWORDS
+    }
 
 
 def title_similarity(candidate: str, hint: str) -> float:
@@ -791,6 +957,16 @@ def bibliographic_region(markdown_text: str, max_lines: int = 120) -> str:
     return "\n".join(lines).strip()
 
 
+def contains_metadata_hint(text: str, hint: str) -> bool:
+    if not hint:
+        return False
+    if hint in WEAK_METADATA_HINTS:
+        return False
+    if " " in hint:
+        return hint in text
+    return bool(re.search(rf"\b{re.escape(hint)}\b", text))
+
+
 def is_affiliation_or_metadata_line(text: str) -> bool:
     lowered = normalize_text(text).lower().strip(":")
     if not lowered:
@@ -801,7 +977,7 @@ def is_affiliation_or_metadata_line(text: str) -> bool:
         return True
     if "@" in text:
         return True
-    if any(hint in lowered for hint in AFFILIATION_HINTS | ORGANIZATION_HINTS | ADDRESS_HINTS):
+    if any(contains_metadata_hint(lowered, hint) for hint in AFFILIATION_HINTS | ORGANIZATION_HINTS | ADDRESS_HINTS):
         return True
     if re.search(r"\b\d{3,}\b", text) and len(text.split()) >= 3:
         return True
@@ -816,7 +992,7 @@ def looks_like_person_name(text: str) -> bool:
     words = [word for word in candidate.split() if word]
     if len(words) < 2 or len(words) > 5:
         return False
-    if not re.search(r"[a-z]", candidate):
+    if not re.search(r"[A-Za-z]", candidate):
         return False
     if any(word.lower() in GENERIC_HEADER_LINES for word in words):
         return False
@@ -840,12 +1016,45 @@ def looks_like_person_name(text: str) -> bool:
 
 
 def split_author_line(raw_line: str) -> list[str]:
-    line = raw_line.strip().strip("*").strip()
-    if not line or is_affiliation_or_metadata_line(line):
+    line = raw_line.strip()
+    if not line:
         return []
-    separated = re.sub(r"([A-Za-z])(?:\^\{[^}]*\}|[$]?\^\d+|[¹²³⁴⁵⁶⁷⁸⁹⁰†‡✉*]+)", r"\1, ", line)
+    bold_names = []
+    for value in re.findall(r"\*\*([^*]+)\*\*", line):
+        for part in value.split(","):
+            candidate = normalize_author_token(part)
+            if looks_like_person_name(candidate):
+                bold_names.append(candidate)
+    if bold_names:
+        return dedupe_preserve_order(bold_names)
+    footnote_names = []
+    for value in re.findall(r"([A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){1,4})(?=\$?\^\{?\d)", line):
+        candidate = normalize_author_token(value)
+        if looks_like_person_name(candidate):
+            footnote_names.append(candidate)
+    if footnote_names:
+        return dedupe_preserve_order(footnote_names)
+    cite_match = re.search(
+        r":\s*([A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){1,4})\s+\*?et al\b",
+        line,
+        re.IGNORECASE,
+    )
+    if normalize_text(line).lower().startswith("to cite this article") and cite_match:
+        candidate = normalize_author_token(cite_match.group(1))
+        return [candidate] if looks_like_person_name(candidate) else []
+    if is_affiliation_or_metadata_line(line):
+        return []
+    separated = line.replace("\\*", " ")
+    separated = separated.replace("**", " ")
+    separated = separated.replace("*", " ")
+    separated = re.sub(r"\$[^$]*\$", ", ", separated)
+    separated = separated.replace(r"\quad", ", ")
+    separated = re.sub(r"\^\{[^}]*\}", ", ", separated)
+    separated = re.sub(r"\^[A-Za-z0-9\\,*†‡]+", ", ", separated)
+    separated = re.sub(r"[¹²³⁴⁵⁶⁷⁸⁹⁰†‡✉]+", ", ", separated)
     separated = separated.replace(" · ", ", ").replace("•", ",").replace(";", ",")
-    separated = separated.replace(" and ", ", ")
+    separated = re.sub(r"\band\b", ",", separated, flags=re.IGNORECASE)
+    separated = re.sub(r"\s{2,}", ", ", separated)
     parts = [normalize_author_token(part) for part in separated.split(",")]
     return dedupe_preserve_order([part for part in parts if looks_like_person_name(part)])
 
@@ -925,6 +1134,20 @@ def canonical_alias(title: str) -> str | None:
     return None
 
 
+def source_page_aliases(title: str, citation_key: str | None = None) -> list[str]:
+    aliases: list[str] = []
+    if " | " in title:
+        pipe_alias = title.split(" | ", 1)[0].strip()
+        if pipe_alias and pipe_alias != title:
+            aliases.append(pipe_alias)
+    short_title = canonical_alias(title)
+    if short_title and short_title != title:
+        aliases.append(short_title)
+    if citation_key and citation_key != title:
+        aliases.append(citation_key)
+    return dedupe_preserve_order(aliases)
+
+
 def normalize_author_token(token: str) -> str:
     cleaned = re.sub(r"\$[^$]*\$", "", token)
     cleaned = re.sub(r"\^\{[^}]*\}", "", cleaned)
@@ -933,6 +1156,7 @@ def normalize_author_token(token: str) -> str:
     cleaned = re.sub(r"\([^)]*\)", " ", cleaned)
     cleaned = cleaned.translate(SUPERSCRIPT_TRANSLATION)
     cleaned = normalize_text(cleaned.replace("et al.", "").replace("et al", ""))
+    cleaned = re.sub(r"^(?:and|&)\s+", "", cleaned, flags=re.IGNORECASE)
     words = cleaned.split()
     if words:
         last = words[-1]
@@ -962,6 +1186,60 @@ def split_author_candidates(raw_text: str) -> list[str]:
     return dedupe_preserve_order(authors)
 
 
+def author_names_from_mixed_line(raw_line: str) -> list[str]:
+    line = raw_line.strip().strip("*").strip()
+    if not line:
+        return []
+    if "@" not in raw_line and "**" not in raw_line:
+        return []
+    lowered = normalize_text(line).lower()
+    if lowered.startswith(("abstract", "keywords", "introduction", "funding", "grant/award")):
+        return []
+
+    cleaned = re.sub(r"https?://\S+", " ", line)
+    cleaned = re.sub(r"\S+@\S+", " ", cleaned)
+    cleaned = re.sub(r"\b(?:co-first authors?|corresponding authors?|equal contribution[s]?).*$", " ", cleaned, flags=re.IGNORECASE)
+    cleaned = cleaned.replace("&", ", ")
+    cleaned = cleaned.translate(SUPERSCRIPT_TRANSLATION)
+    cleaned = re.sub(r"\$[^$]*\$", " ", cleaned)
+    cleaned = re.sub(r"\^\{[^}]*\}", " ", cleaned)
+    cleaned = re.sub(r"\^\d+", " ", cleaned)
+    cleaned = normalize_text(cleaned)
+
+    names = []
+    for chunk in re.split(r"[;,]", cleaned):
+        tokens = [token for token in chunk.split() if token]
+        prefix = []
+        for index, token in enumerate(tokens):
+            lowered_token = token.lower().strip(".:")
+            if lowered_token in {"co-first", "corresponding", "author", "authors"}:
+                break
+            if lowered_token in AFFILIATION_HINTS or lowered_token in ORGANIZATION_HINTS or lowered_token in ADDRESS_HINTS:
+                break
+            if "@" in token:
+                break
+            if prefix and not (
+                lowered_token in PERSON_CONNECTORS
+                or re.fullmatch(r"[A-Z]\.?", token)
+                or token[:1].isupper()
+            ):
+                break
+            prefix.append(token)
+            candidate = normalize_author_token(" ".join(prefix))
+            tail = [tokens[offset].lower().strip(".:") for offset in range(index + 1, min(len(tokens), index + 5))]
+            if looks_like_person_name(candidate):
+                if any(item in AFFILIATION_HINTS or item in ORGANIZATION_HINTS or item in ADDRESS_HINTS for item in tail):
+                    break
+                if len(prefix) >= 3 and tail and tail[0] not in PERSON_CONNECTORS and not re.fullmatch(r"[A-Z]\.?", tokens[index + 1]):
+                    break
+            if len(prefix) >= 5:
+                break
+        candidate = normalize_author_token(" ".join(prefix))
+        if looks_like_person_name(candidate):
+            names.append(candidate)
+    return dedupe_preserve_order(names)
+
+
 def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[str]:
     region = bibliographic_region(markdown_text, max_lines=40)
     lines = [line.strip() for line in region.splitlines()]
@@ -984,7 +1262,8 @@ def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[s
     authors = []
     if title_index is not None:
         for raw in lines[title_index + 1:title_index + 25]:
-            stripped = clean_markdown_candidate(raw)
+            raw_line = raw.strip()
+            stripped = clean_markdown_candidate(raw_line)
             lowered = normalize_text(stripped).lower().strip(":")
             if not stripped:
                 continue
@@ -992,9 +1271,12 @@ def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[s
                 break
             if stripped.startswith("#"):
                 break
-            if is_affiliation_or_metadata_line(stripped):
-                continue
-            authors.extend(split_author_line(stripped))
+            parsed = split_author_line(raw_line)
+            authors.extend(parsed)
+            if not authors:
+                authors.extend(author_names_from_mixed_line(raw_line))
+            elif not parsed:
+                authors.extend(author_names_from_mixed_line(raw_line))
     authors = dedupe_preserve_order(authors)
     if authors:
         return authors
@@ -1038,6 +1320,19 @@ def page_count_for_pdf(root: Path, pdf_path: Path) -> int | None:
     return count or None
 
 
+def ensure_page_images(root: Path, pdf_path: Path, md_path: Path, expected_count: int | None = None) -> list[str]:
+    relative_paths = existing_relative_page_images(root, pdf_path, md_path)
+    if relative_paths and (expected_count is None or len(relative_paths) == expected_count):
+        return relative_paths
+
+    image_paths, work_dir, _ = render_pdf_pages(root, pdf_path)
+    try:
+        relative_paths = copy_page_images(root, pdf_path, image_paths, md_path)
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
+    return relative_paths
+
+
 def extract_section_headings(markdown_text: str, source_path: Path | None = None, limit: int = 10) -> list[str]:
     body = extracted_markdown_body(markdown_text)
     filename_title = paper_title_from_name(source_path.name) if source_path else ""
@@ -1076,16 +1371,21 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
     frontmatter_match = re.search(r"^title:\s*(.+)$", markdown_text, re.MULTILINE)
     frontmatter_title = frontmatter_match.group(1).strip().strip('"') if frontmatter_match else ""
     title_hint = paper_title_from_name(source_path.name)
-    if frontmatter_title:
+    is_pdf_source = source_path.suffix.lower() == ".pdf"
+    frontmatter_valid = bool(frontmatter_title) and not re.fullmatch(r"Pages? \d+(?:-\d+)?", frontmatter_title, re.IGNORECASE)
+    if frontmatter_valid and not (is_pdf_source and title_hint):
         return frontmatter_title
     body = extracted_markdown_body(markdown_text)
+    heading_candidates = [frontmatter_title] if frontmatter_valid else []
     for raw in body.splitlines()[:40]:
         heading_match = re.match(r"^\s*#{1,2}\s+(.+?)\s*$", raw)
         if not heading_match:
             continue
         heading = clean_markdown_candidate(heading_match.group(1))
+        if re.fullmatch(r"Pages? \d+(?:-\d+)?", heading, re.IGNORECASE):
+            continue
         if heading and len(heading) >= 4:
-            return heading
+            heading_candidates.append(heading)
     body_lines = [line.strip() for line in body.splitlines()]
     candidate_lines = []
     for raw in body_lines[:80]:
@@ -1102,7 +1402,7 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
         if is_affiliation_or_metadata_line(cleaned):
             continue
         candidate_lines.append(cleaned)
-    candidate_lines = combined_title_candidates(candidate_lines)
+    candidate_lines = dedupe_preserve_order(heading_candidates + combined_title_candidates(candidate_lines))
     if title_hint:
         ranked = [
             (title_similarity(candidate, title_hint), index, candidate)
@@ -1112,12 +1412,98 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
         if ranked:
             ranked.sort(key=lambda item: (-item[0], item[1], -len(item[2])))
             return ranked[0][2]
-        if source_path.suffix.lower() == ".pdf":
+        if frontmatter_valid and title_similarity(frontmatter_title, title_hint) >= 0.35:
+            return frontmatter_title
+        if is_pdf_source:
             return title_hint
+    for candidate in heading_candidates:
+        if candidate and len(candidate) >= 4:
+            return candidate
     for candidate in candidate_lines:
         if len(candidate.split()) >= 4 and not looks_like_person_name(candidate):
             return candidate
-    return title_hint or frontmatter_title
+    return frontmatter_title or title_hint
+
+
+def concept_body_signal(markdown_text: str, source_kind: str, limit: int = 1800) -> str:
+    body = strip_frontmatter(markdown_text) if source_kind == "raw_markdown" else extracted_markdown_body(markdown_text)
+    snippets = []
+    for raw in body.splitlines():
+        stripped = clean_markdown_candidate(raw)
+        lowered = normalize_text(stripped).lower().strip(":")
+        if not stripped:
+            if snippets and len(" ".join(snippets)) >= limit:
+                break
+            continue
+        if stripped.startswith(">") or stripped.startswith("![]("):
+            continue
+        if re.fullmatch(r"Pages? \d+(?:-\d+)?", stripped, re.IGNORECASE):
+            continue
+        if lowered in GENERIC_HEADER_LINES or lowered.startswith(("abstract", "keywords")):
+            continue
+        snippets.append(stripped)
+        if len(" ".join(snippets)) >= limit:
+            break
+    return normalize_text(" ".join(snippets))[:limit]
+
+
+def first_meaningful_paragraph(markdown_text: str, title: str = "", limit: int = 1600) -> str:
+    source_kind = "raw_pdf" if "\n## Extracted Markdown\n" in strip_frontmatter(markdown_text) else "raw_markdown"
+    body = extracted_markdown_body(markdown_text) if source_kind == "raw_pdf" else strip_frontmatter(markdown_text)
+    title_norm = normalize_text(title).lower()
+    seen_title = not bool(title)
+    snippets = []
+
+    for raw in body.splitlines()[:240]:
+        stripped = raw.strip()
+        cleaned = clean_markdown_candidate(stripped).strip("*").strip()
+        lowered = normalize_text(cleaned).lower().strip(":")
+
+        if not stripped:
+            if snippets:
+                break
+            continue
+
+        if stripped.startswith("#"):
+            heading = clean_markdown_candidate(stripped.lstrip("#").strip())
+            if title and (normalize_text(heading).lower() == title_norm or title_similarity(heading, title) >= 0.75):
+                seen_title = True
+            elif snippets:
+                break
+            continue
+
+        if stripped.startswith(">") or stripped.startswith("![]("):
+            if snippets:
+                break
+            continue
+
+        if not seen_title and title:
+            if normalize_text(cleaned).lower() == title_norm or title_similarity(cleaned, title) >= 0.75:
+                seen_title = True
+            continue
+
+        if not cleaned or re.fullmatch(r"Pages? \d+(?:-\d+)?", cleaned, re.IGNORECASE):
+            continue
+        if lowered in GENERIC_HEADER_LINES or lowered.startswith(("abstract", "keywords")):
+            if snippets:
+                break
+            continue
+        if split_author_line(stripped) or author_names_from_mixed_line(stripped):
+            continue
+        if is_affiliation_or_metadata_line(cleaned) or looks_like_person_name(cleaned):
+            continue
+        if cleaned.count("|") >= 2:
+            if snippets:
+                break
+            continue
+        if len(cleaned.split()) < 8 and not snippets:
+            continue
+
+        snippets.append(cleaned)
+        if len(" ".join(snippets)) >= limit:
+            break
+
+    return normalize_text(" ".join(snippets))[:limit]
 
 
 def extract_abstract(markdown_text: str) -> str:
@@ -1133,51 +1519,7 @@ def extract_abstract(markdown_text: str) -> str:
             return snippet[:1600]
     frontmatter_match = re.search(r"^title:\s*(.+)$", markdown_text, re.MULTILINE)
     title = frontmatter_match.group(1).strip().strip('"') if frontmatter_match else ""
-    title_norm = normalize_text(title).lower()
-    seen_title = False
-    without_headings = []
-    lines = compact.splitlines()
-    skip_next = False
-    for index, line in enumerate(lines):
-        if skip_next:
-            skip_next = False
-            continue
-        stripped = line.strip()
-        if not stripped:
-            if without_headings:
-                break
-            continue
-        cleaned = normalize_text(clean_markdown_candidate(stripped)).lower()
-        combined = cleaned
-        if index + 1 < len(lines):
-            next_cleaned = normalize_text(clean_markdown_candidate(lines[index + 1].strip())).lower()
-            combined = f"{cleaned} {next_cleaned}".strip()
-        if cleaned == title_norm or (title and title_similarity(clean_markdown_candidate(stripped), title) >= 0.75):
-            seen_title = True
-            continue
-        if title and index + 1 < len(lines) and title_similarity(combined, title) >= 0.75:
-            seen_title = True
-            skip_next = True
-            continue
-        if not seen_title and title:
-            continue
-        if stripped.startswith("#"):
-            continue
-        if stripped.startswith("> Converted from") or stripped.startswith("> Working markdown cache"):
-            continue
-        if split_author_line(stripped):
-            continue
-        if is_affiliation_or_metadata_line(stripped) or looks_like_person_name(stripped):
-            continue
-        lowered = normalize_text(stripped).lower().strip(":")
-        if lowered in GENERIC_HEADER_LINES or lowered.startswith("keywords"):
-            continue
-        if stripped.count("|") >= 2:
-            break
-        without_headings.append(stripped)
-        if len(" ".join(without_headings)) > 1800:
-            break
-    return normalize_text(" ".join(without_headings))[:1600]
+    return first_meaningful_paragraph(markdown_text, title=title, limit=1600)
 
 
 def extracted_markdown_body(markdown_text: str) -> str:
@@ -1275,13 +1617,21 @@ def matches_alias(normalized_text: str, alias: str) -> bool:
     return alias_text in normalized_text
 
 
-def matched_concepts(text: str) -> list[str]:
+def matched_concepts(text: str, limit: int = 6) -> list[str]:
     normalized = normalize_for_match(text)
-    found = []
+    scored = []
     for concept in CONCEPTS:
-        if any(matches_alias(normalized, alias) for alias in concept["aliases"]):
-            found.append(concept["slug"])
-    return sorted(set(found))
+        score = 0
+        for alias in concept["aliases"]:
+            alias_text = normalize_for_match(alias)
+            if not alias_text or alias_text not in normalized:
+                continue
+            word_count = len(alias_text.split())
+            score += 1 + min(word_count, 3)
+        if score > 0:
+            scored.append((score, concept["title"].lower(), concept["slug"]))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [slug for _, _, slug in scored[:limit]]
 
 
 def classify_labels(text: str, patterns: dict[str, list[str]]) -> list[str]:
@@ -1426,6 +1776,13 @@ def fallback_markdown_from_pdf_pages(pdf_path: Path, page_start: int, page_end: 
                 continue
             cleaned = re.sub(r"\n{3,}", "\n\n", text)
             snippets.append(f"### Page {page_number}\n\n{cleaned}")
+    if not snippets:
+        if page_start == page_end:
+            return f"### Page {page_start}\n\n[No extractable text could be recovered from this page.]"
+        return (
+            f"### Pages {page_start}-{page_end}\n\n"
+            "[No extractable text could be recovered from these pages.]"
+        )
     return "\n\n".join(snippets).strip()
 
 
@@ -1479,8 +1836,28 @@ def claude_markdown_from_images(root: Path, pdf_path: Path, image_paths: list[Pa
                     for block in response.content
                     if getattr(block, "type", None) == "text" and getattr(block, "text", "").strip()
                 ]
-                text = "\n\n".join(text_blocks)
-                break
+                if text_blocks:
+                    text = "\n\n".join(text_blocks)
+                    break
+                fallback_text = fallback_markdown_from_pdf_pages(pdf_path, page_start, page_end)
+                if fallback_text:
+                    text = fallback_text
+                    print(
+                        f"[vision] local fallback for {pdf_path.name} pages {page_start}-{page_end} "
+                        f"(stop_reason={getattr(response, 'stop_reason', None) or 'empty-response'})",
+                        flush=True,
+                    )
+                    break
+                if attempt == 3:
+                    raise RuntimeError(
+                        f"Claude returned no Markdown for pages {page_start}-{page_end} "
+                        f"(stop_reason={getattr(response, 'stop_reason', None) or 'empty-response'})"
+                    )
+                print(
+                    f"[vision] empty response retry {attempt}/3 for {pdf_path.name} pages {page_start}-{page_end} "
+                    f"(stop_reason={getattr(response, 'stop_reason', None) or 'empty-response'})",
+                    flush=True,
+                )
             except (anthropic.APITimeoutError, anthropic.APIConnectionError, anthropic.APIStatusError, anthropic.APIError) as exc:
                 error_text = str(exc).lower()
                 if "content filtering policy" in error_text or attempt == 3:
@@ -1616,7 +1993,9 @@ def refresh_pdf_cache_note(root: Path, pdf_path: Path) -> dict[str, Any]:
         raise FileNotFoundError(md_path)
     existing = read_text(md_path)
     extracted = extracted_markdown_body(existing)
-    relative_image_paths = existing_relative_page_images(root, pdf_path, md_path)
+    page_count_raw = frontmatter_scalar(existing, "page_count") or ""
+    expected_count = int(page_count_raw) if page_count_raw.isdigit() else None
+    relative_image_paths = ensure_page_images(root, pdf_path, md_path, expected_count=expected_count)
     conversion_pipeline = (frontmatter_scalar(existing, "conversion_pipeline") or "pdf2md+claude-vision").split("+", 1)[0]
     markdown = markdown_from_pdf(pdf_path, pdf_path.relative_to(root).as_posix(), extracted, relative_image_paths, conversion_pipeline)
     changed = write_text_if_changed(md_path, markdown)
@@ -1673,30 +2052,32 @@ def save_state(root: Path, state: dict[str, Any]) -> None:
 
 def build_source_profile(root: Path, logical_path: Path, content_path: Path, source_kind: str) -> dict[str, Any]:
     text = read_text(content_path)
+    tracked_path = content_path if content_path.exists() else logical_path
     title = detect_title(text, logical_path)
     abstract = extract_abstract(text)
     doi = extract_doi(text)
     arxiv_id = extract_arxiv_id(text)
     venue = extract_venue(text, doi=doi, arxiv_id=arxiv_id)
     transcription_mode = cache_transcription_mode(text) if source_kind == "raw_pdf" else "raw_markdown"
-    combined = f"{title}\n\n{abstract}"
-    if transcription_mode == "vision":
-        combined = f"{combined}\n\n{text[:10000]}"
-    concepts = matched_concepts(combined)
+    section_index = extract_section_headings(text, logical_path)
+    body_signal = concept_body_signal(text, source_kind) if source_kind == "raw_markdown" or not abstract else ""
+    concept_text = "\n\n".join(
+        bit for bit in [title, abstract, "\n".join(section_index[:10]), body_signal]
+        if bit
+    )
+    concepts = matched_concepts(concept_text)
     if not concepts:
         concepts = ["scientific-machine-learning"]
     source_rel = logical_path.relative_to(root).as_posix()
     content_rel = content_path.relative_to(root).as_posix()
-    summary = trim_summary(abstract or strip_frontmatter(text)[:500])
+    summary = trim_summary(abstract or first_meaningful_paragraph(text, title=title, limit=500) or "No summary yet.")
     filename_bits = source_filename_parts(logical_path)
     authors = extract_authors(text, title, logical_path)
     year = filename_bits.get("year")
     citation_key = derive_citation_key(title, logical_path, authors, year)
-    short_title = canonical_alias(title)
     page_count = page_count_for_pdf(root, logical_path) if source_kind == "raw_pdf" else None
     image_dir = page_image_directory_rel(root, logical_path) if source_kind == "raw_pdf" else None
-    section_index = extract_section_headings(text, logical_path)
-    aliases = dedupe_preserve_order([alias for alias in [short_title, citation_key] if alias and alias != title])
+    aliases = source_page_aliases(title, citation_key)
     tags = ["research/source", f"source/{source_kind.replace('_', '-')}"]
     if source_kind == "raw_pdf":
         tags.append(f"transcription/{transcription_mode.replace('_', '-')}")
@@ -1722,14 +2103,14 @@ def build_source_profile(root: Path, logical_path: Path, content_path: Path, sou
         "page_image_dir": image_dir,
         "section_index": section_index,
         "tags": tags,
-        "hash": file_hash(logical_path),
-        "mtime_ns": logical_path.stat().st_mtime_ns,
+        "hash": file_hash(tracked_path),
+        "mtime_ns": tracked_path.stat().st_mtime_ns,
         "abstract": abstract,
         "summary": summary,
         "concepts": concepts,
-        "keywords": top_terms(f"{title} {abstract}"),
-        "domains": classify_labels(combined, DOMAIN_PATTERNS),
-        "themes": classify_labels(combined, THEME_PATTERNS),
+        "keywords": top_terms(" ".join(bit for bit in [title, abstract, body_signal] if bit)),
+        "domains": classify_labels(concept_text, DOMAIN_PATTERNS),
+        "themes": classify_labels(concept_text, THEME_PATTERNS),
         "page": source_note_page_path(root, source_rel, title).relative_to(root).as_posix(),
     }
 
@@ -1858,6 +2239,9 @@ def source_page_content(profile: dict[str, Any], compile_date: str) -> str:
     related_links = [wiki_link(CONCEPTS_BY_SLUG[slug]["title"]) for slug in profile.get("concepts", []) if slug in CONCEPTS_BY_SLUG]
     aliases = dedupe_preserve_order([profile["title"], *profile.get("aliases", [])])
     tags = list(profile.get("tags", []))
+    display_abstract = trim_abstract_for_card(profile.get("abstract", ""))
+    citation_lines = compact_citation_lines(profile)
+    _, full_author_list = compact_author_metadata(profile)
     if profile.get("year"):
         tags.append(f"year/{profile['year']}")
     tags = dedupe_preserve_order(tags)
@@ -1911,33 +2295,22 @@ def source_page_content(profile: dict[str, Any], compile_date: str) -> str:
             "",
             "## Citation & Files",
             "",
-            f"- Source ID: `{profile['source_id']}`",
-            f"- Citation key: `{profile['citation_key']}`",
-            f"- Source kind: `{profile['source_kind']}`",
-            f"- Status: `{profile['source_status']}`",
-            f"- Raw source: `{profile['source']}`",
+            *citation_lines,
         ]
     )
-    if profile.get("content_path") and profile["content_path"] != profile["source"]:
-        lines.append(f"- Working text cache: `{profile['content_path']}`")
-    if profile.get("page_image_dir"):
-        lines.append(f"- Page image directory: `{profile['page_image_dir']}`")
-    if profile.get("page_count"):
-        lines.append(f"- Page count: `{profile['page_count']}`")
-    if profile.get("year"):
-        lines.append(f"- Year: `{profile['year']}`")
-    if profile.get("venue"):
-        lines.append(f"- Venue: {profile['venue']}")
-    if profile.get("doi"):
-        lines.append(f"- DOI: `{profile['doi']}`")
-    if profile.get("arxiv_id"):
-        lines.append(f"- arXiv: `{profile['arxiv_id']}`")
-    if profile.get("lead_author"):
-        lines.append(f"- Lead author: {profile['lead_author']}")
-    if profile.get("authors"):
-        lines.append(f"- Authors: {'; '.join(profile['authors'])}")
+    if full_author_list:
+        lines.extend(
+            [
+                "",
+                "<details>",
+                "<summary>Full author list</summary>",
+                "",
+                *[f"- {author}" for author in full_author_list],
+                "</details>",
+            ]
+        )
     lines.extend(["", "## TL;DR", "", profile.get("summary") or "No summary yet.", ""])
-    lines.extend(["## Abstract", "", profile.get("abstract") or "No concise abstract was extracted from this source yet.", ""])
+    lines.extend(["## Abstract", "", display_abstract or "No concise abstract was extracted from this source yet.", ""])
     if related_links:
         lines.extend(["## Key Concepts", ""])
         lines.extend(f"- {link}" for link in related_links)
@@ -1981,6 +2354,24 @@ def note_blurb(text: str, fallback: str = "No summary yet.") -> str:
     return trim_summary(" ".join(snippets) or fallback, limit=160)
 
 
+def collect_derived_notes(root: Path) -> list[dict[str, str]]:
+    config = load_config(root)
+    derived_dir = root / config["derived_wiki_dir"]
+    notes = []
+    for path in sorted(derived_dir.glob("*.md")):
+        if not path.is_file() or path.name == "README.md":
+            continue
+        text = read_text(path)
+        notes.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "title": detect_title(text, path),
+                "summary": note_blurb(text),
+            }
+        )
+    return notes
+
+
 def render_log_index(root: Path) -> str:
     config = load_config(root)
     path = root / config["log_path"]
@@ -2009,18 +2400,7 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
         grouped[CONCEPTS_BY_SLUG[slug]["group"]].append(slug)
 
     config = load_config(root)
-    derived_dir = root / config["derived_wiki_dir"]
-    derived_notes = []
-    for path in sorted(derived_dir.glob("*.md")):
-        if not path.is_file():
-            continue
-        derived_notes.append(
-            {
-                "path": path.relative_to(root).as_posix(),
-                "title": detect_title(read_text(path), path),
-                "summary": note_blurb(read_text(path)),
-            }
-        )
+    derived_notes = collect_derived_notes(root)
 
     lines = [
         "# Research Wiki Index",
@@ -2084,7 +2464,8 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_derived_home(compile_date: str) -> str:
+def render_derived_home(root: Path, compile_date: str) -> str:
+    derived_notes = collect_derived_notes(root)
     lines = [
         "---",
         "title: \"Derived Notes\"",
@@ -2103,6 +2484,13 @@ def render_derived_home(compile_date: str) -> str:
         "Use it when a query result should become part of the long-term knowledge base instead of staying only in `output/`.",
         "",
     ]
+    lines.extend(["## Filed-back Notes", ""])
+    if derived_notes:
+        for item in derived_notes:
+            lines.append(f"- {wiki_link(item['title'])} - {item['summary']}")
+    else:
+        lines.append("- No filed-back notes yet.")
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -2301,6 +2689,25 @@ def extract_wiki_links(text: str) -> list[str]:
     return links
 
 
+def extract_internal_markdown_links(text: str, source_path: Path, root: Path) -> list[str]:
+    links = []
+    for raw_target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", text):
+        target = raw_target.strip()
+        if not target or target.startswith(("http://", "https://", "mailto:", "#")):
+            continue
+        target = unquote(target.split("#", 1)[0].strip())
+        if not target.endswith(".md"):
+            continue
+        resolved = (source_path.parent / target).resolve()
+        try:
+            relative = resolved.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        if resolved.is_file():
+            links.append(relative)
+    return dedupe_preserve_order(links)
+
+
 def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any] | None = None) -> dict[str, Any]:
     ensure_project_dirs(root)
     config = load_config(root)
@@ -2313,28 +2720,43 @@ def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any]
     derived_dir = root / config["derived_wiki_dir"]
     report_path = root / config["lint_report_path"]
 
-    core_docs = [path for path in [wiki_dir / "INDEX.md", wiki_dir / "SYSTEM_OVERVIEW.md", wiki_dir / "PAGE_FORMATS.md", wiki_dir / "LOG.md"] if path.exists()]
+    core_docs = [
+        path
+        for path in [
+            wiki_dir / "INDEX.md",
+            wiki_dir / "SYSTEM_OVERVIEW.md",
+            wiki_dir / "PAGE_FORMATS.md",
+            wiki_dir / "LOG.md",
+            report_path,
+        ]
+        if path.exists()
+    ]
     wiki_docs = sorted(path for path in core_docs + list(concepts_dir.glob("*.md")) + list(sources_dir.glob("*.md")) + list(derived_dir.glob("*.md")) if path.is_file())
-    available_titles = {CONCEPTS_BY_SLUG[path.stem]["title"] for path in concepts_dir.glob("*.md") if path.stem in CONCEPTS_BY_SLUG}
-    for path in wiki_dir.glob("*.md"):
-        available_titles.add(detect_title(read_text(path), path))
-        available_titles.update(frontmatter_list(read_text(path), "aliases"))
-    for path in sources_dir.glob("*.md"):
-        available_titles.add(detect_title(read_text(path), path))
-        available_titles.update(frontmatter_list(read_text(path), "aliases"))
-    for path in derived_dir.glob("*.md"):
-        available_titles.add(detect_title(read_text(path), path))
-        available_titles.update(frontmatter_list(read_text(path), "aliases"))
-    available_titles.update({"INDEX", "SYSTEM_OVERVIEW", "PAGE_FORMATS", "LINT_AND_HEAL", "README", "LOG"})
+    title_owner: dict[str, str] = {}
+    path_owner: dict[str, str] = {}
+    for path in wiki_docs:
+        text = read_text(path)
+        title = detect_title(text, path)
+        path_owner[path.relative_to(root).as_posix()] = title
+        for name in dedupe_preserve_order([title, *frontmatter_list(text, "aliases")]):
+            title_owner[name] = title
+    for static_name in {"INDEX", "SYSTEM_OVERVIEW", "PAGE_FORMATS", "LINT_AND_HEAL", "README", "LOG"}:
+        title_owner[static_name] = static_name
+    available_titles = set(title_owner)
 
     broken_links = []
     inbound_links: Counter[str] = Counter()
     for path in wiki_docs:
-        for link in extract_wiki_links(read_text(path)):
+        text = read_text(path)
+        for link in extract_wiki_links(text):
             if link in available_titles:
-                inbound_links[link] += 1
+                inbound_links[title_owner.get(link, link)] += 1
             if link not in available_titles:
                 broken_links.append({"source": path.relative_to(root).as_posix(), "target": link})
+        for target_path in extract_internal_markdown_links(text, path, root):
+            title = path_owner.get(target_path)
+            if title:
+                inbound_links[title] += 1
 
     orphan_pages = []
     for path in wiki_docs:
@@ -2355,6 +2777,9 @@ def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any]
         profile
         for profile in state.get("source_docs", {}).values()
         if profile.get("concepts") == ["scientific-machine-learning"]
+        and not profile.get("domains")
+        and not profile.get("themes")
+        and not (profile.get("source_kind") == "raw_markdown" and len(profile.get("section_index", [])) <= 3)
     ]
     candidate_terms = [term for term, _ in Counter(term for profile in low_coverage_profiles for term in profile.get("keywords", [])).most_common(8)]
 
@@ -2449,8 +2874,9 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
     changed_sources = []
     for item in current_sources:
         rel_path = item["source"]
-        digest = file_hash(item["logical_path"])
-        mtime_ns = item["logical_path"].stat().st_mtime_ns
+        tracked_path = item["content_path"] if item["content_path"].exists() else item["logical_path"]
+        digest = file_hash(tracked_path)
+        mtime_ns = tracked_path.stat().st_mtime_ns
         cached = source_docs.get(rel_path)
         if not force and cached and cached.get("hash") == digest and cached.get("mtime_ns") == mtime_ns:
             continue
@@ -2521,7 +2947,7 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
     save_state(root, new_state)
     system_overview_written = write_text_if_changed(root / config["system_overview_path"], render_system_overview(root, current_date, new_state))
     page_formats_written = write_text_if_changed(root / config.get("page_formats_path", "wiki/PAGE_FORMATS.md"), render_page_formats(current_date))
-    derived_home_written = write_text_if_changed(root / config["derived_wiki_dir"] / "README.md", render_derived_home(current_date))
+    derived_home_written = write_text_if_changed(root / config["derived_wiki_dir"] / "README.md", render_derived_home(root, current_date))
     log_written = write_text_if_changed(root / config["log_path"], render_log_index(root))
     lint_result = lint_wiki(root, compile_date=current_date, state=new_state)
 
@@ -2545,13 +2971,13 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
 
 
 def snapshot_raw_tree(root: Path) -> dict[str, int]:
-    raw_dir = root / load_config(root)["raw_dir"]
     snapshot = {}
-    if not raw_dir.exists():
-        return snapshot
-    for path in sorted(raw_dir.rglob("*")):
-        if path.is_file():
-            snapshot[path.relative_to(root).as_posix()] = path.stat().st_mtime_ns
+    for source_dir in configured_source_dirs(root):
+        if not source_dir.exists():
+            continue
+        for path in sorted(source_dir.rglob("*")):
+            if path.is_file():
+                snapshot[path.relative_to(root).as_posix()] = path.stat().st_mtime_ns
     return snapshot
 
 

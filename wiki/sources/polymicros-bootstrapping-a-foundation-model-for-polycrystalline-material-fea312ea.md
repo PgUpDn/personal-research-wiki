@@ -21,11 +21,9 @@ sources:
 concepts:
   - "[[Foundation Models]]"
   - "[[Generative Models]]"
-  - "[[Large Language Models]]"
   - "[[Materials Design]]"
   - "[[Scientific Datasets]]"
   - "[[Scientific Discovery]]"
-  - "[[Scientific Machine Learning]]"
   - "[[Simulation Acceleration]]"
 domains:
   - "materials and chemistry"
@@ -52,16 +50,14 @@ tags:
 related:
   - "[[Foundation Models]]"
   - "[[Generative Models]]"
-  - "[[Large Language Models]]"
   - "[[Materials Design]]"
   - "[[Scientific Datasets]]"
   - "[[Scientific Discovery]]"
-  - "[[Scientific Machine Learning]]"
   - "[[Simulation Acceleration]]"
 cache_path: "_meta/converted_sources/Buzzy et al. - 2025 - PolyMicros Bootstrapping a Foundation Model for Polycrystalline Material Structure.md"
 page_image_dir: "_meta/source_page_images/buzzy-et-al-2025-polymicros-bootstrapping-a-foundation-model-for-polycry-7ee49100"
 page_count: 43
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # PolyMicros: Bootstrapping a Foundation Model for Polycrystalline Material Structure
@@ -70,17 +66,11 @@ last_compiled: 2026-04-05
 
 ## Citation & Files
 
-- Source ID: `buzzy2025polymicros`
-- Citation key: `buzzy2025polymicros`
-- Source kind: `raw_pdf`
-- Status: `compiled`
-- Raw source: `raw/Buzzy et al. - 2025 - PolyMicros Bootstrapping a Foundation Model for Polycrystalline Material Structure.pdf`
-- Working text cache: `_meta/converted_sources/Buzzy et al. - 2025 - PolyMicros Bootstrapping a Foundation Model for Polycrystalline Material Structure.md`
-- Page image directory: `_meta/source_page_images/buzzy-et-al-2025-polymicros-bootstrapping-a-foundation-model-for-polycry-7ee49100`
-- Page count: `43`
-- Year: `2025`
-- Lead author: Michael O. Buzzy
+- Citation: Michael O. Buzzy et al. · (2025) · `buzzy2025polymicros`
 - Authors: Michael O. Buzzy; Andreas E. Robertson; Peng Chen; Surya R. Kalidindi
+- Identifiers: raw_pdf / compiled
+- Source: `raw/Buzzy et al. - 2025 - PolyMicros Bootstrapping a Foundation Model for Polycrystalline Material Structure.pdf`
+- Assets: cache `_meta/converted_sources/Buzzy et al. - 2025 - PolyMicros Bootstrapping a Foundation Model for Polycrystalline Material Structure.md` · 43 pages `_meta/source_page_images/buzzy-et-al-2025-polymicros-bootstrapping-a-foundation-model-for-polycry-7ee49100`
 
 ## TL;DR
 
@@ -88,17 +78,15 @@ Recent advances in Foundation Models for Materials Science are poised to revolut
 
 ## Abstract
 
-Recent advances in Foundation Models for Materials Science are poised to revolutionize the discovery, manufacture, and design of novel materials with tailored properties and responses. Although great strides have been made, successes have been restricted to materials classes where multi-million sample data repositories can be readily curated (e.g., atomistic structures). Unfortunately, for many structural and functional materials (e.g., mesoscale structured metal alloys), such datasets are too costly or prohibitive to construct; instead, datasets are limited to very few examples. To address this challenge, we introduce a novel machine learning approach for learning from hyper-sparse, complex spatial data in scientific domains. Our core contribution is a physics-driven data augmentation scheme that leverages an ensemble of local generative models, trained on as few as five experimental observations, and coordinates them through a novel diversity curation strategy to generate a large-scale, physically diverse dataset. We utilize this framework to construct PolyMicros, the first Foundation Model for polycrystalline materials (a structural material class important across a broad range of industrial and scientific applications). We demonstrate the utility of PolyMicros by zero-shot solving several long standing challenges related to accelerating 3D experimental microscopy. Finally, we make both our models and datasets openly available to the community. --- *Preprint. Under review.* --- Figure 1: PolyMicros is a Foundation model for polycrystalline materials structure trained on 
+Recent advances in Foundation Models for Materials Science are poised to revolutionize the discovery, manufacture, and design of novel materials with tailored properties and responses. Although great strides have been made, successes have been restricted to materials classes where multi-million sample data repositories can be readily curated (e.g., atomistic structures). Unfortunately, for many structural and functional materials (e.g., mesoscale structured metal alloys), such datasets are too costly or prohibitive to construct; instead, datasets are limited to very few examples.
 
 ## Key Concepts
 
 - [[Foundation Models]]
 - [[Generative Models]]
-- [[Large Language Models]]
 - [[Materials Design]]
 - [[Scientific Datasets]]
 - [[Scientific Discovery]]
-- [[Scientific Machine Learning]]
 - [[Simulation Acceleration]]
 
 ## Research Signals
@@ -122,6 +110,6 @@ Recent advances in Foundation Models for Materials Science are poised to revolut
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 

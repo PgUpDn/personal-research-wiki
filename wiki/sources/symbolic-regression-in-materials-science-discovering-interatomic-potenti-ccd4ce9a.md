@@ -21,16 +21,10 @@ authors:
 sources:
   - "raw/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.pdf"
 concepts:
-  - "[[Geometry-Aware Learning]]"
-  - "[[Large Language Models]]"
-  - "[[Materials Design]]"
   - "[[Symbolic Regression]]"
-domains:
-  - "materials and chemistry"
-themes:
-  - "geometry and irregular domains"
-  - "inverse design and optimization"
-  - "physics-guided learning"
+  - "[[Materials Design]]"
+domains: []
+themes: []
 section_index:
   - "Symbolic Regression in Materials Science: Discovering Interatomic Potentials from Data"
   - "1 Introduction"
@@ -48,14 +42,12 @@ tags:
   - "transcription/vision"
   - "year/2023"
 related:
-  - "[[Geometry-Aware Learning]]"
-  - "[[Large Language Models]]"
-  - "[[Materials Design]]"
   - "[[Symbolic Regression]]"
+  - "[[Materials Design]]"
 cache_path: "_meta/converted_sources/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.md"
 page_image_dir: "_meta/source_page_images/burlacu-et-al-2023-symbolic-regression-in-materials-science-discovering--074b6d84"
 page_count: 31
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Symbolic Regression in Materials Science: Discovering Interatomic Potentials from Data
@@ -64,17 +56,21 @@ last_compiled: 2026-04-05
 
 ## Citation & Files
 
-- Source ID: `burlacu2023symbolic`
-- Citation key: `burlacu2023symbolic`
-- Source kind: `raw_pdf`
-- Status: `compiled`
-- Raw source: `raw/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.pdf`
-- Working text cache: `_meta/converted_sources/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.md`
-- Page image directory: `_meta/source_page_images/burlacu-et-al-2023-symbolic-regression-in-materials-science-discovering--074b6d84`
-- Page count: `31`
-- Year: `2023`
-- Lead author: Bogdan Burlacu
-- Authors: Bogdan Burlacu; Michael Kommend; Gabriel Kronberger; Stephan Winkler; Michael Affenzeller
+- Citation: Bogdan Burlacu et al. · (2023) · `burlacu2023symbolic`
+- Authors: Bogdan Burlacu et al.
+- Identifiers: raw_pdf / compiled
+- Source: `raw/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.pdf`
+- Assets: cache `_meta/converted_sources/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.md` · 31 pages `_meta/source_page_images/burlacu-et-al-2023-symbolic-regression-in-materials-science-discovering--074b6d84`
+
+<details>
+<summary>Full author list</summary>
+
+- Bogdan Burlacu
+- Michael Kommend
+- Gabriel Kronberger
+- Stephan Winkler
+- Michael Affenzeller
+</details>
 
 ## TL;DR
 
@@ -82,19 +78,15 @@ last_compiled: 2026-04-05
 
 ## Abstract
 
-** Particle-based modeling of materials at atomic scale plays an important role in the development of new materials and understanding of their properties. The accuracy of particle simulations is determined by *interatomic potentials*, which allow to calculate the potential energy of an atomic system as a function of atomic coordinates and potentially other properties. First-principles-based *ab initio* potentials can reach arbitrary levels of accuracy, however their aplicability is limited by their high computational cost. Machine learning (ML) has recently emerged as an effective way to offset the high computational costs of *ab initio* atomic potentials by replacing expensive models with highly efficient surrogates trained on electronic structure data. Among a plethora of current methods, symbolic regression (SR) is gaining traction as a powerful "white-box" approach for discovering functional forms of interatomic potentials. This contribution discusses the role of symbolic regression in Materials Science (MS) and offers a comprehensive overview of current methodological challenges and state-of-the-art results. A genetic programming-based approach for modeling atomic potentials from raw data (consisting of snapshots of atomic positions and associated potential energy) is presented and empirically validated on *ab initio* electronic structure data. --- Heuristic and Evolutionary Algorithms Laboratory University of Applied Sciences Upper Austria Softwarepark 11, 4232 Hagenberg, Austria ---
+** Particle-based modeling of materials at atomic scale plays an important role in the development of new materials and understanding of their properties. The accuracy of particle simulations is determined by *interatomic potentials*, which allow to calculate the potential energy of an atomic system as a function of atomic coordinates and potentially other properties. First-principles-based *ab initio* potentials can reach arbitrary levels of accuracy, however their aplicability is limited by their high computational cost.
 
 ## Key Concepts
 
-- [[Geometry-Aware Learning]]
-- [[Large Language Models]]
-- [[Materials Design]]
 - [[Symbolic Regression]]
+- [[Materials Design]]
 
 ## Research Signals
 
-- Domains: materials and chemistry
-- Themes: geometry and irregular domains, inverse design and optimization, physics-guided learning
 - Keywords: potentials, atomic, materials, symbolic, regression, interatomic
 
 ## Reading Map
@@ -112,6 +104,6 @@ last_compiled: 2026-04-05
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 

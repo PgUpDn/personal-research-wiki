@@ -1,21 +1,22 @@
 ---
-title: "Concise summary Introduction to AI and AGI"
+title: "Introduction to AI and AGI"
 aliases:
-  - "Concise summary Introduction to AI and AGI"
-  - "gameundatedconcise"
+  - "Introduction to AI and AGI"
+  - "backgrounundatedintroduction"
 note_type: "source"
 schema_version: "research-wiki-pdf-v1"
-source_id: "gameundatedconcise"
-citation_key: "gameundatedconcise"
+source_id: "backgrounundatedintroduction"
+citation_key: "backgrounundatedintroduction"
 source_kind: "raw_markdown"
 source_status: "compiled"
-lead_author: "The Thinking Game"
+lead_author: "Demis Hassabis' Backgroun"
 authors:
-  - "The Thinking Game"
+  - "Demis Hassabis' Backgroun"
+  - "- Demis Hassabis"
 sources:
   - "raw/The Thinking Game.md"
 concepts:
-  - "[[Scientific Machine Learning]]"
+  - "[[AI Agents]]"
 domains: []
 themes: []
 section_index:
@@ -33,39 +34,36 @@ tags:
   - "research/source"
   - "source/raw-markdown"
 related:
-  - "[[Scientific Machine Learning]]"
-last_compiled: 2026-04-05
+  - "[[AI Agents]]"
+last_compiled: 2026-04-14
 ---
 
-# Concise summary Introduction to AI and AGI
+# Introduction to AI and AGI
 
 > This source page is maintained by the wiki compiler so the vault can summarize, link, and query `raw/The Thinking Game.md` without modifying the raw source.
 
 ## Citation & Files
 
-- Source ID: `gameundatedconcise`
-- Citation key: `gameundatedconcise`
-- Source kind: `raw_markdown`
-- Status: `compiled`
-- Raw source: `raw/The Thinking Game.md`
-- Lead author: The Thinking Game
-- Authors: The Thinking Game
+- Citation: Demis Hassabis' Backgroun et al. · `backgrounundatedintroduction`
+- Authors: Demis Hassabis' Backgroun; - Demis Hassabis
+- Identifiers: raw_markdown / compiled
+- Source: `raw/The Thinking Game.md`
 
 ## TL;DR
 
-Concise summary
+- Artificial intelligence is advancing at breakneck speed, with some people raising alarms about its potential risks and consequences (00:01:37)
 
 ## Abstract
 
-Concise summary
+- Artificial intelligence is advancing at breakneck speed, with some people raising alarms about its potential risks and consequences (00:01:37)
 
 ## Key Concepts
 
-- [[Scientific Machine Learning]]
+- [[AI Agents]]
 
 ## Research Signals
 
-- Keywords: concise, summary, introduction
+- Keywords: intelligence, deepmind, system, artificial, games, demis
 
 ## Reading Map
 
@@ -82,6 +80,6 @@ Concise summary
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 

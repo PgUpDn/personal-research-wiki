@@ -44,6 +44,20 @@ a:hover { text-decoration: underline; }
 code, pre {
   font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
+details {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+details > :last-child {
+  margin-bottom: 0;
+}
 .layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
@@ -387,6 +401,37 @@ img {
   background: var(--code-bg);
   padding: 0.12rem 0.35rem;
   border-radius: 8px;
+}
+.ask-inline-section {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+}
+.ask-inline-section h2,
+.ask-page-minimal h1 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.ask-intro {
+  margin: 0 0 14px;
+  color: var(--muted);
+  max-width: 60ch;
+}
+.compact-ask textarea {
+  min-height: 96px;
+}
+.ask-page-minimal {
+  max-width: 860px;
+}
+.ask-standalone {
+  max-width: 760px;
+  margin: 56px auto;
+  padding: 0 24px 56px;
+}
+.ask-standalone .ask-layout {
+  gap: 16px;
 }
 .index-shell {
   padding-top: 28px;
@@ -1019,6 +1064,24 @@ def render_markdown_blocks(
             blocks.append(f"<blockquote>{inner}</blockquote>")
             continue
 
+        if stripped == "<details>":
+            index += 1
+            summary_text = "Details"
+            if index < len(lines) and lines[index].strip().startswith("<summary>") and lines[index].strip().endswith("</summary>"):
+                summary_line = lines[index].strip()
+                summary_text = re.sub(r"^<summary>|</summary>$", "", summary_line).strip() or "Details"
+                index += 1
+            inner_lines = []
+            while index < len(lines) and lines[index].strip() != "</details>":
+                inner_lines.append(lines[index])
+                index += 1
+            if index < len(lines) and lines[index].strip() == "</details>":
+                index += 1
+            inner = render_markdown_blocks("\n".join(inner_lines), source_path, current_export_path, root, export_root, title_to_export, source_to_export)
+            summary_html = convert_inline(summary_text, source_path, current_export_path, root, export_root, title_to_export, source_to_export)
+            blocks.append(f"<details><summary>{summary_html}</summary>{inner}</details>")
+            continue
+
         if "|" in stripped and index + 1 < len(lines) and is_table_separator(lines[index + 1]):
             headers = parse_table_row(lines[index])
             index += 2
@@ -1209,6 +1272,14 @@ def render_index_page(
     export_path = Path("index.html")
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
     sidebar_html = render_sidebar(docs, export_path)
+    server_command = ".venv/bin/python _meta/scripts/wiki_cli.py serve-html --root ."
+    local_server_url = "http://127.0.0.1:8765/ask.html"
+    ask_script = ask_widget_script(server_command, local_server_url)
+    ask_widget = ask_widget_markup(
+        compact=True,
+        show_file_into_wiki=False,
+        placeholder="Ask a question about the research wiki.",
+    )
     source_docs = [item for item in docs if item["group"] == "Sources"]
     concept_docs = [item for item in docs if item["group"] == "Concepts"]
     system_docs = [item for item in docs if item["group"] == "System" and Path(item["export_path"]) != export_path]
@@ -1406,6 +1477,11 @@ def render_index_page(
           </aside>
         </section>
 
+        <section class="ask-inline-section" id="ask-the-wiki">
+          <h2>Ask The Wiki</h2>
+          {ask_widget}
+        </section>
+
         <section class="toc-box">
           <h2>Contents</h2>
           <div class="toc-columns">
@@ -1497,6 +1573,7 @@ def render_index_page(
       </main>
     </div>
   </div>
+  <script>{ask_script}</script>
 </body>
 </html>
 """
@@ -1716,20 +1793,19 @@ init();
 """
 
 
-def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
-    export_path = Path("ask.html")
-    stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
-    sidebar_html = render_sidebar(docs, export_path)
-    server_command = ".venv/bin/python _meta/scripts/wiki_cli.py serve-html --root ."
-    script = f"""
+def ask_widget_script(server_command: str, local_server_url: str) -> str:
+    return f"""
 const formEl = document.querySelector('[data-ask-form]');
 const textareaEl = document.querySelector('[data-ask-input]');
 const submitEl = document.querySelector('[data-ask-submit]');
 const statusEl = document.querySelector('[data-ask-status]');
 const resultEl = document.querySelector('[data-ask-result]');
 const metaEl = document.querySelector('[data-ask-meta]');
-const fileIntoWikiEl = document.querySelector('[data-file-into-wiki]');
 const serverNoteEl = document.querySelector('[data-server-note]');
+const localServerUrl = {json.dumps(local_server_url)};
+const apiBase = window.location.protocol === 'file:' ? 'http://127.0.0.1:8765' : '';
+let timerId = null;
+let requestStartedAt = 0;
 
 const escapeHtml = (value) =>
   value.replace(/[&<>\"']/g, (char) => ({{
@@ -1754,18 +1830,50 @@ const renderMeta = (payload) => {{
 
 const setUnavailable = () => {{
   serverNoteEl.hidden = false;
-  statusEl.textContent = 'Q&A needs the local HTML server.';
-  resultEl.textContent = `Run: {server_command}`;
+  if (window.location.protocol === 'file:') {{
+    serverNoteEl.innerHTML = `This static page can ask the wiki through the local server, but the server is not reachable right now. Open <a href="${{localServerUrl}}"><code>${{localServerUrl}}</code></a> after starting <code>{server_command}</code>.`;
+    statusEl.textContent = 'Start the local server to use Q&A.';
+  }} else {{
+    serverNoteEl.innerHTML = `Local Q&A server is unavailable. Run <code>{server_command}</code> and reload this page.`;
+    statusEl.textContent = 'Q&A server unavailable.';
+  }}
+  resultEl.textContent = 'The local Q&A server is currently unavailable.';
   metaEl.innerHTML = '';
   submitEl.disabled = true;
 }};
 
-if (window.location.protocol === 'file:') {{
-  setUnavailable();
-}} else {{
-  serverNoteEl.hidden = false;
-  serverNoteEl.innerHTML = 'This page calls the local wiki server so your Claude API key stays on disk. If the form does not respond, start the server with <code>{server_command}</code>.';
-}}
+const setLoading = () => {{
+  requestStartedAt = Date.now();
+  const render = () => {{
+    const seconds = Math.max(1, Math.round((Date.now() - requestStartedAt) / 1000));
+    statusEl.textContent = `Asking the wiki... ${{seconds}}s elapsed. Typical latency is 10-30s.`;
+  }};
+  render();
+  timerId = window.setInterval(render, 1000);
+}};
+
+const clearLoading = () => {{
+  if (timerId !== null) {{
+    window.clearInterval(timerId);
+    timerId = null;
+  }}
+}};
+
+const checkServer = async () => {{
+  try {{
+    const response = await fetch(`${{apiBase}}/api/health`, {{ method: 'GET' }});
+    if (!response.ok) {{
+      throw new Error('Health check failed.');
+    }}
+    submitEl.disabled = false;
+    serverNoteEl.hidden = true;
+    serverNoteEl.innerHTML = '';
+    statusEl.textContent = 'Waiting for a question.';
+    resultEl.textContent = 'Answers will appear here.';
+  }} catch (error) {{
+    setUnavailable();
+  }}
+}};
 
 formEl.addEventListener('submit', async (event) => {{
   event.preventDefault();
@@ -1775,16 +1883,16 @@ formEl.addEventListener('submit', async (event) => {{
     return;
   }}
   submitEl.disabled = true;
-  statusEl.textContent = 'Asking the wiki...';
+  setLoading();
   resultEl.textContent = '';
   metaEl.innerHTML = '';
   try {{
-    const response = await fetch('/api/ask', {{
+    const response = await fetch(`${{apiBase}}/api/ask`, {{
       method: 'POST',
       headers: {{ 'Content-Type': 'application/json' }},
       body: JSON.stringify({{
         question,
-        file_into_wiki: fileIntoWikiEl.checked
+        file_into_wiki: true
       }})
     }});
     const payload = await response.json();
@@ -1800,10 +1908,57 @@ formEl.addEventListener('submit', async (event) => {{
     resultEl.textContent = '';
     metaEl.innerHTML = '';
   }} finally {{
+    clearLoading();
     submitEl.disabled = false;
   }}
 }});
+
+submitEl.disabled = true;
+checkServer();
 """.strip()
+
+
+def ask_widget_markup(*, compact: bool, show_file_into_wiki: bool, placeholder: str) -> str:
+    form_class = "ask-form compact-ask" if compact else "ask-form"
+    answer_class = "answer-shell compact-ask" if compact else "answer-shell"
+    checkbox_html = ""
+    if show_file_into_wiki:
+        checkbox_html = """
+                <label class="checkbox-row">
+                  <input data-file-into-wiki type="checkbox">
+                  <span>File the answer back into <code>wiki/derived</code></span>
+                </label>"""
+    return f"""
+        <div class="ask-layout">
+          <section class="{form_class}">
+            <form data-ask-form>
+              <textarea data-ask-input placeholder="{html.escape(placeholder, quote=True)}"></textarea>
+              <div class="ask-actions">
+                <button class="primary-button" data-ask-submit type="submit">Ask</button>{checkbox_html}
+              </div>
+            </form>
+          </section>
+          <div class="server-note" data-server-note hidden></div>
+          <section class="{answer_class}">
+            <div class="search-hint" data-ask-status>Waiting for a question.</div>
+            <div class="answer-meta" data-ask-meta></div>
+            <pre class="answer-output" data-ask-result>Answers will appear here.</pre>
+          </section>
+        </div>""".rstrip()
+
+
+def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
+    del docs, root
+    export_path = Path("ask.html")
+    stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
+    server_command = ".venv/bin/python _meta/scripts/wiki_cli.py serve-html --root ."
+    local_server_url = "http://127.0.0.1:8765/ask.html"
+    script = ask_widget_script(server_command, local_server_url)
+    widget_html = ask_widget_markup(
+        compact=True,
+        show_file_into_wiki=False,
+        placeholder="Ask a question about the research wiki.",
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -1813,41 +1968,10 @@ formEl.addEventListener('submit', async (event) => {{
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      {sidebar_html}
-    </aside>
-    <div class="content-shell">
-      <main class="content">
-        <div class="breadcrumb"><span>output/html/ask.html</span></div>
-        <section class="search-hero">
-          <h1>Ask The Wiki</h1>
-          <p>Ask questions against the compiled vault and get a grounded answer from the same local pipeline that powers the CLI.</p>
-        </section>
-        <div class="ask-layout">
-          <section class="ask-form">
-            <form data-ask-form>
-              <textarea data-ask-input placeholder="Try: Compare the neural operator papers in this vault."></textarea>
-              <div class="ask-actions">
-                <button class="primary-button" data-ask-submit type="submit">Ask</button>
-                <label class="checkbox-row">
-                  <input data-file-into-wiki type="checkbox">
-                  <span>File the answer back into <code>wiki/derived</code></span>
-                </label>
-              </div>
-            </form>
-          </section>
-          <div class="server-note" data-server-note hidden></div>
-          <section class="answer-shell">
-            <div class="search-hint" data-ask-status>Waiting for a question.</div>
-            <div class="answer-meta" data-ask-meta></div>
-            <pre class="answer-output" data-ask-result>Answers will appear here.</pre>
-          </section>
-        </div>
-        <div class="footer">Exported from the local research wiki at <code>{html.escape(root.as_posix())}</code>.</div>
-      </main>
-    </div>
-  </div>
+  <main class="content ask-page-minimal ask-standalone">
+    <h1>Ask The Wiki</h1>
+    {widget_html}
+  </main>
   <script>{script}</script>
 </body>
 </html>

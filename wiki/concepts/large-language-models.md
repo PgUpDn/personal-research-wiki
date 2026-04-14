@@ -4,6 +4,8 @@ aliases:
   - "Large Language Models"
   - "large language model"
   - "large language models"
+  - "language model"
+  - "language models"
   - "llm"
   - "llms"
   - "chatgpt"
@@ -12,52 +14,110 @@ aliases:
 note_type: "concept"
 schema_version: "research-wiki-pdf-v1"
 concept_group: "Agents and Reasoning"
-source_count: 16
+source_count: 45
 sources:
-  - "raw/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.pdf"
-  - "raw/Boya and Subramani - 2024 - A physics-informed transformer neural operator for learning generalized solutions of initial boundar.pdf"
-  - "raw/Adams et al. - 2025 - GeoTransolver Learning Physics on Irregular Domains Using Multi-scale Geometry Aware Physics Attent.pdf"
-  - "raw/Azizzadenesheli et al. - 2024 - Neural operators for accelerating scientific simulations and design.pdf"
-  - "raw/Buehler - 2023 - MeLM, a generative pretrained language modeling fr.pdf"
+  - "raw/Kim et al. - 2024 - A ChatGPT-MATLAB framework for numerical modeling in geotechnical engineering applications.pdf"
+  - "raw/Marcato et al. - 2025 - A Foundation Model for Material Fracture Prediction.pdf"
+  - "raw/Guo et al. - 2025 - A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models.pdf"
+  - "raw/Schmidgall et al. - 2025 - Agent Laboratory Using LLM Agents as Research Assistants.pdf"
+  - "raw/Liu et al. - 2024 - Agents4PLC Automating Closed-loop PLC Code Generation and Verification in Industrial Control System.pdf"
+  - "raw/Ghafarollahi and Buehler - 2024 - AtomAgents Alloy design and discovery through physics-aware multi-modal multi-agent artificial inte.pdf"
+  - "raw/Vyas and Mercangoz - 2025 - Autonomous Control Leveraging LLMs An Agentic Framework for Next-Generation Industrial Automation.pdf"
+  - "raw/Mehandru et al. - 2025 - BioAgents Democratizing Bioinformatics Analysis with Multi-Agent Systems.pdf"
+  - "raw/Xia et al. - 2025 - BuildArena A Physics-Aligned Interactive Benchmark of LLMs for Engineering Construction.pdf"
+  - "raw/Liu et al. - 2024 - ChipNeMo Domain-Adapted LLMs for Chip Design.pdf"
+  - "raw/Gandhi et al. - 2025 - Cognitive Behaviors that Enable Self-Improving Reasoners, or, Four Habits of Highly Effective STaRs.pdf"
+  - "raw/Zhang et al. - 2024 - COMBO Compositional World Models for Embodied Multi-Agent Cooperation.pdf"
+  - "raw/Zhang and Gilpin - 2025 - Context parroting A simple but tough-to-beat baseline for foundation models in scientific machine l.pdf"
+  - "raw/Huang and Cole - 2025 - Cost-Efficient Domain-Adaptive Pretraining of Language Models for Optoelectronics Applications.pdf"
+  - "raw/Jiang et al. - 2025 - DeepSeek vs. ChatGPT vs. Claude A Comparative Study for Scientific Computing and Scientific Machine.pdf"
+  - "raw/Dong et al. - 2025 - Fine-tuning a Large Language Model for Automating Computational Fluid Dynamics Simulations.pdf"
+  - "raw/Yao - From Language Models to Language Agents.pdf"
+  - "raw/Hu and Shu - 2023 - Language Models, Agent Models, and World Models The LAW for Machine Reasoning and Planning.pdf"
   - "raw/Barman et al. - 2025 - Large Physics Models Towards a collaborative approach with Large Language Models and Foundation Mod.pdf"
-  - "raw/Cao et al. - 2023 - LNO Laplace Neural Operator for Solving Differential Equations.pdf"
-  - "raw/Ament et al. - 2021 - Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams.pdf"
-  - "raw/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.pdf"
-  - "raw/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.pdf"
-  - "raw/Buzzy et al. - 2025 - PolyMicros Bootstrapping a Foundation Model for Polycrystalline Material Structure.pdf"
+  - "raw/Ma et al. - 2024 - LLM and Simulation as Bilevel Optimizers A New Paradigm to Advance Physical Scientific Discovery.pdf"
+  - "raw/Shojaee et al. - 2024 - LLM-SR Scientific Equation Discovery via Programming with Large Language Models.pdf"
+  - "raw/Wong et al. - 2025 - LLM-to-Phy3D Physically Conform Online 3D Object Generation with LLMs.pdf"
+  - "raw/Wong et al. - 2025 - LLM2TEA An Agentic AI Designer for Discovery with Generative Evolutionary Multitasking.pdf"
+  - "raw/Huang et al. - 2025 - MCP-Enabled LLM for Meta-optics Inverse Design Leveraging Differentiable Solver without LLM Experti.pdf"
+  - "raw/Buehler - 2023 - MeLM, a generative pretrained language modeling fr.pdf"
+  - "raw/Chen et al. - 2024 - Metaopenfoam An Llm-Based Multi-Agent Framework for Cfd.pdf"
+  - "raw/Wang et al. - 2024 - Mixture-of-Agents Enhances Large Language Model Capabilities.pdf"
+  - "raw/ml4science-references/Media and News.md"
+  - "raw/ml4science-references/Topic-Specific Resources.md"
+  - "raw/Kim et al. - 2025 - Artificial intelligence orchestration for text-based ultrasonic simulation via self-review by multi-.pdf"
+  - "raw/Pandey et al. - 2025 - OpenFOAMGPT a RAG-Augmented LLM Agent for OpenFOAM-Based Computational Fluid Dynamics.pdf"
+  - "raw/Liu et al. - 2025 - ParaView-MCP An Autonomous Visualization Agent with Direct Tool Use.pdf"
+  - "raw/Ghafarollahi and Buehler - 2024 - Rapid and Automated Alloy Design with Graph Neural Network-Powered LLM-Driven Multi-Agent Systems.pdf"
+  - "raw/Yao et al. - 2023 - ReAct Synergizing Reasoning and Acting in Language Models.pdf"
+  - "raw/Qian et al. - 2024 - Scaling Large-Language-Model-based Multi-Agent Collaboration.pdf"
+  - "raw/Yu et al. - 2026 - SCDFM DISTRIBUTIONAL FLOW MATCHING FOR RO- BUST SINGLE-CELL PERTURBATION PREDICTION.pdf"
+  - "raw/Nguyen et al. - 2024 - SemiKong Curating, Training, and Evaluating A Semiconductor Industry-Specific Large Language Model.pdf"
   - "raw/Belcak et al. - 2025 - Small Language Models are the Future of Agentic AI.pdf"
   - "raw/Brenner et al. - 2026 - Solving an Open Problem in Theoretical Physics using AI-Assisted Discovery.pdf"
-  - "raw/Bakirtzis et al. - 2024 - Solving Maxwell's equations with Non-Trainable Graph Neural Network Message Passing.pdf"
-  - "raw/Burlacu et al. - 2023 - Symbolic Regression in Materials Science Discovering Interatomic Potentials from Data.pdf"
+  - "raw/Swanson et al. - 2025 - The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies.pdf"
+  - "raw/Lee et al. - 2025 - Toward Knowledge-Guided AI for Inverse Design in Manufacturing A Perspective on Domain, Physics, an.pdf"
   - "raw/Bounsi et al. - 2024 - Transformers meet Neural Algorithmic Reasoners.pdf"
+  - "raw/Grosskopf et al. - 2025 - URSA The Universal Research and Scientific Agent.pdf"
+  - "raw/Man et al. - 2025 - VideoCAD A Dataset and Model for Learning Long-Horizon 3D CAD UI Interactions from Video.pdf"
+  - "raw/Wang et al. - 2023 - Voyager An Open-Ended Embodied Agent with Large Language Models.pdf"
 source_pages:
-  - "[[A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dispersion fields in indoor environments]]"
-  - "[[A physics-informed transformer neural operator for learning generalized solutions of initial boundary value problems]]"
-  - "[[GeoTransolver: Learning Physics on Irregular Domains using Multi-scale Geometry Aware Physics Attention Transformer]]"
-  - "[[https://doi.org/10.1038/s42254-024-00712-5 Neural operators for accelerating scientific simulations and design]]"
-  - "[[Journal of the Mechanics and Physics of Solids MeLM, a generative pretrained language modeling framework that solves forward and inverse mechanics problems]]"
-  - "[[Large Physics Models Towards a collaborative approach with Large Language Models and Foundation Mod]]"
-  - "[[LNO: Laplace Neural Operator for Solving Differential Equations]]"
-  - "[[MATERIALS SCIENCE Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams]]"
-  - "[[Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning]]"
-  - "[[Physics-Learning AI Datamodel (PLAID) datasets: a collection of physics simulations for machine learning]]"
-  - "[[PolyMicros: Bootstrapping a Foundation Model for Polycrystalline Material Structure]]"
+  - "[[A ChatGPT-MATLAB framework for numerical modeling in geotechnical engineering applications]]"
+  - "[[A Foundation Model for Material Fracture Prediction]]"
+  - "[[A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models]]"
+  - "[[Agent Laboratory: Using LLM Agents as Research Assistants]]"
+  - "[[Agents4PLC: Automating Closed-loop PLC Code Generation and Verification in Industrial Control Systems using LLM-based Agents]]"
+  - "[[AtomAgents: Alloy Design and Discovery Through Physics-Aware Multi-Modal Multi-Agent Artificial Intelligence]]"
+  - "[[Autonomous Control Leveraging LLMs: An Agentic Framework for Next-Generation Industrial Automation]]"
+  - "[[BioAgents: Democratizing Bioinformatics Analysis with Multi-Agent Systems]]"
+  - "[[BuildArena: A Physics-Aligned Interactive Benchmark of LLMs for Engineering Construction]]"
+  - "[[ChipNeMo: Domain-Adapted LLMs for Chip Design]]"
+  - "[[Cognitive Behaviors that Enable Self-Improving Reasoners, *or,* **Four Habits of Highly Effective STaRs]]"
+  - "[[COMBO: Compositional World Models for Embodied Multi-Agent Cooperation]]"
+  - "[[Context parroting: A simple but tough-to-beat baseline for foundation models in scientific machine learning]]"
+  - "[[Cost-Efficient Domain-Adaptive Pretraining of Language Models for Optoelectronics Applications]]"
+  - "[[DeepSeek vs. ChatGPT vs. Claude: A comparative study for scientific computing and scientific machine learning tasks]]"
+  - "[[Fine-tuning a Large Language Model for Automating Computational Fluid Dynamics Simulations]]"
+  - "[[From Language Models to Language Agents]]"
+  - "[[Language Models, Agent Models, and World Models: The LAW for Machine Reasoning and Planning]]"
+  - "[[Large Physics Models: Towards a collaborative approach with Large Language Models and Foundation Models]]"
+  - "[[LLM and Simulation as Bilevel Optimizers: A New Paradigm to Advance Physical Scientific Discovery]]"
+  - "[[LLM-SR: Scientific Equation Discovery via Programming with Large Language Models]]"
+  - "[[LLM-to-Phy3D: Physically Conform Online 3D Object Generation with LLMs]]"
+  - "[[LLM2TEA: An Agentic AI Designer for Discovery with Generative Evolutionary Multitasking]]"
+  - "[[MCP-Enabled LLM for Meta-optics Inverse Design: Leveraging Differentiable Solver without LLM Expertise]]"
+  - "[[MeLM, a generative pretrained language modeling framework that solves forward and inverse mechanics problems]]"
+  - "[[MetaOpenFOAM: an LLM-based multi-agent framework for CFD]]"
+  - "[[Mixture-of-Agents Enhances Large Language Model Capabilities]]"
+  - "[[ML4Science References - Media and News]]"
+  - "[[ML4Science References - Topic-Specific Resources]]"
+  - "[[OPEN Artificial intelligence orchestration for text-based ultrasonic simulation via self-review by multi-large language model agents]]"
+  - "[[OpenFOAMGPT: a RAG-Augmented LLM Agent for OpenFOAM-Based Computational Fluid Dynamics]]"
+  - "[[ParaView-MCP: An Autonomous Visualization Agent with Direct Tool Use]]"
+  - "[[Rapid and Automated Alloy Design with Graph Neural Network-Powered LLM-Driven Multi-Agent Systems]]"
+  - "[[REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS]]"
+  - "[[Scaling Large-Language-Model-based Multi-Agent Collaboration]]"
+  - "[[SCDFM: DISTRIBUTIONAL FLOW MATCHING FOR ROBUST SINGLE-CELL PERTURBATION PREDICTION]]"
+  - "[[SEMIKONG: CURATING, TRAINING, AND EVALUATING A SEMICONDUCTOR INDUSTRY-SPECIFIC LARGE LANGUAGE MODEL]]"
   - "[[Small Language Models are the Future of Agentic AI]]"
   - "[[Solving an Open Problem in Theoretical Physics using AI-Assisted Discovery]]"
-  - "[[Solving Maxwell's Equations with Non-Trainable Graph Neural Network Message Passing]]"
-  - "[[Symbolic Regression in Materials Science: Discovering Interatomic Potentials from Data]]"
+  - "[[The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies]]"
+  - "[[Toward Knowledge-Guided AI for Inverse Design in Manufacturing: A Perspective on Domain, Physics, and Human-AI Synergy]]"
   - "[[Transformers meet Neural Algorithmic Reasoners]]"
+  - "[[URSA: The Universal Research and Scientific Agent]]"
+  - "[[VideoCAD: A Dataset and Model for Learning Long-Horizon 3D CAD UI Interactions from Video]]"
+  - "[[VOYAGER: An Open-Ended Embodied Agent with Large Language Models]]"
 related:
   - "[[AI Agents]]"
+  - "[[Multi-Agent Systems]]"
   - "[[Foundation Models]]"
-  - "[[Computational Fluid Dynamics]]"
-  - "[[Scientific Datasets]]"
-  - "[[Partial Differential Equations]]"
   - "[[Benchmarks and Evaluation]]"
+  - "[[Scientific Datasets]]"
+  - "[[Inverse Design]]"
 tags:
   - "research/concept"
   - "group/agents-and-reasoning"
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Large Language Models
@@ -66,42 +126,42 @@ last_compiled: 2026-04-05
 
 ## Definition
 
-[[Large Language Models]] appears across `raw/` as language-centric models used as interfaces, planners, code generators, and scientific assistants in simulation-heavy workflows. The strongest source cluster is in computational fluid dynamics, materials and chemistry, agents and automation. It is most often discussed alongside [[AI Agents]], [[Foundation Models]], [[Computational Fluid Dynamics]].
+[[Large Language Models]] appears across `raw/` as language-centric models used as interfaces, planners, code generators, and scientific assistants in simulation-heavy workflows. The strongest source cluster is in agents and automation, computational fluid dynamics, materials and chemistry. It is most often discussed alongside [[AI Agents]], [[Multi-Agent Systems]], [[Foundation Models]].
 
 ## What The Sources Emphasize
 
-- The matched sources frame Large Language Models through inverse design and optimization, benchmarking and data curation, geometry and irregular domains.
-- Representative application areas include computational fluid dynamics, materials and chemistry, agents and automation.
-- Recurring vocabulary around this concept includes language, that, this, materials, operator.
+- The matched sources frame Large Language Models through inverse design and optimization, benchmarking and data curation, scaling and transfer.
+- Representative application areas include agents and automation, computational fluid dynamics, materials and chemistry.
+- Recurring vocabulary around this concept includes language, that, llms, multi-agent, reasoning.
 
 ## Coverage
 
-- Source pages: 16
+- Source pages: 45
 - Concept group: Agents and Reasoning
-- Top domains: computational fluid dynamics, materials and chemistry, agents and automation
-- Top themes: inverse design and optimization, benchmarking and data curation, geometry and irregular domains
+- Top domains: agents and automation, computational fluid dynamics, materials and chemistry
+- Top themes: inverse design and optimization, benchmarking and data curation, scaling and transfer
 
 ## Related Concepts
 
 - [[AI Agents]]
+- [[Multi-Agent Systems]]
 - [[Foundation Models]]
-- [[Computational Fluid Dynamics]]
-- [[Scientific Datasets]]
-- [[Partial Differential Equations]]
 - [[Benchmarks and Evaluation]]
+- [[Scientific Datasets]]
+- [[Inverse Design]]
 
 ## Representative sources
 
-- [[A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dispersion fields in indoor environments]] from `raw/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.pdf`
-- [[A physics-informed transformer neural operator for learning generalized solutions of initial boundary value problems]] from `raw/Boya and Subramani - 2024 - A physics-informed transformer neural operator for learning generalized solutions of initial boundar.pdf`
-- [[GeoTransolver: Learning Physics on Irregular Domains using Multi-scale Geometry Aware Physics Attention Transformer]] from `raw/Adams et al. - 2025 - GeoTransolver Learning Physics on Irregular Domains Using Multi-scale Geometry Aware Physics Attent.pdf`
-- [[https://doi.org/10.1038/s42254-024-00712-5 Neural operators for accelerating scientific simulations and design]] from `raw/Azizzadenesheli et al. - 2024 - Neural operators for accelerating scientific simulations and design.pdf`
-- [[Journal of the Mechanics and Physics of Solids MeLM, a generative pretrained language modeling framework that solves forward and inverse mechanics problems]] from `raw/Buehler - 2023 - MeLM, a generative pretrained language modeling fr.pdf`
-- [[Large Physics Models Towards a collaborative approach with Large Language Models and Foundation Mod]] from `raw/Barman et al. - 2025 - Large Physics Models Towards a collaborative approach with Large Language Models and Foundation Mod.pdf`
-- [[LNO: Laplace Neural Operator for Solving Differential Equations]] from `raw/Cao et al. - 2023 - LNO Laplace Neural Operator for Solving Differential Equations.pdf`
-- [[MATERIALS SCIENCE Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams]] from `raw/Ament et al. - 2021 - Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams.pdf`
+- [[A ChatGPT-MATLAB framework for numerical modeling in geotechnical engineering applications]] from `raw/Kim et al. - 2024 - A ChatGPT-MATLAB framework for numerical modeling in geotechnical engineering applications.pdf`
+- [[A Foundation Model for Material Fracture Prediction]] from `raw/Marcato et al. - 2025 - A Foundation Model for Material Fracture Prediction.pdf`
+- [[A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models]] from `raw/Guo et al. - 2025 - A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models.pdf`
+- [[Agent Laboratory: Using LLM Agents as Research Assistants]] from `raw/Schmidgall et al. - 2025 - Agent Laboratory Using LLM Agents as Research Assistants.pdf`
+- [[Agents4PLC: Automating Closed-loop PLC Code Generation and Verification in Industrial Control Systems using LLM-based Agents]] from `raw/Liu et al. - 2024 - Agents4PLC Automating Closed-loop PLC Code Generation and Verification in Industrial Control System.pdf`
+- [[AtomAgents: Alloy Design and Discovery Through Physics-Aware Multi-Modal Multi-Agent Artificial Intelligence]] from `raw/Ghafarollahi and Buehler - 2024 - AtomAgents Alloy design and discovery through physics-aware multi-modal multi-agent artificial inte.pdf`
+- [[Autonomous Control Leveraging LLMs: An Agentic Framework for Next-Generation Industrial Automation]] from `raw/Vyas and Mercangoz - 2025 - Autonomous Control Leveraging LLMs An Agentic Framework for Next-Generation Industrial Automation.pdf`
+- [[BioAgents: Democratizing Bioinformatics Analysis with Multi-Agent Systems]] from `raw/Mehandru et al. - 2025 - BioAgents Democratizing Bioinformatics Analysis with Multi-Agent Systems.pdf`
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`

@@ -19,20 +19,15 @@ authors:
 sources:
   - "raw/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.pdf"
 concepts:
-  - "[[Computational Fluid Dynamics]]"
   - "[[Graph Neural Networks]]"
-  - "[[Large Language Models]]"
-  - "[[Multi-Physics]]"
-  - "[[Partial Differential Equations]]"
-  - "[[Scientific Datasets]]"
   - "[[Scientific Machine Learning]]"
-  - "[[Simulation Acceleration]]"
+  - "[[Multi-Physics]]"
+  - "[[Scientific Datasets]]"
 domains:
   - "computational fluid dynamics"
 themes:
   - "benchmarking and data curation"
   - "geometry and irregular domains"
-  - "inverse design and optimization"
 section_index:
   - "Contents"
   - "1 Introduction 2"
@@ -50,18 +45,14 @@ tags:
   - "transcription/vision"
   - "year/2023"
 related:
-  - "[[Computational Fluid Dynamics]]"
   - "[[Graph Neural Networks]]"
-  - "[[Large Language Models]]"
-  - "[[Multi-Physics]]"
-  - "[[Partial Differential Equations]]"
-  - "[[Scientific Datasets]]"
   - "[[Scientific Machine Learning]]"
-  - "[[Simulation Acceleration]]"
+  - "[[Multi-Physics]]"
+  - "[[Scientific Datasets]]"
 cache_path: "_meta/converted_sources/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.md"
 page_image_dir: "_meta/source_page_images/barwey-et-al-2023-multiscale-graph-neural-network-autoencoders-for-inter-d8f047a3"
 page_count: 30
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning
@@ -70,17 +61,11 @@ last_compiled: 2026-04-05
 
 ## Citation & Files
 
-- Source ID: `barwey2023multiscale`
-- Citation key: `barwey2023multiscale`
-- Source kind: `raw_pdf`
-- Status: `compiled`
-- Raw source: `raw/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.pdf`
-- Working text cache: `_meta/converted_sources/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.md`
-- Page image directory: `_meta/source_page_images/barwey-et-al-2023-multiscale-graph-neural-network-autoencoders-for-inter-d8f047a3`
-- Page count: `30`
-- Year: `2023`
-- Lead author: Shivam Barwey
+- Citation: Shivam Barwey et al. · (2023) · `barwey2023multiscale`
 - Authors: Shivam Barwey; Varun Shankar; Venkatasubramanian Viswanathan; Romit Maulik
+- Identifiers: raw_pdf / compiled
+- Source: `raw/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.pdf`
+- Assets: cache `_meta/converted_sources/Barwey et al. - 2023 - Multiscale Graph Neural Network Autoencoders for Interpretable Scientific Machine Learning.md` · 30 pages `_meta/source_page_images/barwey-et-al-2023-multiscale-graph-neural-network-autoencoders-for-inter-d8f047a3`
 
 ## TL;DR
 
@@ -88,23 +73,19 @@ The goal of this work is to address two limitations in autoencoder-based models:
 
 ## Abstract
 
-The goal of this work is to address two limitations in autoencoder-based models: latent space interpretability and compatibility with unstructured meshes. This is accomplished here with the development of a novel graph neural network (GNN) autoencoding architecture with demonstrations on complex fluid flow applications. To address the first goal of interpretability, the GNN autoencoder achieves reduction in the number nodes in the encoding stage through an adaptive graph reduction procedure. This reduction procedure essentially amounts to flowfield-conditioned node sampling and sensor identification, and produces interpretable latent graph representations tailored to the flowfield reconstruction task in the form of so-called masked fields. These masked fields allow the user to (a) visualize where in physical space a given latent graph is active, and (b) interpret the time-evolution of the latent graph connectivity in accordance with the time-evolution of unsteady flow features (e.g. recirculation zones, shear layers) in the domain. To address the goal of unstructured mesh compatibility, the autoencoding architecture utilizes a series of multi-scale message passing (MMP) layers, each of which models information exchange among node neighborhoods at various lengthscales. The MMP layer, which augments standard single-scale message passing with learnable coarsening operations, allows the decoder to more efficiently reconstruct the flowfield from the identified regions in the masked fields. Analysis of latent graphs produced by the autoencoder for various model settings are condu
+The goal of this work is to address two limitations in autoencoder-based models: latent space interpretability and compatibility with unstructured meshes. This is accomplished here with the development of a novel graph neural network (GNN) autoencoding architecture with demonstrations on complex fluid flow applications. To address the first goal of interpretability, the GNN autoencoder achieves reduction in the number nodes in the encoding stage through an adaptive graph reduction procedure.
 
 ## Key Concepts
 
-- [[Computational Fluid Dynamics]]
 - [[Graph Neural Networks]]
-- [[Large Language Models]]
-- [[Multi-Physics]]
-- [[Partial Differential Equations]]
-- [[Scientific Datasets]]
 - [[Scientific Machine Learning]]
-- [[Simulation Acceleration]]
+- [[Multi-Physics]]
+- [[Scientific Datasets]]
 
 ## Research Signals
 
 - Domains: computational fluid dynamics
-- Themes: benchmarking and data curation, geometry and irregular domains, inverse design and optimization
+- Themes: benchmarking and data curation, geometry and irregular domains
 - Keywords: graph, latent, goal, this, address, reduction
 
 ## Reading Map
@@ -122,6 +103,6 @@ The goal of this work is to address two limitations in autoencoder-based models:
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 

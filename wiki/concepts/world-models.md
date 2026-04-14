@@ -9,28 +9,56 @@ aliases:
 note_type: "concept"
 schema_version: "research-wiki-pdf-v1"
 concept_group: "Agents and Reasoning"
-source_count: 4
+source_count: 18
 sources:
-  - "raw/Boya and Subramani - 2024 - A physics-informed transformer neural operator for learning generalized solutions of initial boundar.pdf"
+  - "raw/Vyas and Mercangoz - 2025 - Autonomous Control Leveraging LLMs An Agentic Framework for Next-Generation Industrial Automation.pdf"
+  - "raw/Stach et al. - 2021 - Autonomous experimentation systems for materials development A community perspective.pdf"
+  - "raw/Zhang et al. - 2024 - COMBO Compositional World Models for Embodied Multi-Agent Cooperation.pdf"
+  - "raw/Mukhopadhyay et al. - 2025 - COMPUTE-ADAPTIVE SURROGATE MODELING OF PAR- TIAL DIFFERENTIAL EQUATIONS.pdf"
+  - "raw/Zhang and Gilpin - 2025 - Context parroting A simple but tough-to-beat baseline for foundation models in scientific machine l.pdf"
+  - "raw/Zhou et al. - 2025 - DINO-WM World Models on Pre-trained Visual Features enable Zero-shot Planning.pdf"
   - "raw/Brunton et al. - 2016 - Discovering governing equations from data by sparse identification of nonlinear dynamical systems.pdf"
-  - "raw/Azizzadenesheli et al. - 2024 - Neural operators for accelerating scientific simulations and design.pdf"
-  - "raw/Belcak et al. - 2025 - Small Language Models are the Future of Agentic AI.pdf"
+  - "raw/Discovering governing equations from data by sparse identification of nonlinear dynamical systems.pdf"
+  - "raw/Rao et al. - 2023 - Encoding physics to learn reaction–diffusion processes.pdf"
+  - "raw/Liu et al. - 2026 - From Kepler to Newton Inductive Biases Guide Learned World Models in Transformers.pdf"
+  - "raw/Lyu et al. - Graph Potential Field Neural Network for Massive Agents Group-wise Path Planning.pdf"
+  - "raw/Hu and Shu - 2023 - Language Models, Agent Models, and World Models The LAW for Machine Reasoning and Planning.pdf"
+  - "raw/Wu et al. - 2022 - Learning Large-scale Subsurface Simulations with a Hybrid Graph Network Simulator.pdf"
+  - "raw/Rozet et al. - 2025 - Lost in Latent Space An Empirical Study of Latent Diffusion Models for Physics Emulation.pdf"
+  - "raw/ml4science-references/Scientific ML Resources.md"
+  - "raw/Grosskopf et al. - 2025 - URSA The Universal Research and Scientific Agent.pdf"
+  - "raw/Vafa et al. - 2025 - What Has a Foundation Model Found Using Inductive Bias to Probe for World Models.pdf"
+  - "raw/Ross et al. - 2025 - When do World Models Successfully Learn Dynamical Systems.pdf"
 source_pages:
-  - "[[A physics-informed transformer neural operator for learning generalized solutions of initial boundary value problems]]"
+  - "[[Autonomous Control Leveraging LLMs: An Agentic Framework for Next-Generation Industrial Automation]]"
+  - "[[Autonomous experimentation systems for materials development: A community perspective]]"
+  - "[[COMBO: Compositional World Models for Embodied Multi-Agent Cooperation]]"
+  - "[[COMPUTE-ADAPTIVE SURROGATE MODELING OF PARTIAL DIFFERENTIAL EQUATIONS]]"
+  - "[[Context parroting: A simple but tough-to-beat baseline for foundation models in scientific machine learning]]"
+  - "[[DINO-WM: World Models on Pre-trained Visual Features enable Zero-shot Planning]]"
   - "[[Discovering governing equations from data by sparse identification of nonlinear dynamical systems]]"
-  - "[[https://doi.org/10.1038/s42254-024-00712-5 Neural operators for accelerating scientific simulations and design]]"
-  - "[[Small Language Models are the Future of Agentic AI]]"
+  - "[[Discovering governing equations from data by sparse identification of nonlinear dynamical systems]]"
+  - "[[Encoding physics to learn reaction–diffusion processes]]"
+  - "[[From Kepler to Newton: Inductive Biases Guide Learned World Models in Transformers]]"
+  - "[[Graph Potential Field Neural Network for Massive Agents Group-wise Path Planning]]"
+  - "[[Language Models, Agent Models, and World Models: The LAW for Machine Reasoning and Planning]]"
+  - "[[Learning Large-scale Subsurface Simulations with a Hybrid Graph Network Simulator]]"
+  - "[[Lost in Latent Space: An Empirical Study of Latent Diffusion Models for Physics Emulation]]"
+  - "[[ML4Science References - Scientific ML Resources]]"
+  - "[[URSA: The Universal Research and Scientific Agent]]"
+  - "[[What Has a Foundation Model Found? Using Inductive Bias to Probe for World Models]]"
+  - "[[When do World Models Successfully Learn Dynamical Systems?]]"
 related:
   - "[[Transformers]]"
   - "[[AI Agents]]"
   - "[[Scientific Discovery]]"
+  - "[[Scientific Datasets]]"
   - "[[Large Language Models]]"
-  - "[[Computational Fluid Dynamics]]"
-  - "[[Neural Operators]]"
+  - "[[Control and Automation]]"
 tags:
   - "research/concept"
   - "group/agents-and-reasoning"
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # World Models
@@ -39,38 +67,42 @@ last_compiled: 2026-04-05
 
 ## Definition
 
-[[World Models]] appears across `raw/` as learned internal models of dynamics or environment structure used for reasoning, prediction, and planning. The strongest source cluster is in computational fluid dynamics, agents and automation, electromagnetics and optics. It is most often discussed alongside [[Transformers]], [[AI Agents]], [[Scientific Discovery]].
+[[World Models]] appears across `raw/` as learned internal models of dynamics or environment structure used for reasoning, prediction, and planning. The strongest source cluster is in agents and automation, computational fluid dynamics, electromagnetics and optics. It is most often discussed alongside [[Transformers]], [[AI Agents]], [[Scientific Discovery]].
 
 ## What The Sources Emphasize
 
-- The matched sources frame World Models through inverse design and optimization, geometry and irregular domains, physics-guided learning.
-- Representative application areas include computational fluid dynamics, agents and automation, electromagnetics and optics.
-- Recurring vocabulary around this concept includes equations, initial, boundary, operator, conditions.
+- The matched sources frame World Models through inverse design and optimization, benchmarking and data curation, scaling and transfer.
+- Representative application areas include agents and automation, computational fluid dynamics, electromagnetics and optics.
+- Recurring vocabulary around this concept includes that, world, planning, this, equations.
 
 ## Coverage
 
-- Source pages: 4
+- Source pages: 18
 - Concept group: Agents and Reasoning
-- Top domains: computational fluid dynamics, agents and automation, electromagnetics and optics
-- Top themes: inverse design and optimization, geometry and irregular domains, physics-guided learning
+- Top domains: agents and automation, computational fluid dynamics, electromagnetics and optics
+- Top themes: inverse design and optimization, benchmarking and data curation, scaling and transfer
 
 ## Related Concepts
 
 - [[Transformers]]
 - [[AI Agents]]
 - [[Scientific Discovery]]
+- [[Scientific Datasets]]
 - [[Large Language Models]]
-- [[Computational Fluid Dynamics]]
-- [[Neural Operators]]
+- [[Control and Automation]]
 
 ## Representative sources
 
-- [[A physics-informed transformer neural operator for learning generalized solutions of initial boundary value problems]] from `raw/Boya and Subramani - 2024 - A physics-informed transformer neural operator for learning generalized solutions of initial boundar.pdf`
+- [[Autonomous Control Leveraging LLMs: An Agentic Framework for Next-Generation Industrial Automation]] from `raw/Vyas and Mercangoz - 2025 - Autonomous Control Leveraging LLMs An Agentic Framework for Next-Generation Industrial Automation.pdf`
+- [[Autonomous experimentation systems for materials development: A community perspective]] from `raw/Stach et al. - 2021 - Autonomous experimentation systems for materials development A community perspective.pdf`
+- [[COMBO: Compositional World Models for Embodied Multi-Agent Cooperation]] from `raw/Zhang et al. - 2024 - COMBO Compositional World Models for Embodied Multi-Agent Cooperation.pdf`
+- [[COMPUTE-ADAPTIVE SURROGATE MODELING OF PARTIAL DIFFERENTIAL EQUATIONS]] from `raw/Mukhopadhyay et al. - 2025 - COMPUTE-ADAPTIVE SURROGATE MODELING OF PAR- TIAL DIFFERENTIAL EQUATIONS.pdf`
+- [[Context parroting: A simple but tough-to-beat baseline for foundation models in scientific machine learning]] from `raw/Zhang and Gilpin - 2025 - Context parroting A simple but tough-to-beat baseline for foundation models in scientific machine l.pdf`
+- [[DINO-WM: World Models on Pre-trained Visual Features enable Zero-shot Planning]] from `raw/Zhou et al. - 2025 - DINO-WM World Models on Pre-trained Visual Features enable Zero-shot Planning.pdf`
 - [[Discovering governing equations from data by sparse identification of nonlinear dynamical systems]] from `raw/Brunton et al. - 2016 - Discovering governing equations from data by sparse identification of nonlinear dynamical systems.pdf`
-- [[https://doi.org/10.1038/s42254-024-00712-5 Neural operators for accelerating scientific simulations and design]] from `raw/Azizzadenesheli et al. - 2024 - Neural operators for accelerating scientific simulations and design.pdf`
-- [[Small Language Models are the Future of Agentic AI]] from `raw/Belcak et al. - 2025 - Small Language Models are the Future of Agentic AI.pdf`
+- [[Discovering governing equations from data by sparse identification of nonlinear dynamical systems]] from `raw/Discovering governing equations from data by sparse identification of nonlinear dynamical systems.pdf`
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`

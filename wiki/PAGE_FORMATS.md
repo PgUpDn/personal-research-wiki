@@ -3,12 +3,12 @@ title: "Page Formats"
 aliases:
   - "Page Formats"
 note_type: "system"
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Page Formats
 
-- Last refreshed: 2026-04-05
+- Last refreshed: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 
 ## Design Goals

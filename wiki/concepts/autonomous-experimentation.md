@@ -8,22 +8,26 @@ aliases:
 note_type: "concept"
 schema_version: "research-wiki-pdf-v1"
 concept_group: "Data and Evaluation"
-source_count: 1
+source_count: 3
 sources:
+  - "raw/Stach et al. - 2021 - Autonomous experimentation systems for materials development A community perspective.pdf"
   - "raw/Ament et al. - 2021 - Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams.pdf"
+  - "raw/Swanson et al. - 2025 - The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies.pdf"
 source_pages:
-  - "[[MATERIALS SCIENCE Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams]]"
+  - "[[Autonomous experimentation systems for materials development: A community perspective]]"
+  - "[[Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams]]"
+  - "[[The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies]]"
 related:
   - "[[Active Learning]]"
   - "[[Materials Design]]"
   - "[[AI Agents]]"
   - "[[Control and Automation]]"
-  - "[[Inverse Design]]"
-  - "[[Large Language Models]]"
+  - "[[World Models]]"
+  - "[[Scientific Discovery]]"
 tags:
   - "research/concept"
   - "group/data-and-evaluation"
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Autonomous Experimentation
@@ -32,20 +36,20 @@ last_compiled: 2026-04-05
 
 ## Definition
 
-[[Autonomous Experimentation]] appears across `raw/` as systems that plan, run, and refine experiments or synthesis loops with minimal human intervention. The strongest source cluster is in materials and chemistry, agents and automation. It is most often discussed alongside [[Active Learning]], [[Materials Design]], [[AI Agents]].
+[[Autonomous Experimentation]] appears across `raw/` as systems that plan, run, and refine experiments or synthesis loops with minimal human intervention. The strongest source cluster is in agents and automation. It is most often discussed alongside [[Active Learning]], [[Materials Design]], [[AI Agents]].
 
 ## What The Sources Emphasize
 
-- The matched sources frame Autonomous Experimentation through geometry and irregular domains, inverse design and optimization, physics-guided learning.
-- Representative application areas include materials and chemistry, agents and automation.
-- Recurring vocabulary around this concept includes materials, autonomous, synthesis, hierarchical, active.
+- The matched sources frame Autonomous Experimentation through inverse design and optimization.
+- Representative application areas include agents and automation.
+- Recurring vocabulary around this concept includes autonomous, materials, experimentation, development, related.
 
 ## Coverage
 
-- Source pages: 1
+- Source pages: 3
 - Concept group: Data and Evaluation
-- Top domains: materials and chemistry, agents and automation
-- Top themes: geometry and irregular domains, inverse design and optimization, physics-guided learning
+- Top domains: agents and automation
+- Top themes: inverse design and optimization
 
 ## Related Concepts
 
@@ -53,14 +57,16 @@ last_compiled: 2026-04-05
 - [[Materials Design]]
 - [[AI Agents]]
 - [[Control and Automation]]
-- [[Inverse Design]]
-- [[Large Language Models]]
+- [[World Models]]
+- [[Scientific Discovery]]
 
 ## Representative sources
 
-- [[MATERIALS SCIENCE Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams]] from `raw/Ament et al. - 2021 - Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams.pdf`
+- [[Autonomous experimentation systems for materials development: A community perspective]] from `raw/Stach et al. - 2021 - Autonomous experimentation systems for materials development A community perspective.pdf`
+- [[Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams]] from `raw/Ament et al. - 2021 - Autonomous materials synthesis via hierarchical active learning of nonequilibrium phase diagrams.pdf`
+- [[The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies]] from `raw/Swanson et al. - 2025 - The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies.pdf`
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`

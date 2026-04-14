@@ -20,10 +20,8 @@ sources:
   - "raw/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.pdf"
 concepts:
   - "[[Computational Fluid Dynamics]]"
-  - "[[Control and Automation]]"
   - "[[Generative Models]]"
-  - "[[Large Language Models]]"
-  - "[[Scientific Datasets]]"
+  - "[[Control and Automation]]"
 domains:
   - "computational fluid dynamics"
 themes:
@@ -46,14 +44,12 @@ tags:
   - "year/2025"
 related:
   - "[[Computational Fluid Dynamics]]"
-  - "[[Control and Automation]]"
   - "[[Generative Models]]"
-  - "[[Large Language Models]]"
-  - "[[Scientific Datasets]]"
+  - "[[Control and Automation]]"
 cache_path: "_meta/converted_sources/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.md"
 page_image_dir: "_meta/source_page_images/alanis-ruiz-et-al-2025-a-deep-convolutional-generative-adversarial-netwo-53bed0a3"
 page_count: 23
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dispersion fields in indoor environments
@@ -62,17 +58,11 @@ last_compiled: 2026-04-05
 
 ## Citation & Files
 
-- Source ID: `ruiz2025a`
-- Citation key: `ruiz2025a`
-- Source kind: `raw_pdf`
-- Status: `compiled`
-- Raw source: `raw/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.pdf`
-- Working text cache: `_meta/converted_sources/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.md`
-- Page image directory: `_meta/source_page_images/alanis-ruiz-et-al-2025-a-deep-convolutional-generative-adversarial-netwo-53bed0a3`
-- Page count: `23`
-- Year: `2025`
-- Lead author: Claudio Alanis Ruiz
+- Citation: Claudio Alanis Ruiz et al. · (2025) · `ruiz2025a`
 - Authors: Claudio Alanis Ruiz; Marcel Loomans; Twan van Hoof
+- Identifiers: raw_pdf / compiled
+- Source: `raw/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.pdf`
+- Assets: cache `_meta/converted_sources/Alanis Ruiz et al. - 2025 - A deep convolutional generative adversarial network (DCGAN) for the fast estimation of pollutant dis.md` · 23 pages `_meta/source_page_images/alanis-ruiz-et-al-2025-a-deep-convolutional-generative-adversarial-netwo-53bed0a3`
 
 ## TL;DR
 
@@ -80,15 +70,13 @@ This paper presents a generative AI approach using a conditional deep convolutio
 
 ## Abstract
 
-This paper presents a generative AI approach using a conditional deep convolutional generative adversarial network (cDCGAN) to rapidly predict pollutant concentration fields in indoor environments. The cDCGAN model is applied to a case study of a generic classroom with multiple heat and pollution sources and two distinct ventilation system configurations. It predicts pollutant dispersion at the breathing plane under simultaneous variations in ventilation rates and air supply temperatures. The model was trained and validated using high-quality computational fluid dynamics (CFD) simulation data. Results show that the cDCGAN can generate rapid predictions within seconds, providing reasonable accuracy in capturing the overall distribution and concentration levels of pollutants, with a mean absolute percentage error ranging from 13 % to 15 % when compared to CFD simulations. Despite some limitations in reproducing small-scale flow features, the model's ability to handle multiple system parameters and efficiently predict complex flow phenomena with limited training data highlights its value and potential. The methodology is adaptable to a range of indoor and outdoor environments and can be extended to estimate other flow variables and incorporate additional system parameters, making it a promising tool for applications requiring speed and efficiency when analyzing a large number of flow and dispersion scenarios.
+This paper presents a generative AI approach using a conditional deep convolutional generative adversarial network (cDCGAN) to rapidly predict pollutant concentration fields in indoor environments. The cDCGAN model is applied to a case study of a generic classroom with multiple heat and pollution sources and two distinct ventilation system configurations. It predicts pollutant dispersion at the breathing plane under simultaneous variations in ventilation rates and air supply temperatures.
 
 ## Key Concepts
 
 - [[Computational Fluid Dynamics]]
-- [[Control and Automation]]
 - [[Generative Models]]
-- [[Large Language Models]]
-- [[Scientific Datasets]]
+- [[Control and Automation]]
 
 ## Research Signals
 
@@ -111,6 +99,6 @@ This paper presents a generative AI approach using a conditional deep convolutio
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 

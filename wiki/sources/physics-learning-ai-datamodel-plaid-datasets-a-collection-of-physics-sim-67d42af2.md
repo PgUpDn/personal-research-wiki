@@ -24,37 +24,28 @@ authors:
   - "Luca Saverio"
   - "Raphaël Carpintero Perez"
   - "Anthony Kalaydjian"
-  - "Samy Fouché $^{"
+  - "Samy Fouché"
   - "Thierry Gonon"
   - "Ghassan Najjar"
   - "Emmanuel Menier"
   - "Matthieu Nastorg"
   - "Giovanni Catalani"
   - "Christian Rey"
-  - "Augur Inria Airbus ISAE-SUPAERO"
+  - "Ecole des Ponts ParisTech"
+  - "Mines Paris - PSL"
+  - "Ecole Poytechniqu"
+  - "ENS Paris-Saclay"
 sources:
   - "raw/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.pdf"
 concepts:
-  - "[[Benchmarks and Evaluation]]"
   - "[[Computational Fluid Dynamics]]"
-  - "[[Foundation Models]]"
-  - "[[Graph Neural Networks]]"
-  - "[[Inverse Design]]"
-  - "[[Large Language Models]]"
-  - "[[MeshGraphNets]]"
-  - "[[Partial Differential Equations]]"
-  - "[[Scientific Datasets]]"
-  - "[[Scientific Machine Learning]]"
+  - "[[Benchmarks and Evaluation]]"
   - "[[Surrogate Models]]"
-  - "[[Uncertainty Quantification]]"
+  - "[[Scientific Datasets]]"
 domains:
   - "computational fluid dynamics"
-  - "materials and chemistry"
 themes:
   - "benchmarking and data curation"
-  - "geometry and irregular domains"
-  - "inverse design and optimization"
-  - "scaling and transfer"
 section_index:
   - "Physics-Learning AI Datamodel (PLAID) datasets: a collection of physics simulations for machine learning"
   - "1 Introduction"
@@ -72,22 +63,14 @@ tags:
   - "transcription/vision"
   - "year/2025"
 related:
-  - "[[Benchmarks and Evaluation]]"
   - "[[Computational Fluid Dynamics]]"
-  - "[[Foundation Models]]"
-  - "[[Graph Neural Networks]]"
-  - "[[Inverse Design]]"
-  - "[[Large Language Models]]"
-  - "[[MeshGraphNets]]"
-  - "[[Partial Differential Equations]]"
-  - "[[Scientific Datasets]]"
-  - "[[Scientific Machine Learning]]"
+  - "[[Benchmarks and Evaluation]]"
   - "[[Surrogate Models]]"
-  - "[[Uncertainty Quantification]]"
+  - "[[Scientific Datasets]]"
 cache_path: "_meta/converted_sources/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.md"
 page_image_dir: "_meta/source_page_images/casenave-et-al-2025-physics-learning-ai-datamodel-plaid-datasets-a-colle-67101eb5"
 page_count: 33
-last_compiled: 2026-04-05
+last_compiled: 2026-04-14
 ---
 
 # Physics-Learning AI Datamodel (PLAID) datasets: a collection of physics simulations for machine learning
@@ -96,17 +79,38 @@ last_compiled: 2026-04-05
 
 ## Citation & Files
 
-- Source ID: `casenav2025physics`
-- Citation key: `casenav2025physics`
-- Source kind: `raw_pdf`
-- Status: `compiled`
-- Raw source: `raw/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.pdf`
-- Working text cache: `_meta/converted_sources/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.md`
-- Page image directory: `_meta/source_page_images/casenave-et-al-2025-physics-learning-ai-datamodel-plaid-datasets-a-colle-67101eb5`
-- Page count: `33`
-- Year: `2025`
-- Lead author: Fabien Casenav
-- Authors: Fabien Casenav; Xavier Roynar; Brian Staber; William Piat; Michele Alessandro Bucci; Nissrine Akkari; Abbas Kabalan; Xuan Minh Vuong Nguyen; Luca Saverio; Raphaël Carpintero Perez; Anthony Kalaydjian; Samy Fouché $^{; Thierry Gonon; Ghassan Najjar; Emmanuel Menier; Matthieu Nastorg; Giovanni Catalani; Christian Rey; Augur Inria Airbus ISAE-SUPAERO
+- Citation: Fabien Casenav et al. · (2025) · `casenav2025physics`
+- Authors: Fabien Casenav et al.
+- Identifiers: raw_pdf / compiled
+- Source: `raw/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.pdf`
+- Assets: cache `_meta/converted_sources/Casenave et al. - 2025 - Physics-Learning AI Datamodel (PLAID) datasets a collection of physics simulations for machine lear.md` · 33 pages `_meta/source_page_images/casenave-et-al-2025-physics-learning-ai-datamodel-plaid-datasets-a-colle-67101eb5`
+
+<details>
+<summary>Full author list</summary>
+
+- Fabien Casenav
+- Xavier Roynar
+- Brian Staber
+- William Piat
+- Michele Alessandro Bucci
+- Nissrine Akkari
+- Abbas Kabalan
+- Xuan Minh Vuong Nguyen
+- Luca Saverio
+- Raphaël Carpintero Perez
+- Anthony Kalaydjian
+- Samy Fouché
+- Thierry Gonon
+- Ghassan Najjar
+- Emmanuel Menier
+- Matthieu Nastorg
+- Giovanni Catalani
+- Christian Rey
+- Ecole des Ponts ParisTech
+- Mines Paris - PSL
+- Ecole Poytechniqu
+- ENS Paris-Saclay
+</details>
 
 ## TL;DR
 
@@ -114,27 +118,19 @@ Machine learning-based surrogate models have emerged as a powerful tool to accel
 
 ## Abstract
 
-Machine learning-based surrogate models have emerged as a powerful tool to accelerate simulation-driven scientific workflows. However, their widespread adoption is hindered by the lack of large-scale, diverse, and standardized datasets tailored to physics-based simulations. While existing initiatives provide valuable contributions, many are limited in scope—focusing on specific physics domains, relying on fragmented tooling, or adhering to overly simplistic datamodels that restrict generalization. To address these limitations, we introduce PLAID (Physics-Learning AI Datamodel), a flexible and extensible framework for representing and sharing datasets of physics simulations. PLAID defines a unified standard for describing simulation data and is accompanied by a library for creating, reading, and manipulating complex datasets across a wide range of physical use cases (gitlab.com/drti/plaid). We release six carefully crafted datasets under the PLAID standard, covering structural mechanics and computational fluid dynamics, and provide baseline benchmarks using representative learning methods. Benchmarking tools are made available on Hugging Face, enabling direct participation by the community and contribution to ongoing evaluation efforts (huggingface.co/PLAIDcompetitions).
+Machine learning-based surrogate models have emerged as a powerful tool to accelerate simulation-driven scientific workflows. However, their widespread adoption is hindered by the lack of large-scale, diverse, and standardized datasets tailored to physics-based simulations. While existing initiatives provide valuable contributions, many are limited in scope—focusing on specific physics domains, relying on fragmented tooling, or adhering to overly simplistic datamodels that restrict generalization.
 
 ## Key Concepts
 
-- [[Benchmarks and Evaluation]]
 - [[Computational Fluid Dynamics]]
-- [[Foundation Models]]
-- [[Graph Neural Networks]]
-- [[Inverse Design]]
-- [[Large Language Models]]
-- [[MeshGraphNets]]
-- [[Partial Differential Equations]]
-- [[Scientific Datasets]]
-- [[Scientific Machine Learning]]
+- [[Benchmarks and Evaluation]]
 - [[Surrogate Models]]
-- [[Uncertainty Quantification]]
+- [[Scientific Datasets]]
 
 ## Research Signals
 
-- Domains: computational fluid dynamics, materials and chemistry
-- Themes: benchmarking and data curation, geometry and irregular domains, inverse design and optimization, scaling and transfer
+- Domains: computational fluid dynamics
+- Themes: benchmarking and data curation
 - Keywords: plaid, datasets, physics-learning, datamodel, provide, standard
 
 ## Reading Map
@@ -152,6 +148,6 @@ Machine learning-based surrogate models have emerged as a powerful tool to accel
 
 ## Provenance
 
-- Last compiled: 2026-04-05
+- Last compiled: 2026-04-14
 - Schema version: `research-wiki-pdf-v1`
 
