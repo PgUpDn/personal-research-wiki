@@ -11,6 +11,24 @@
           "id": "research-new-raw-source",
           "name": "New Raw Source Note",
           "type": "Capture",
+          "insertAfter": {
+            "enabled": false,
+            "after": "",
+            "inline": false,
+            "replaceExisting": false,
+            "insertAtEnd": false,
+            "blankLineAfterMatchMode": "auto",
+            "considerSubsections": false,
+            "createIfNotFound": false,
+            "createIfNotFoundLocation": "bottom"
+          },
+          "prepend": false,
+          "captureToActiveFile": false,
+          "activeFileWritePosition": "cursor",
+          "newLineCapture": {
+            "enabled": false,
+            "direction": "below"
+          },
           "captureTo": "raw/{{DATE:YYYY-MM-DD}}-{{VALUE:title|case:kebab}}.md",
           "createFileIfItDoesntExist": {
             "enabled": true,
@@ -33,12 +51,32 @@
           "templater": {
             "afterCapture": "wholeFile"
           },
+          "task": false,
+          "appendLink": false,
           "onePageInput": "always"
         },
         {
           "id": "research-new-derived-note",
           "name": "New Derived Note",
           "type": "Capture",
+          "insertAfter": {
+            "enabled": false,
+            "after": "",
+            "inline": false,
+            "replaceExisting": false,
+            "insertAtEnd": false,
+            "blankLineAfterMatchMode": "auto",
+            "considerSubsections": false,
+            "createIfNotFound": false,
+            "createIfNotFoundLocation": "bottom"
+          },
+          "prepend": false,
+          "captureToActiveFile": false,
+          "activeFileWritePosition": "cursor",
+          "newLineCapture": {
+            "enabled": false,
+            "direction": "below"
+          },
           "captureTo": "wiki/derived/{{DATE:YYYY-MM-DD}}-{{VALUE:title|case:kebab}}.md",
           "createFileIfItDoesntExist": {
             "enabled": true,
@@ -61,12 +99,32 @@
           "templater": {
             "afterCapture": "wholeFile"
           },
+          "task": false,
+          "appendLink": false,
           "onePageInput": "always"
         },
         {
           "id": "research-new-output-report",
           "name": "New Output Report",
           "type": "Capture",
+          "insertAfter": {
+            "enabled": false,
+            "after": "",
+            "inline": false,
+            "replaceExisting": false,
+            "insertAtEnd": false,
+            "blankLineAfterMatchMode": "auto",
+            "considerSubsections": false,
+            "createIfNotFound": false,
+            "createIfNotFoundLocation": "bottom"
+          },
+          "prepend": false,
+          "captureToActiveFile": false,
+          "activeFileWritePosition": "cursor",
+          "newLineCapture": {
+            "enabled": false,
+            "direction": "below"
+          },
           "captureTo": "output/reports/{{DATE:YYYY-MM-DD}}-{{VALUE:title|case:kebab}}.md",
           "createFileIfItDoesntExist": {
             "enabled": true,
@@ -89,12 +147,26 @@
           "templater": {
             "afterCapture": "wholeFile"
           },
+          "task": false,
+          "appendLink": false,
           "onePageInput": "always"
         },
         {
           "id": "research-append-question",
           "name": "Append Research Question To Current Note",
           "type": "Capture",
+          "insertAfter": {
+            "enabled": false,
+            "after": "",
+            "inline": false,
+            "replaceExisting": false,
+            "insertAtEnd": false,
+            "blankLineAfterMatchMode": "auto",
+            "considerSubsections": false,
+            "createIfNotFound": false,
+            "createIfNotFoundLocation": "bottom"
+          },
+          "prepend": false,
           "captureToActiveFile": true,
           "activeFileWritePosition": "cursor",
           "newLineCapture": {
@@ -108,6 +180,8 @@
           "templater": {
             "afterCapture": "wholeFile"
           },
+          "task": false,
+          "appendLink": false,
           "onePageInput": "always",
           "fileOpening": {
             "location": "tab",
@@ -222,7 +296,7 @@
     "migrateToMacroIDFromEmbeddedMacro": true,
     "useQuickAddTemplateFolder": true,
     "incrementFileNameSettingMoveToDefaultBehavior": true,
-    "mutualExclusionInsertAfterAndWriteToBottomOfFile": false,
+    "mutualExclusionInsertAfterAndWriteToBottomOfFile": true,
     "setVersionAfterUpdateModalRelease": true,
     "addDefaultAIProviders": true,
     "removeMacroIndirection": true,
