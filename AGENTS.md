@@ -17,6 +17,7 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 - `Clippings/`: immutable Obsidian Web Clipper captures that should compile like raw source notes.
 - `wiki/sources/`: one LLM-maintained page per source document.
 - `wiki/concepts/`: synthesized concept pages spanning many sources.
+- `wiki/projects/`: active research programmes and hierarchical subproject dossiers connecting evidence, milestones, gaps, and next actions.
 - `wiki/derived/`: answers, comparisons, and other outputs worth filing back into the knowledge base.
 - `output/`: generated artifacts that may or may not later be filed back into `wiki/derived/`.
 - `_meta/converted_sources/`: machine-generated markdown caches for PDFs.
@@ -28,7 +29,7 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 When new sources appear:
 
 1. Read the new raw source.
-2. If it is a PDF, transcribe it into `_meta/converted_sources/` without changing the original PDF.
+2. If it is a PDF, transcribe it into `_meta/converted_sources/` without changing the original PDF. If an adjacent same-stem `.tex` exists, compile the LaTeX source with Pandoc and retain the PDF as the visual snapshot instead of creating duplicate source pages.
 3. Create or update a source page in `wiki/sources/`.
 4. Update the relevant concept pages in `wiki/concepts/`.
 5. Refresh `wiki/INDEX.md`.
@@ -39,7 +40,7 @@ When new sources appear:
 When answering questions:
 
 1. Read `wiki/INDEX.md` first.
-2. Pull in relevant source pages, concept pages, and prior derived notes.
+2. Pull in relevant project dossiers, source pages, concept pages, and prior derived notes.
 3. Write the result into `output/` as markdown, Marp, charts, or similar.
 4. If the result is durable, file it into `wiki/derived/`.
 5. Append a query entry to `wiki/LOG.md`.
@@ -62,6 +63,8 @@ Record lint outcomes in `wiki/LINT_AND_HEAL.md` and append a lint entry to `wiki
 - Keep the same important links both in frontmatter and in body sections: frontmatter for Dataview, body `[[wiki-links]]` for graph/backlinks.
 - Use source pages as the default human and agent landing pages for individual documents.
 - Use concept pages as the place to synthesize across documents.
+- Use project pages to organize active programmes across their source evidence, milestones, open gaps, and execution plans.
+- Give subprojects `project_level: subproject` and `parent_project_id`; link them from the parent programme in both frontmatter and body sections.
 - Keep raw-source paths explicit in frontmatter so provenance stays visible.
 
 ## Schema Version
@@ -130,6 +133,29 @@ Record lint outcomes in `wiki/LINT_AND_HEAL.md` and append a lint entry to `wiki
   - `## Reading Map`
   - `## Provenance`
 
+### 2a. LaTeX Cache Notes
+
+- Location: `_meta/converted_sources/*.md`
+- Role: machine-oriented Markdown generated from immutable LaTeX manuscript packages
+- Required frontmatter:
+  - `title`
+  - `note_type: source_cache`
+  - `schema_version`
+  - `source_id`
+  - `source_tex`
+  - `source_kind: raw_tex`
+  - `authors`
+  - `converted_at`
+  - `conversion_pipeline: pandoc-latex-to-markdown`
+  - `cache_role: latex-source-cache`
+  - `source_digest`
+  - `dependencies`
+  - `tags`
+- Required sections:
+  - `## Conversion Snapshot`
+  - `## Abstract` when present
+  - `## Extracted Markdown`
+
 ### 3. Concept Pages
 
 - Location: `wiki/concepts/*.md`
@@ -153,6 +179,33 @@ Record lint outcomes in `wiki/LINT_AND_HEAL.md` and append a lint entry to `wiki
   - `## Related Concepts`
   - `## Representative sources`
   - `## Provenance`
+
+### 4. Project Pages
+
+- Location: `wiki/projects/*.md`
+- Role: active programme dossiers that connect project status, evidence, milestones, gaps, and source packages
+- Required frontmatter:
+  - `title`
+  - `aliases`
+  - `note_type: project`
+  - `project_id`
+  - `project_name`
+  - `project_status`
+  - `snapshot_date`
+  - `sources`
+  - `related`
+  - `tags`
+- Hierarchy fields for subprojects:
+  - `project_level: subproject`
+  - `parent_project_id`
+  - `parent_project`
+- Required sections:
+  - `## Programme Thesis` or `## Project Thesis`
+  - `## Evidence Ledger`
+  - `## Milestone Gates`
+  - `## Negative Evidence and Open Gaps`
+  - `## Next Execution Focus`
+  - `## Source Package`
 
 ## PDF-Specific Rules
 

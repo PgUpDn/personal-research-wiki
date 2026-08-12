@@ -19,9 +19,9 @@ from typing import Any
 from urllib.parse import unquote
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-VENV_SITE_PACKAGES = PROJECT_ROOT / ".venv/lib/python3.9/site-packages"
-if VENV_SITE_PACKAGES.exists():
-    sys.path.insert(0, str(VENV_SITE_PACKAGES))
+VENV_SITE_PACKAGES = sorted((PROJECT_ROOT / ".venv/lib").glob("python*/site-packages"), reverse=True)
+if VENV_SITE_PACKAGES:
+    sys.path.insert(0, str(VENV_SITE_PACKAGES[0]))
 
 import fitz
 import anthropic
@@ -583,6 +583,7 @@ def load_config(root: Path) -> dict[str, Any]:
         "concepts_dir": "wiki/concepts",
         "source_notes_dir": "wiki/sources",
         "derived_wiki_dir": "wiki/derived",
+        "projects_dir": "wiki/projects",
         "output_dir": "output",
         "html_dir": "output/html",
         "answers_dir": "output/answers",
@@ -601,7 +602,10 @@ def load_config(root: Path) -> dict[str, Any]:
         "schema_path": "AGENTS.md",
         "watch_interval_seconds": 15,
         "venv_python": ".venv/bin/python",
-        "venv_site_packages": ".venv/lib/python3.9/site-packages",
+        "pdf_conversion_backend": "markitdown",
+        "markitdown_cli": ".venv/bin/markitdown",
+        "tex_conversion_backend": "pandoc",
+        "pandoc_bin": "pandoc",
         "node_bin": "node",
         "pdf2md_entrypoint": "_meta/node_tools/pdf2md/node_modules/pdf2md/bin/index.js",
         "pdf2md_workspace_dir": "_meta/pdf2md_work",
@@ -610,10 +614,11 @@ def load_config(root: Path) -> dict[str, Any]:
         "claude_api_key_file": "",
         "claude_api_base": "https://api.anthropic.com/v1/messages",
         "claude_model": "claude-sonnet-4-6",
-        "qa_model": "claude-sonnet-4-6",
         "claude_max_tokens": 3500,
         "claude_page_batch_size": 8,
-        "qa_max_tokens": 3000,
+        "qa_provider": "codex-subscription",
+        "codex_cli": "codex",
+        "qa_timeout_seconds": 300,
         "qa_context_char_limit": 180000,
         "qa_top_concepts": 14,
     }
@@ -628,6 +633,7 @@ def ensure_project_dirs(root: Path) -> None:
         "concepts_dir",
         "source_notes_dir",
         "derived_wiki_dir",
+        "projects_dir",
         "output_dir",
         "html_dir",
         "answers_dir",
@@ -654,6 +660,12 @@ def timestamp_string() -> str:
 
 def normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def normalize_page_title(title: str) -> str:
+    cleaned = normalize_text(title)
+    cleaned = cleaned.replace("|", " ").replace("\uFF5C", " ")
+    return normalize_text(cleaned).strip(" -") or "Untitled source"
 
 
 def normalize_for_match(text: str) -> str:
@@ -760,6 +772,9 @@ def compact_citation_lines(profile: dict[str, Any]) -> list[str]:
         if record_bits:
             identifier_bits.append(" / ".join(record_bits))
 
+    github_links = profile.get("github_links", [])
+    code_bits = [f"[{github_link_label(url)}]({url})" for url in github_links]
+
     asset_bits = []
     if profile.get("content_path") and profile["content_path"] != profile["source"]:
         asset_bits.append(f"cache `{profile['content_path']}`")
@@ -775,6 +790,8 @@ def compact_citation_lines(profile: dict[str, Any]) -> list[str]:
         lines.append(f"- Authors: {author_summary}")
     if identifier_bits:
         lines.append(f"- Identifiers: {' · '.join(identifier_bits)}")
+    if code_bits:
+        lines.append(f"- Code: {' · '.join(code_bits)}")
     lines.append(f"- Source: `{profile['source']}`")
     if asset_bits:
         lines.append(f"- Assets: {' · '.join(asset_bits)}")
@@ -800,6 +817,17 @@ def converted_pdf_markdown_path(root: Path, pdf_path: Path) -> Path:
         relative = pdf_path.relative_to(raw_dir)
     else:
         relative = pdf_path.relative_to(root)
+    return (root / config["converted_sources_dir"] / relative).with_suffix(".md")
+
+
+def converted_tex_markdown_path(root: Path, tex_path: Path) -> Path:
+    config = load_config(root)
+    raw_dir = root / config["raw_dir"]
+    source_dir = source_dir_for_path(root, tex_path)
+    if source_dir == raw_dir:
+        relative = tex_path.relative_to(raw_dir)
+    else:
+        relative = tex_path.relative_to(root)
     return (root / config["converted_sources_dir"] / relative).with_suffix(".md")
 
 
@@ -848,12 +876,42 @@ def raw_markdown_files(root: Path) -> list[Path]:
 
 
 def raw_pdf_files(root: Path) -> list[Path]:
+    tex_asset_pdfs = {
+        dependency.resolve()
+        for tex_path in raw_tex_files(root)
+        for dependency in tex_dependency_files(tex_path)
+        if dependency.suffix.lower() == ".pdf"
+    }
     paths = []
     for source_dir in configured_source_dirs(root):
         if not source_dir.exists():
             continue
-        paths.extend(path for path in source_dir.rglob("*.pdf") if path.is_file())
+        paths.extend(
+            path
+            for path in source_dir.rglob("*.pdf")
+            if path.is_file()
+            and not path.with_suffix(".tex").is_file()
+            and path.resolve() not in tex_asset_pdfs
+        )
     return sorted(paths)
+
+
+def raw_tex_files(root: Path) -> list[Path]:
+    paths = []
+    for source_dir in configured_source_dirs(root):
+        if not source_dir.exists():
+            continue
+        paths.extend(path for path in source_dir.rglob("*.tex") if path.is_file())
+    included_paths = set()
+    for path in paths:
+        text = read_text(path)
+        for match in re.finditer(r"\\(?:input|include|subfile)\s*\{([^{}]+)\}", text):
+            target = (path.parent / match.group(1).strip()).resolve()
+            if not target.suffix:
+                target = target.with_suffix(".tex")
+            if target.is_file():
+                included_paths.add(target)
+    return sorted(path for path in paths if path.resolve() not in included_paths)
 
 
 def source_input_records(root: Path) -> list[dict[str, Any]]:
@@ -879,6 +937,18 @@ def source_input_records(root: Path) -> list[dict[str, Any]]:
                     "logical_path": pdf_path,
                     "content_path": cache_path,
                     "source_kind": "raw_pdf",
+                }
+            )
+
+    for tex_path in raw_tex_files(root):
+        cache_path = converted_tex_markdown_path(root, tex_path)
+        if cache_path.exists():
+            records.append(
+                {
+                    "source": tex_path.relative_to(root).as_posix(),
+                    "logical_path": tex_path,
+                    "content_path": cache_path,
+                    "source_kind": "raw_tex",
                 }
             )
 
@@ -1077,6 +1147,9 @@ def is_reasonable_venue_candidate(candidate: str) -> bool:
 
 
 def cache_transcription_mode(markdown_text: str) -> str:
+    declared_mode = re.search(r"^transcription_mode:\s*[\"']?([^\"'\n]+)", markdown_text, re.MULTILINE)
+    if declared_mode:
+        return declared_mode.group(1).strip()
     body = extracted_markdown_body(markdown_text)
     has_fallback = bool(re.search(r"^### Page \d+\s*$", body, re.MULTILINE))
     if has_fallback and "## Pages " in body:
@@ -1136,12 +1209,13 @@ def canonical_alias(title: str) -> str | None:
 
 def source_page_aliases(title: str, citation_key: str | None = None) -> list[str]:
     aliases: list[str] = []
+    is_supplementary = bool(re.search(r"\bsupplement(?:ary)?\b", title, re.IGNORECASE))
     if " | " in title:
         pipe_alias = title.split(" | ", 1)[0].strip()
         if pipe_alias and pipe_alias != title:
             aliases.append(pipe_alias)
     short_title = canonical_alias(title)
-    if short_title and short_title != title:
+    if short_title and short_title != title and not is_supplementary:
         aliases.append(short_title)
     if citation_key and citation_key != title:
         aliases.append(citation_key)
@@ -1241,6 +1315,10 @@ def author_names_from_mixed_line(raw_line: str) -> list[str]:
 
 
 def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[str]:
+    declared_authors = frontmatter_list(markdown_text, "authors")
+    if declared_authors:
+        return declared_authors
+
     region = bibliographic_region(markdown_text, max_lines=40)
     lines = [line.strip() for line in region.splitlines()]
     title_norm = normalize_text(title).lower()
@@ -1297,6 +1375,8 @@ def derive_citation_key(title: str, source_path: Path, authors: list[str], year:
     lead = lead or "source"
     year_token = year or "undated"
     key_tail = title_tokens[0] if title_tokens else "note"
+    if "supplement" in title.lower():
+        key_tail = f"{key_tail}-supplement"
     return f"{lead}{year_token}{key_tail}"
 
 
@@ -1372,7 +1452,11 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
     frontmatter_title = frontmatter_match.group(1).strip().strip('"') if frontmatter_match else ""
     title_hint = paper_title_from_name(source_path.name)
     is_pdf_source = source_path.suffix.lower() == ".pdf"
-    frontmatter_valid = bool(frontmatter_title) and not re.fullmatch(r"Pages? \d+(?:-\d+)?", frontmatter_title, re.IGNORECASE)
+    frontmatter_valid = (
+        bool(frontmatter_title)
+        and frontmatter_title.count("|") < 2
+        and not re.fullmatch(r"Pages? \d+(?:-\d+)?", frontmatter_title, re.IGNORECASE)
+    )
     if frontmatter_valid and not (is_pdf_source and title_hint):
         return frontmatter_title
     body = extracted_markdown_body(markdown_text)
@@ -1395,6 +1479,8 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
             continue
         if any(hint in lowered for hint in {"manuscript", "inserted by the editor", "journal homepage", "check for updates"}):
             continue
+        if cleaned.count("|") >= 2:
+            continue
         if len(cleaned) < 12 or len(cleaned) > 220:
             continue
         if re.search(r"[.!?]$", cleaned):
@@ -1411,7 +1497,18 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
         ranked = [item for item in ranked if item[0] >= 0.55]
         if ranked:
             ranked.sort(key=lambda item: (-item[0], item[1], -len(item[2])))
-            return ranked[0][2]
+            candidate = ranked[0][2]
+            candidate_tokens = title_token_set(candidate)
+            hint_tokens = title_token_set(title_hint)
+            if (
+                is_pdf_source
+                and (
+                    (candidate_tokens < hint_tokens and len(candidate) < len(title_hint) * 0.85)
+                    or len(candidate) > len(title_hint) * 1.6
+                )
+            ):
+                return title_hint
+            return candidate
         if frontmatter_valid and title_similarity(frontmatter_title, title_hint) >= 0.35:
             return frontmatter_title
         if is_pdf_source:
@@ -1507,8 +1604,28 @@ def first_meaningful_paragraph(markdown_text: str, title: str = "", limit: int =
 
 
 def extract_abstract(markdown_text: str) -> str:
+    cache_body = strip_frontmatter(markdown_text)
+    cache_abstract = re.search(
+        r"(?is)(?:^|\n)## Abstract\s*\n+(.*?)(?=\n## [^#]|\Z)",
+        cache_body,
+    )
+    if cache_abstract:
+        snippet = normalize_text(cache_abstract.group(1))
+        if snippet:
+            return snippet[:1600]
+
     body = extracted_markdown_body(markdown_text)
     compact = body.replace("\r\n", "\n")
+    executive_summary = re.search(
+        r"(?is)(?:^|\n)# Executive Summary[^\n]*\n+(.*?)(?=\n#|\n##)",
+        compact,
+    )
+    if executive_summary:
+        paragraphs = [normalize_text(part) for part in re.split(r"\n\s*\n", executive_summary.group(1))]
+        paragraph = next((part for part in paragraphs if len(part.split()) >= 12 and not part.startswith("<")), "")
+        if paragraph:
+            return paragraph[:1600]
+
     abstract_match = re.search(
         r"(?is)\babstract\b[:\s]*\n?(.*?)(?:\n\s*#|\n\s*##|\n\s*\d+\s+introduction\b|\n\s*introduction\b)",
         compact,
@@ -1519,7 +1636,21 @@ def extract_abstract(markdown_text: str) -> str:
             return snippet[:1600]
     frontmatter_match = re.search(r"^title:\s*(.+)$", markdown_text, re.MULTILINE)
     title = frontmatter_match.group(1).strip().strip('"') if frontmatter_match else ""
-    return first_meaningful_paragraph(markdown_text, title=title, limit=1600)
+    if "\n## Extracted Markdown\n" in cache_body:
+        introduction = re.search(
+            r"(?is)(?:^|\n)#{1,3}\s+Introduction[^\n]*\n+(.*?)(?=\n#{1,3}\s|\Z)",
+            body,
+        )
+        if introduction:
+            paragraphs = [normalize_text(part) for part in re.split(r"\n\s*\n", introduction.group(1))]
+            paragraph = next((part for part in paragraphs if len(part.split()) >= 12 and not part.startswith("<")), "")
+            if paragraph:
+                return paragraph[:1600]
+        fallback = first_meaningful_paragraph(markdown_text, limit=1600)
+        if fallback:
+            return fallback
+    fallback = first_meaningful_paragraph(markdown_text, title=title, limit=1600)
+    return fallback or first_meaningful_paragraph(markdown_text, limit=1600)
 
 
 def extracted_markdown_body(markdown_text: str) -> str:
@@ -1531,6 +1662,32 @@ def extracted_markdown_body(markdown_text: str) -> str:
 
 def clean_identifier(value: str) -> str:
     return value.rstrip(".,);]}>\"'")
+
+
+def extract_github_links(markdown_text: str) -> list[str]:
+    pattern = re.compile(
+        r"(?<![\w@])(?:https?://)?(?:www\.)?(?:github\.com|gist\.github\.com)/[^\s<>)\]\"']+",
+        re.IGNORECASE,
+    )
+    links = []
+    for match in pattern.finditer(markdown_text):
+        url = clean_identifier(match.group(0))
+        if not url.lower().startswith(("http://", "https://")):
+            url = f"https://{url}"
+        url = re.sub(r"^https?://www\.", "https://", url, flags=re.IGNORECASE)
+        links.append(url)
+    return dedupe_preserve_order(links)
+
+
+def github_link_label(url: str) -> str:
+    match = re.match(r"https?://(?:gist\.)?github\.com/([^/?#]+)(?:/([^/?#]+))?", url, re.IGNORECASE)
+    if not match:
+        return url
+    owner = unquote(match.group(1))
+    repo = unquote(match.group(2) or "")
+    if "gist.github.com" in url.lower():
+        return f"gist:{owner}/{repo}" if repo else f"gist:{owner}"
+    return f"{owner}/{repo}" if repo else owner
 
 
 def extract_doi(markdown_text: str) -> str | None:
@@ -1643,19 +1800,28 @@ def classify_labels(text: str, patterns: dict[str, list[str]]) -> list[str]:
     return labels
 
 
+def normalize_api_key_value(raw: str, env_name: str) -> str:
+    first_line = next((line.strip() for line in raw.splitlines() if line.strip()), "")
+    value = re.sub(
+        rf"^(?:export\s+)?{re.escape(env_name)}\s*(?:=|:|：)\s*",
+        "",
+        first_line,
+        count=1,
+    )
+    return value.strip().strip("'\"")
+
+
 def load_claude_api_key(root: Path) -> str:
     config = load_config(root)
     env_name = config["claude_api_env"]
-    env_value = os.environ.get(env_name, "").strip()
+    env_value = normalize_api_key_value(os.environ.get(env_name, ""), env_name)
     if env_value:
         return env_value
 
     key_file_value = str(config.get("claude_api_key_file", "")).strip()
     key_file = Path(key_file_value).expanduser() if key_file_value else None
     if key_file and key_file.is_file():
-        raw = key_file.read_text(encoding="utf-8", errors="ignore").strip()
-        if "=" in raw and not raw.startswith("sk-ant-"):
-            raw = raw.split("=", 1)[1].strip().strip("'\"")
+        raw = normalize_api_key_value(key_file.read_text(encoding="utf-8", errors="ignore"), env_name)
         if raw:
             return raw
 
@@ -1678,6 +1844,265 @@ def safe_project_name(pdf_path: Path) -> str:
 
 def pdftocairo_path() -> str | None:
     return shutil.which("pdftocairo") or ("/opt/homebrew/bin/pdftocairo" if Path("/opt/homebrew/bin/pdftocairo").exists() else None)
+
+
+def resolve_markitdown_cli(root: Path) -> str | None:
+    config = load_config(root)
+    configured = Path(str(config.get("markitdown_cli", ".venv/bin/markitdown"))).expanduser()
+    candidates = [
+        configured if configured.is_absolute() else root / configured,
+        root / "_meta/markitdown_env/bin/markitdown",
+    ]
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return shutil.which("markitdown")
+
+
+def resolve_pandoc_bin(root: Path) -> str | None:
+    config = load_config(root)
+    configured = str(config.get("pandoc_bin", "pandoc")).strip() or "pandoc"
+    candidate = Path(configured).expanduser()
+    if candidate.is_file() and os.access(candidate, os.X_OK):
+        return str(candidate)
+    return shutil.which(configured)
+
+
+def latex_command_arguments(text: str, command: str) -> list[str]:
+    pattern = re.compile(rf"\\{re.escape(command)}\*?(?:\[[^\]]*\])?\s*\{{")
+    arguments = []
+    for match in pattern.finditer(text):
+        start = match.end()
+        depth = 1
+        index = start
+        while index < len(text) and depth:
+            if text[index] == "\\":
+                index += 2
+                continue
+            if text[index] == "{":
+                depth += 1
+            elif text[index] == "}":
+                depth -= 1
+            index += 1
+        if depth == 0:
+            arguments.append(text[start:index - 1].strip())
+    return arguments
+
+
+def latex_abstract_source(tex_text: str) -> str:
+    command_abstracts = latex_command_arguments(tex_text, "abstract")
+    if command_abstracts:
+        return command_abstracts[0]
+    environment = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", tex_text, re.DOTALL)
+    return environment.group(1).strip() if environment else ""
+
+
+def clean_latex_person_name(value: str) -> str:
+    cleaned = re.sub(r"\\color\{[^{}]*\}", " ", value)
+    for _ in range(4):
+        updated = re.sub(r"\\[A-Za-z@]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r" \1 ", cleaned)
+        if updated == cleaned:
+            break
+        cleaned = updated
+    cleaned = re.sub(r"\\[A-Za-z@]+\*?(?:\[[^\]]*\])?", " ", cleaned)
+    cleaned = cleaned.replace("~", " ").replace("\\&", "&")
+    return normalize_text(cleaned).strip(" ,;*\\")
+
+
+def extract_latex_authors(tex_text: str) -> list[str]:
+    authors = []
+    for argument in latex_command_arguments(tex_text, "author"):
+        fnm = re.search(r"\\fnm\{([^{}]+)\}", argument)
+        surname = re.search(r"\\sur\{([^{}]+)\}", argument)
+        if fnm and surname:
+            authors.append(normalize_text(f"{fnm.group(1)} {surname.group(1)}"))
+            continue
+        first_line = re.split(r"\\\\|\\thanks\b|\\affil\b", argument, maxsplit=1)[0]
+        candidate = clean_latex_person_name(first_line)
+        if candidate and "@" not in candidate and len(candidate.split()) <= 6:
+            authors.append(candidate)
+
+    for argument in latex_command_arguments(tex_text, "icmlauthor"):
+        candidate = clean_latex_person_name(argument)
+        if candidate and "@" not in candidate and len(candidate.split()) <= 6:
+            authors.append(candidate)
+
+    prepared_by = re.search(r"Prepared\s+by[^\n&]*&(.+?)\\\\", tex_text, re.IGNORECASE)
+    if prepared_by:
+        authors.insert(0, clean_latex_person_name(prepared_by.group(1)))
+    return dedupe_preserve_order(authors)
+
+
+def extract_latex_year(tex_text: str) -> str | None:
+    for command in ("IACpaperyear", "paperyear"):
+        for argument in latex_command_arguments(tex_text, command):
+            match = re.search(r"\b(?:19|20)\d{2}\b", argument)
+            if match:
+                return match.group(0)
+    return None
+
+
+TEX_DEPENDENCY_SUFFIXES = {
+    ".tex",
+    ".bib",
+    ".bst",
+    ".cls",
+    ".sty",
+    ".csl",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".pdf",
+    ".eps",
+    ".svg",
+}
+
+
+def tex_dependency_files(tex_path: Path) -> list[Path]:
+    package_root = tex_path.parent.resolve()
+    dependencies: set[Path] = set()
+    pending = [tex_path.resolve()]
+    seen_tex: set[Path] = set()
+
+    def add_candidate(raw_value: str, suffixes: tuple[str, ...]) -> Path | None:
+        value = raw_value.strip().strip('"\'')
+        if not value or "#" in value:
+            return None
+        candidate = (package_root / value).resolve()
+        try:
+            candidate.relative_to(package_root)
+        except ValueError:
+            return None
+        variants = [candidate] if candidate.suffix else [candidate.with_suffix(suffix) for suffix in suffixes]
+        return next((path for path in variants if path.is_file()), None)
+
+    while pending:
+        current = pending.pop()
+        if current in seen_tex or not current.is_file():
+            continue
+        seen_tex.add(current)
+        dependencies.add(current)
+        text = read_text(current)
+
+        reference_specs = (
+            (r"\\(?:input|include|subfile)\s*\{([^{}]+)\}", (".tex",)),
+            (r"\\includegraphics(?:\[[^\]]*\])?\s*\{([^{}]+)\}", (".pdf", ".png", ".jpg", ".jpeg", ".eps", ".svg")),
+            (r"\\(?:bibliography|addbibresource)(?:\[[^\]]*\])?\s*\{([^{}]+)\}", (".bib",)),
+            (r"\\documentclass(?:\[[^\]]*\])?\s*\{([^{}]+)\}", (".cls",)),
+            (r"\\usepackage(?:\[[^\]]*\])?\s*\{([^{}]+)\}", (".sty",)),
+        )
+        for pattern, suffixes in reference_specs:
+            for match in re.finditer(pattern, text):
+                for raw_value in match.group(1).split(","):
+                    candidate = add_candidate(raw_value, suffixes)
+                    if candidate is None or candidate.suffix.lower() not in TEX_DEPENDENCY_SUFFIXES:
+                        continue
+                    dependencies.add(candidate)
+                    if candidate.suffix.lower() == ".tex":
+                        pending.append(candidate)
+
+    for suffix in (".bib", ".bst", ".csl"):
+        adjacent = tex_path.with_suffix(suffix).resolve()
+        if adjacent.is_file():
+            dependencies.add(adjacent)
+    return sorted(dependencies)
+
+
+def tex_package_digest(tex_path: Path) -> str:
+    digest = hashlib.sha256()
+    package_root = tex_path.parent.resolve()
+    for path in tex_dependency_files(tex_path):
+        digest.update(path.relative_to(package_root).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(file_hash(path).encode("ascii"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def pandoc_latex_fragment(pandoc_bin: str, fragment: str, cwd: Path) -> str:
+    if not fragment.strip():
+        return ""
+    result = subprocess.run(
+        [pandoc_bin, "--from=latex", "--to=markdown+tex_math_dollars", "--wrap=none"],
+        cwd=cwd,
+        input=fragment,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        return normalize_text(fragment)
+    return result.stdout.strip()
+
+
+def run_pandoc_for_tex(root: Path, tex_path: Path) -> tuple[str, str]:
+    pandoc_bin = resolve_pandoc_bin(root)
+    if not pandoc_bin:
+        raise RuntimeError("Pandoc is unavailable; install it with `brew install pandoc`")
+
+    command = [
+        pandoc_bin,
+        tex_path.name,
+        "--from=latex",
+        "--to=markdown+tex_math_dollars+pipe_tables+fenced_code_blocks+yaml_metadata_block",
+        "--standalone",
+        "--wrap=none",
+        f"--resource-path={tex_path.parent}",
+    ]
+    bibliographies = sorted(tex_path.parent.glob("*.bib"))
+    for bibliography in bibliographies:
+        command.append(f"--bibliography={bibliography.name}")
+    if bibliographies:
+        command.append("--citeproc")
+
+    result = subprocess.run(
+        command,
+        cwd=tex_path.parent,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    if result.returncode != 0:
+        raise RuntimeError((result.stderr or result.stdout or "Pandoc failed").strip())
+    extracted = result.stdout.strip()
+    if not extracted:
+        raise RuntimeError("Pandoc returned empty Markdown")
+    return extracted, pandoc_bin
+
+
+def run_markitdown(root: Path, pdf_path: Path) -> tuple[str, Path]:
+    cli = resolve_markitdown_cli(root)
+    if not cli:
+        raise RuntimeError("MarkItDown CLI is unavailable; install _meta/requirements.txt into .venv")
+
+    config = load_config(root)
+    work_dir = root / config["pdf2md_workspace_dir"] / safe_project_name(pdf_path)
+    if work_dir.exists():
+        shutil.rmtree(work_dir)
+    work_dir.mkdir(parents=True, exist_ok=True)
+    output_path = work_dir / "markitdown.md"
+
+    result = subprocess.run(
+        [cli, str(pdf_path), "-o", str(output_path)],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    if result.returncode != 0:
+        raise RuntimeError((result.stderr or result.stdout or "MarkItDown failed").strip())
+    if not output_path.is_file():
+        raise RuntimeError("MarkItDown did not create a Markdown output file")
+
+    extracted = output_path.read_text(encoding="utf-8", errors="replace").strip()
+    if not extracted:
+        raise RuntimeError("MarkItDown returned empty Markdown")
+    return extracted, work_dir
+
+
+def pdf_page_count(pdf_path: Path) -> int:
+    with fitz.open(pdf_path) as document:
+        return document.page_count
 
 
 def can_use_pdf2md(root: Path) -> bool:
@@ -1905,18 +2330,21 @@ def markdown_from_pdf(
     rel_pdf: str,
     extracted_text: str,
     relative_image_paths: list[str],
-    render_pipeline: str,
+    conversion_pipeline: str,
+    page_count: int | None = None,
+    transcription_mode: str | None = None,
 ) -> str:
     title = detect_title(extracted_text, pdf_path)
-    body = extracted_text or "Claude Vision did not return readable text for this PDF."
-    transcription_mode = cache_transcription_mode(extracted_text)
+    body = extracted_text or "The configured PDF converter did not return readable text for this PDF."
+    transcription_mode = transcription_mode or cache_transcription_mode(extracted_text)
     year = source_filename_parts(pdf_path).get("year")
     authors = extract_authors(extracted_text, title, pdf_path)
     doi = extract_doi(extracted_text)
     arxiv_id = extract_arxiv_id(extracted_text)
     venue = extract_venue(extracted_text, doi=doi, arxiv_id=arxiv_id)
+    github_links = extract_github_links(extracted_text)
     source_id = derive_citation_key(title, pdf_path, authors, year)
-    page_count = len(relative_image_paths)
+    page_count = page_count if page_count is not None else len(relative_image_paths)
     image_dir = os.path.dirname(relative_image_paths[0]) if relative_image_paths else ""
     lines = [
         "---",
@@ -1936,12 +2364,13 @@ def markdown_from_pdf(
         lines.append(f"doi: {json.dumps(doi, ensure_ascii=False)}")
     if arxiv_id:
         lines.append(f"arxiv_id: {json.dumps(arxiv_id, ensure_ascii=False)}")
+    lines.extend(render_yaml_list("github_links", github_links))
     lines.extend(
         [
         f"page_count: {page_count}",
         f"page_image_dir: {json.dumps(image_dir, ensure_ascii=False)}",
         f"converted_at: {today_string()}",
-        f"conversion_pipeline: {json.dumps(f'{render_pipeline}+claude-vision', ensure_ascii=False)}",
+        f"conversion_pipeline: {json.dumps(conversion_pipeline, ensure_ascii=False)}",
         "cache_role: \"pdf-source-cache\"",
         f"transcription_mode: {json.dumps(transcription_mode)}",
         *render_yaml_list("tags", ["research/cache", "cache/pdf-transcript", f"transcription/{transcription_mode.replace('_', '-')}"]),
@@ -1954,13 +2383,13 @@ def markdown_from_pdf(
         "## Conversion Snapshot",
         "",
         f"- Source ID: `{source_id}`",
-        f"- Pipeline: `{render_pipeline}+claude-vision`",
+        f"- Pipeline: `{conversion_pipeline}`",
         f"- Page count: `{page_count}`",
         f"- Page image directory: `{image_dir or '_meta/source_page_images/'}`",
         "",
     ]
     )
-    if venue or doi or arxiv_id:
+    if venue or doi or arxiv_id or github_links:
         lines.extend(["## Bibliographic Signals", ""])
         if venue:
             lines.append(f"- Venue: {venue}")
@@ -1968,9 +2397,14 @@ def markdown_from_pdf(
             lines.append(f"- DOI: `{doi}`")
         if arxiv_id:
             lines.append(f"- arXiv: `{arxiv_id}`")
+        if github_links:
+            lines.append("- GitHub: " + " · ".join(f"[{github_link_label(url)}]({url})" for url in github_links))
         lines.append("")
+    lines.extend(["## Preview", ""])
     if relative_image_paths:
-        lines.extend(["## Preview", "", f"![{Path(relative_image_paths[0]).name}]({relative_image_paths[0]})", ""])
+        lines.extend([f"![{Path(relative_image_paths[0]).name}]({relative_image_paths[0]})", ""])
+    else:
+        lines.extend(["No page preview was generated by the text-only conversion pipeline.", ""])
     lines.extend([
         "## Extracted Markdown",
         "",
@@ -1995,9 +2429,22 @@ def refresh_pdf_cache_note(root: Path, pdf_path: Path) -> dict[str, Any]:
     extracted = extracted_markdown_body(existing)
     page_count_raw = frontmatter_scalar(existing, "page_count") or ""
     expected_count = int(page_count_raw) if page_count_raw.isdigit() else None
-    relative_image_paths = ensure_page_images(root, pdf_path, md_path, expected_count=expected_count)
-    conversion_pipeline = (frontmatter_scalar(existing, "conversion_pipeline") or "pdf2md+claude-vision").split("+", 1)[0]
-    markdown = markdown_from_pdf(pdf_path, pdf_path.relative_to(root).as_posix(), extracted, relative_image_paths, conversion_pipeline)
+    conversion_pipeline = frontmatter_scalar(existing, "conversion_pipeline") or "pdf2md+claude-vision"
+    transcription_mode = frontmatter_scalar(existing, "transcription_mode")
+    if conversion_pipeline == "markitdown":
+        relative_image_paths = []
+        expected_count = expected_count or pdf_page_count(pdf_path)
+    else:
+        relative_image_paths = ensure_page_images(root, pdf_path, md_path, expected_count=expected_count)
+    markdown = markdown_from_pdf(
+        pdf_path,
+        pdf_path.relative_to(root).as_posix(),
+        extracted,
+        relative_image_paths,
+        conversion_pipeline,
+        page_count=expected_count,
+        transcription_mode=transcription_mode,
+    )
     changed = write_text_if_changed(md_path, markdown)
     return {
         "source_pdf": pdf_path.relative_to(root).as_posix(),
@@ -2017,19 +2464,165 @@ def convert_pdfs(root: Path, force: bool = False) -> dict[str, Any]:
         md_path = converted_pdf_markdown_path(root, pdf_path)
         needs_regen = force or (not md_path.exists()) or (pdf_path.stat().st_mtime_ns > md_path.stat().st_mtime_ns)
         if needs_regen:
+            work_dir = None
             try:
-                image_paths, work_dir, render_pipeline = render_pdf_pages(root, pdf_path)
-                extracted = claude_markdown_from_images(root, pdf_path, image_paths)
-                relative_image_paths = copy_page_images(root, pdf_path, image_paths, md_path)
-                markdown = markdown_from_pdf(pdf_path, rel_pdf, extracted, relative_image_paths, render_pipeline)
+                config = load_config(root)
+                backend = str(config.get("pdf_conversion_backend", "markitdown")).strip().lower()
+                if backend == "markitdown":
+                    extracted, work_dir = run_markitdown(root, pdf_path)
+                    markdown = markdown_from_pdf(
+                        pdf_path,
+                        rel_pdf,
+                        extracted,
+                        [],
+                        "markitdown",
+                        page_count=pdf_page_count(pdf_path),
+                        transcription_mode="markitdown",
+                    )
+                elif backend == "claude-vision":
+                    image_paths, work_dir, render_pipeline = render_pdf_pages(root, pdf_path)
+                    extracted = claude_markdown_from_images(root, pdf_path, image_paths)
+                    relative_image_paths = copy_page_images(root, pdf_path, image_paths, md_path)
+                    markdown = markdown_from_pdf(
+                        pdf_path,
+                        rel_pdf,
+                        extracted,
+                        relative_image_paths,
+                        f"{render_pipeline}+claude-vision",
+                    )
+                else:
+                    raise RuntimeError(f"Unsupported PDF conversion backend: {backend}")
                 changed = write_text_if_changed(md_path, markdown)
                 converted.append({"source_pdf": rel_pdf, "cache_markdown": md_path.relative_to(root).as_posix(), "written": changed})
-                shutil.rmtree(work_dir, ignore_errors=True)
             except Exception as exc:
                 failures.append({"source_pdf": rel_pdf, "error": str(exc)})
                 continue
+            finally:
+                if work_dir is not None:
+                    shutil.rmtree(work_dir, ignore_errors=True)
 
     return {"converted": converted, "archived": [], "failures": failures}
+
+
+def markdown_from_tex(
+    tex_path: Path,
+    rel_tex: str,
+    pandoc_markdown: str,
+    pandoc_bin: str,
+    source_digest: str,
+) -> str:
+    tex_text = read_text(tex_path)
+    title = frontmatter_scalar(pandoc_markdown, "title") or ""
+    latex_titles = latex_command_arguments(tex_text, "title")
+    if latex_titles:
+        latex_title = normalize_text(pandoc_latex_fragment(pandoc_bin, latex_titles[0], tex_path.parent))
+        latex_title = normalize_text(re.sub(r"\\+", " ", latex_title))
+        if latex_title and (not title or len(latex_title) > len(title)):
+            title = latex_title
+    if not title:
+        pdf_title = re.search(r"pdftitle\s*=\s*\{([^{}]+)\}", tex_text, re.IGNORECASE)
+        title = pdf_title.group(1).strip() if pdf_title else paper_title_from_name(tex_path.name)
+    if "supplement" in tex_path.stem.lower() and "supplement" not in title.lower():
+        title = f"{title} - Supplementary Information"
+    generic_supplement = re.match(r"^Supplementary Information\s*:\s*(.+)$", title, re.IGNORECASE)
+    if generic_supplement:
+        title = f"{generic_supplement.group(1).strip()} - Supplementary Information"
+    title = normalize_page_title(title)
+
+    abstract_source = latex_abstract_source(tex_text)
+    abstract = pandoc_latex_fragment(pandoc_bin, abstract_source, tex_path.parent)
+    authors = extract_latex_authors(tex_text)
+    year = source_filename_parts(tex_path).get("year") or extract_latex_year(tex_text)
+    source_id = derive_citation_key(title, tex_path, authors, year)
+    package_root = tex_path.parent.resolve()
+    dependencies = [path.relative_to(package_root).as_posix() for path in tex_dependency_files(tex_path)]
+    body = strip_frontmatter(pandoc_markdown).strip()
+
+    lines = [
+        "---",
+        f"title: {json.dumps(title, ensure_ascii=False)}",
+        "note_type: \"source_cache\"",
+        f"schema_version: {json.dumps(SCHEMA_VERSION)}",
+        f"source_id: {json.dumps(source_id, ensure_ascii=False)}",
+        f"source_tex: {json.dumps(rel_tex, ensure_ascii=False)}",
+        "source_kind: \"raw_tex\"",
+        *render_yaml_list("authors", authors),
+    ]
+    if year:
+        lines.append(f"year: {year}")
+    lines.extend(
+        [
+            f"converted_at: {today_string()}",
+            "conversion_pipeline: \"pandoc-latex-to-markdown\"",
+            "cache_role: \"latex-source-cache\"",
+            "transcription_mode: \"source-native\"",
+            f"source_digest: {json.dumps(source_digest)}",
+            *render_yaml_list("dependencies", dependencies),
+            *render_yaml_list("tags", ["research/cache", "cache/latex-transcript", "transcription/source-native"]),
+            "---",
+            "",
+            f"# {title}",
+            "",
+            f"> Working Markdown cache generated from `{rel_tex}` on {today_string()}. The immutable LaTeX package remains the source of truth.",
+            "",
+            "## Conversion Snapshot",
+            "",
+            f"- Source ID: `{source_id}`",
+            "- Pipeline: `pandoc-latex-to-markdown`",
+            f"- Tracked package files: {len(dependencies)}",
+            "",
+        ]
+    )
+    if abstract:
+        lines.extend(["## Abstract", "", abstract, ""])
+    lines.extend(["## Extracted Markdown", "", body, ""])
+    return "\n".join(lines)
+
+
+def convert_tex_sources(root: Path, force: bool = False) -> dict[str, Any]:
+    ensure_project_dirs(root)
+    converted = []
+    failures = []
+    config = load_config(root)
+    backend = str(config.get("tex_conversion_backend", "pandoc")).strip().lower()
+
+    for tex_path in raw_tex_files(root):
+        rel_tex = tex_path.relative_to(root).as_posix()
+        md_path = converted_tex_markdown_path(root, tex_path)
+        source_digest = tex_package_digest(tex_path)
+        existing_digest = frontmatter_scalar(read_text(md_path), "source_digest") if md_path.exists() else None
+        needs_regen = force or not md_path.exists() or existing_digest != source_digest
+        if not needs_regen:
+            continue
+        try:
+            if backend != "pandoc":
+                raise RuntimeError(f"Unsupported TeX conversion backend: {backend}")
+            extracted, pandoc_bin = run_pandoc_for_tex(root, tex_path)
+            markdown = markdown_from_tex(tex_path, rel_tex, extracted, pandoc_bin, source_digest)
+            changed = write_text_if_changed(md_path, markdown)
+            converted.append(
+                {
+                    "source_tex": rel_tex,
+                    "cache_markdown": md_path.relative_to(root).as_posix(),
+                    "written": changed,
+                }
+            )
+        except Exception as exc:
+            failures.append({"source_tex": rel_tex, "error": str(exc)})
+
+    return {"converted": converted, "archived": [], "failures": failures}
+
+
+def convert_sources(root: Path, force: bool = False) -> dict[str, Any]:
+    pdf_result = convert_pdfs(root, force=force)
+    tex_result = convert_tex_sources(root, force=force)
+    return {
+        "converted": [*pdf_result["converted"], *tex_result["converted"]],
+        "archived": [*pdf_result["archived"], *tex_result["archived"]],
+        "failures": [*pdf_result["failures"], *tex_result["failures"]],
+        "pdf_converted": len(pdf_result["converted"]),
+        "tex_converted": len(tex_result["converted"]),
+    }
 
 
 def state_path(root: Path) -> Path:
@@ -2053,12 +2646,13 @@ def save_state(root: Path, state: dict[str, Any]) -> None:
 def build_source_profile(root: Path, logical_path: Path, content_path: Path, source_kind: str) -> dict[str, Any]:
     text = read_text(content_path)
     tracked_path = content_path if content_path.exists() else logical_path
-    title = detect_title(text, logical_path)
+    title = normalize_page_title(detect_title(text, logical_path))
     abstract = extract_abstract(text)
     doi = extract_doi(text)
     arxiv_id = extract_arxiv_id(text)
     venue = extract_venue(text, doi=doi, arxiv_id=arxiv_id)
-    transcription_mode = cache_transcription_mode(text) if source_kind == "raw_pdf" else "raw_markdown"
+    github_links = extract_github_links(text)
+    transcription_mode = cache_transcription_mode(text) if source_kind in {"raw_pdf", "raw_tex"} else "raw_markdown"
     section_index = extract_section_headings(text, logical_path)
     body_signal = concept_body_signal(text, source_kind) if source_kind == "raw_markdown" or not abstract else ""
     concept_text = "\n\n".join(
@@ -2073,13 +2667,13 @@ def build_source_profile(root: Path, logical_path: Path, content_path: Path, sou
     summary = trim_summary(abstract or first_meaningful_paragraph(text, title=title, limit=500) or "No summary yet.")
     filename_bits = source_filename_parts(logical_path)
     authors = extract_authors(text, title, logical_path)
-    year = filename_bits.get("year")
+    year = filename_bits.get("year") or frontmatter_scalar(text, "year")
     citation_key = derive_citation_key(title, logical_path, authors, year)
     page_count = page_count_for_pdf(root, logical_path) if source_kind == "raw_pdf" else None
     image_dir = page_image_directory_rel(root, logical_path) if source_kind == "raw_pdf" else None
     aliases = source_page_aliases(title, citation_key)
     tags = ["research/source", f"source/{source_kind.replace('_', '-')}"]
-    if source_kind == "raw_pdf":
+    if source_kind in {"raw_pdf", "raw_tex"}:
         tags.append(f"transcription/{transcription_mode.replace('_', '-')}")
     return {
         "source": source_rel,
@@ -2099,6 +2693,7 @@ def build_source_profile(root: Path, logical_path: Path, content_path: Path, sou
         "doi": doi,
         "arxiv_id": arxiv_id,
         "venue": venue,
+        "github_links": github_links,
         "page_count": page_count,
         "page_image_dir": image_dir,
         "section_index": section_index,
@@ -2136,7 +2731,7 @@ def best_related_slugs(current_slug: str, docs: list[dict[str, Any]], available_
 
 
 def wiki_link(title: str) -> str:
-    return f"[[{title}]]"
+    return f"[[{normalize_page_title(title)}]]"
 
 
 def render_yaml_list(key: str, values: list[str]) -> list[str]:
@@ -2269,6 +2864,7 @@ def source_page_content(profile: dict[str, Any], compile_date: str) -> str:
     lines.extend(
         [
         *render_yaml_list("authors", profile.get("authors", [])),
+        *render_yaml_list("github_links", profile.get("github_links", [])),
         *render_yaml_list("sources", profile.get("source_files", [profile["source"]])),
         *render_yaml_list("concepts", related_links),
         *render_yaml_list("domains", profile.get("domains", [])),
@@ -2372,6 +2968,31 @@ def collect_derived_notes(root: Path) -> list[dict[str, str]]:
     return notes
 
 
+def collect_project_notes(root: Path) -> list[dict[str, str]]:
+    config = load_config(root)
+    projects_dir = root / config.get("projects_dir", "wiki/projects")
+    notes = []
+    for path in sorted(projects_dir.glob("*.md")):
+        if not path.is_file() or path.name == "README.md":
+            continue
+        text = read_text(path)
+        parent_project_id = frontmatter_scalar(text, "parent_project_id") or ""
+        notes.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "title": detect_title(text, path),
+                "summary": note_blurb(text),
+                "project_id": frontmatter_scalar(text, "project_id") or path.stem,
+                "project_name": frontmatter_scalar(text, "project_name") or detect_title(text, path),
+                "project_level": frontmatter_scalar(text, "project_level") or ("subproject" if parent_project_id else "programme"),
+                "parent_project_id": parent_project_id,
+                "status": frontmatter_scalar(text, "project_status") or "active",
+                "snapshot_date": frontmatter_scalar(text, "snapshot_date") or "",
+            }
+        )
+    return notes
+
+
 def render_log_index(root: Path) -> str:
     config = load_config(root)
     path = root / config["log_path"]
@@ -2401,6 +3022,7 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
 
     config = load_config(root)
     derived_notes = collect_derived_notes(root)
+    project_notes = collect_project_notes(root)
 
     lines = [
         "# Research Wiki Index",
@@ -2414,6 +3036,7 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
         "- Schema: [AGENTS](../AGENTS.md)",
         "- Log: [LOG](LOG.md)",
         "- Health checks: [LINT_AND_HEAL](LINT_AND_HEAL.md)",
+        "- Projects: [projects/README](projects/README.md)",
         "- Filed-back notes: [derived/README](derived/README.md)",
         "",
         "## System Pages",
@@ -2425,13 +3048,40 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
         "| [PAPER_TEMPLATE](PAPER_TEMPLATE.md) | Recommended literature-note template for PDF-derived source pages |",
         "| [LOG](LOG.md) | Append-only chronology of ingests, queries, and lint passes |",
         "| [LINT_AND_HEAL](LINT_AND_HEAL.md) | Health checks, contradictions, orphans, and cleanup suggestions |",
+        "| [projects/README](projects/README.md) | Active research programmes and project dossiers |",
         "| [derived/README](derived/README.md) | How query outputs get filed back into the wiki |",
         "",
-        "## Source Pages",
+        "## Projects",
         "",
-        "| Source | Summary | Concepts |",
-        "| --- | --- | --- |",
     ]
+
+    if project_notes:
+        projects_by_id = {item["project_id"]: item for item in project_notes}
+        ordered_projects = sorted(
+            project_notes,
+            key=lambda item: (
+                item["parent_project_id"] or item["project_id"],
+                bool(item["parent_project_id"]),
+                item["title"].lower(),
+            ),
+        )
+        lines.extend(["| Project | Parent | Status | Snapshot | Summary |", "| --- | --- | --- | --- | --- |"])
+        for item in ordered_projects:
+            project_path = Path(item["path"]).relative_to(config["wiki_dir"]).as_posix()
+            parent = projects_by_id.get(item["parent_project_id"])
+            parent_cell = ""
+            if parent:
+                parent_path = Path(parent["path"]).relative_to(config["wiki_dir"]).as_posix()
+                parent_cell = f"[{parent['project_name']}]({parent_path})"
+            elif item["parent_project_id"]:
+                parent_cell = item["parent_project_id"].upper()
+            lines.append(
+                f"| [{item['title']}]({project_path}) | {parent_cell} | {item['status']} | {item['snapshot_date']} | {item['summary']} |"
+            )
+    else:
+        lines.append("- No project dossiers yet.")
+
+    lines.extend(["", "## Source Pages", "", "| Source | Summary | Concepts |", "| --- | --- | --- |"])
 
     for profile in sorted(source_docs.values(), key=lambda item: item["title"].lower()):
         concept_links = [wiki_link(CONCEPTS_BY_SLUG[slug]["title"]) for slug in profile.get("concepts", []) if slug in CONCEPTS_BY_SLUG][:3]
@@ -2459,7 +3109,7 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
             lines.append(f"| [{item['title']}]({Path(item['path']).relative_to(config['wiki_dir']).as_posix()}) | {item['summary']} |")
     else:
         lines.append("- No filed-back notes yet.")
-    lines.extend(["", "## Working Convention", "", "- Read the index first, then drill into source pages, concept pages, and derived notes as needed.", "- See [[Page Formats]] when adjusting generated note layouts or metadata conventions.", ""])
+    lines.extend(["", "## Working Convention", "", "- Read the index first, then drill into projects, source pages, concept pages, and derived notes as needed.", "- See [[Page Formats]] when adjusting generated note layouts or metadata conventions.", ""])
 
     return "\n".join(lines).rstrip() + "\n"
 
@@ -2490,6 +3140,70 @@ def render_derived_home(root: Path, compile_date: str) -> str:
             lines.append(f"- {wiki_link(item['title'])} - {item['summary']}")
     else:
         lines.append("- No filed-back notes yet.")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_projects_home(root: Path, compile_date: str) -> str:
+    project_notes = collect_project_notes(root)
+    projects_by_id = {item["project_id"]: item for item in project_notes}
+    lines = [
+        "---",
+        "title: \"Projects\"",
+        "aliases:",
+        "  - \"Project Catalog\"",
+        "note_type: \"system\"",
+        f"last_compiled: {compile_date}",
+        "---",
+        "",
+        "# Projects",
+        "",
+        f"- Last refreshed: {compile_date}",
+        "",
+        "## Active Programmes",
+        "",
+    ]
+    active_programmes = [
+        item for item in project_notes
+        if item["status"].lower() == "active" and not item["parent_project_id"]
+    ]
+    if active_programmes:
+        for item in active_programmes:
+            lines.append(f"- {wiki_link(item['title'])} - {item['summary']}")
+    else:
+        lines.append("- No active programmes yet.")
+
+    active_subprojects = [
+        item for item in project_notes
+        if item["status"].lower() == "active" and item["parent_project_id"]
+    ]
+    if active_subprojects:
+        lines.extend(["", "## Active Subprojects", ""])
+        for item in active_subprojects:
+            parent = projects_by_id.get(item["parent_project_id"])
+            parent_label = wiki_link(parent["title"]) if parent else f"`{item['parent_project_id']}`"
+            lines.append(f"- {wiki_link(item['title'])} - Part of {parent_label}. {item['summary']}")
+
+    completed_statuses = {"complete", "completed", "done"}
+    completed_subprojects = [
+        item for item in project_notes
+        if item["status"].lower() in completed_statuses and item["parent_project_id"]
+    ]
+    if completed_subprojects:
+        lines.extend(["", "## Completed Subprojects", ""])
+        for item in completed_subprojects:
+            parent = projects_by_id.get(item["parent_project_id"])
+            parent_label = wiki_link(parent["title"]) if parent else f"`{item['parent_project_id']}`"
+            lines.append(f"- {wiki_link(item['title'])} - Part of {parent_label}. {item['summary']}")
+
+    other = [
+        item for item in project_notes
+        if item["status"].lower() != "active" and item["status"].lower() not in completed_statuses
+    ]
+    if other:
+        lines.extend(["", "## Other Projects", ""])
+        for item in other:
+            lines.append(f"- {wiki_link(item['title'])} - {item['summary']}")
     lines.append("")
     return "\n".join(lines)
 
@@ -2532,6 +3246,7 @@ def render_page_formats(compile_date: str) -> str:
         "- `venue`",
         "- `doi`",
         "- `arxiv_id`",
+        "- `github_links`",
         "- `page_count`",
         "- `page_image_dir`",
         "- `converted_at`",
@@ -2542,6 +3257,31 @@ def render_page_formats(compile_date: str) -> str:
         "Sections:",
         "- `## Conversion Snapshot`",
         "- `## Preview`",
+        "- `## Extracted Markdown`",
+        "",
+        "## LaTeX Cache Notes",
+        "",
+        "Location: `_meta/converted_sources/*.md`",
+        "",
+        "Frontmatter:",
+        "- `title`",
+        "- `note_type: source_cache`",
+        "- `schema_version`",
+        "- `source_id`",
+        "- `source_tex`",
+        "- `source_kind: raw_tex`",
+        "- `authors`",
+        "- `year`",
+        "- `converted_at`",
+        "- `conversion_pipeline: pandoc-latex-to-markdown`",
+        "- `cache_role: latex-source-cache`",
+        "- `source_digest`",
+        "- `dependencies`",
+        "- `tags`",
+        "",
+        "Sections:",
+        "- `## Conversion Snapshot`",
+        "- `## Abstract` when present",
         "- `## Extracted Markdown`",
         "",
         "## Source Pages",
@@ -2563,6 +3303,7 @@ def render_page_formats(compile_date: str) -> str:
         "- `doi`",
         "- `arxiv_id`",
         "- `authors`",
+        "- `github_links`",
         "- `sources`",
         "- `cache_path`",
         "- `page_image_dir`",
@@ -2609,6 +3350,32 @@ def render_page_formats(compile_date: str) -> str:
         "- `## Representative sources`",
         "- `## Provenance`",
         "",
+        "## Project Pages",
+        "",
+        "Location: `wiki/projects/*.md`",
+        "",
+        "Frontmatter:",
+        "- `title`",
+        "- `aliases`",
+        "- `note_type: project`",
+        "- `project_id`",
+        "- `project_name`",
+        "- `project_level: programme | subproject`",
+        "- `parent_project_id` for subprojects",
+        "- `project_status`",
+        "- `snapshot_date`",
+        "- `sources`",
+        "- `related`",
+        "- `tags`",
+        "",
+        "Sections:",
+        "- `## Programme Thesis` or `## Project Thesis`",
+        "- `## Evidence Ledger`",
+        "- `## Milestone Gates`",
+        "- `## Negative Evidence and Open Gaps`",
+        "- `## Next Execution Focus`",
+        "- `## Source Package`",
+        "",
         "## Querying Notes",
         "",
         "- Query frontmatter fields such as `note_type`, `year`, `lead_author`, `concept_group`, and `source_count` from Dataview.",
@@ -2641,13 +3408,13 @@ def render_system_overview(root: Path, compile_date: str, state: dict[str, Any])
         "",
         "1. `raw/` stores source material as-is. It is the immutable source-of-truth layer.",
         "2. PDF transcription caches and rendered page images live under `_meta/`, not in `raw/`, so the compiler can process sources without mutating them.",
-        "3. The compiler incrementally refreshes `wiki/sources/*.md`, `wiki/concepts/*.md`, `wiki/INDEX.md`, and `wiki/LOG.md`.",
+        "3. The compiler incrementally refreshes source pages, concept pages, the project catalog, `wiki/INDEX.md`, and `wiki/LOG.md`.",
         "4. The Q&A layer reads the maintained wiki, renders answers into markdown, Marp slides, or other output files, and can file valuable outputs back into `wiki/derived/`.",
         "",
         "## Three Layers",
         "",
         "- `raw/`: immutable source documents, web clips, datasets, and local assets.",
-        "- `wiki/`: LLM-maintained markdown pages including source pages, concept pages, indexes, logs, and filed-back notes.",
+        "- `wiki/`: LLM-maintained markdown pages including projects, source pages, concept pages, indexes, logs, and filed-back notes.",
         "- `AGENTS.md`: the in-repo schema that tells the LLM how to ingest, query, and maintain this workspace.",
         "- `wiki/PAGE_FORMATS.md`: the canonical frontmatter and section layouts for generated cache, source, and concept notes.",
         "- `wiki/PAPER_TEMPLATE.md`: the rationale and recommended structure for PDF-derived literature notes.",
@@ -2665,6 +3432,7 @@ def render_system_overview(root: Path, compile_date: str, state: dict[str, Any])
         f"| `{config['raw_dir']}/` | immutable source documents and user-managed local assets |",
         f"| `{config['wiki_dir']}/sources/` | one wiki page per source document, maintained by the compiler |",
         f"| `{config['wiki_dir']}/concepts/` | synthesized concept pages built across many sources |",
+        f"| `{config.get('projects_dir', 'wiki/projects')}/` | active research programmes and project dossiers |",
         f"| `{config['wiki_dir']}/derived/` | valuable outputs filed back into the knowledge base |",
         f"| `{config['output_dir']}/` | generated answers, slide decks, charts, and reports |",
         "| `_meta/` | compiler state, cached PDF transcriptions, rendered page images, scripts, and tooling |",
@@ -2718,6 +3486,7 @@ def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any]
     concepts_dir = root / config["concepts_dir"]
     sources_dir = root / config["source_notes_dir"]
     derived_dir = root / config["derived_wiki_dir"]
+    projects_dir = root / config.get("projects_dir", "wiki/projects")
     report_path = root / config["lint_report_path"]
 
     core_docs = [
@@ -2731,7 +3500,15 @@ def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any]
         ]
         if path.exists()
     ]
-    wiki_docs = sorted(path for path in core_docs + list(concepts_dir.glob("*.md")) + list(sources_dir.glob("*.md")) + list(derived_dir.glob("*.md")) if path.is_file())
+    wiki_docs = sorted(
+        path
+        for path in core_docs
+        + list(concepts_dir.glob("*.md"))
+        + list(sources_dir.glob("*.md"))
+        + list(projects_dir.glob("*.md"))
+        + list(derived_dir.glob("*.md"))
+        if path.is_file()
+    )
     title_owner: dict[str, str] = {}
     path_owner: dict[str, str] = {}
     for path in wiki_docs:
@@ -2892,8 +3669,10 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
     config = load_config(root)
     sources_dir = root / config["source_notes_dir"]
     concepts_dir = root / config["concepts_dir"]
+    projects_dir = root / config.get("projects_dir", "wiki/projects")
     sources_dir.mkdir(parents=True, exist_ok=True)
     concepts_dir.mkdir(parents=True, exist_ok=True)
+    projects_dir.mkdir(parents=True, exist_ok=True)
 
     written_source_pages = []
     for profile in sorted(source_docs.values(), key=lambda item: item["title"].lower()):
@@ -2947,6 +3726,7 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
     save_state(root, new_state)
     system_overview_written = write_text_if_changed(root / config["system_overview_path"], render_system_overview(root, current_date, new_state))
     page_formats_written = write_text_if_changed(root / config.get("page_formats_path", "wiki/PAGE_FORMATS.md"), render_page_formats(current_date))
+    projects_home_written = write_text_if_changed(projects_dir / "README.md", render_projects_home(root, current_date))
     derived_home_written = write_text_if_changed(root / config["derived_wiki_dir"] / "README.md", render_derived_home(root, current_date))
     log_written = write_text_if_changed(root / config["log_path"], render_log_index(root))
     lint_result = lint_wiki(root, compile_date=current_date, state=new_state)
@@ -2963,6 +3743,7 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
         "log_written": log_written,
         "system_overview_written": system_overview_written,
         "page_formats_written": page_formats_written,
+        "projects_home_written": projects_home_written,
         "derived_home_written": derived_home_written,
         "lint": lint_result,
         "source_count": len(current_sources),
@@ -2992,7 +3773,7 @@ def convert_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", default=None)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
-    result = convert_pdfs(parse_root_arg(args.root), force=args.force)
+    result = convert_sources(parse_root_arg(args.root), force=args.force)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if not result["failures"] else 1
 
@@ -3003,22 +3784,24 @@ def compile_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
     root = parse_root_arg(args.root)
-    convert_result = convert_pdfs(root, force=args.force)
+    convert_result = convert_sources(root, force=args.force)
     result = compile_wiki(root, force=args.force)
     append_log_entry(
         root,
         "compile",
         "Incremental wiki refresh",
         [
-            f"Converted PDF caches: {len(convert_result['converted'])}",
-            f"Failed PDF conversions: {len(convert_result['failures'])}",
+            f"Converted PDF caches: {convert_result['pdf_converted']}",
+            f"Converted LaTeX caches: {convert_result['tex_converted']}",
+            f"Failed source conversions: {len(convert_result['failures'])}",
             f"Changed sources: {len(result['changed_sources'])}",
             f"Source pages written: {len(result['written_source_pages'])}",
             f"Concept pages written: {len(result['written_articles'])}",
         ],
     )
-    print(json.dumps(result, indent=2, ensure_ascii=False))
-    return 0
+    payload = {**result, "conversion": convert_result}
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0 if not convert_result["failures"] else 1
 
 
 def lint_main(argv: list[str] | None = None) -> int:
@@ -3076,7 +3859,7 @@ def watch_main(argv: list[str] | None = None) -> int:
     while True:
         snapshot = snapshot_raw_tree(root)
         if args.force or last_snapshot is None or snapshot != last_snapshot:
-            convert_result = convert_pdfs(root, force=args.force)
+            convert_result = convert_sources(root, force=args.force)
             compile_result = compile_wiki(root, force=args.force)
             html_export = None
             html_export_error = None

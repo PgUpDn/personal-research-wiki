@@ -32,6 +32,7 @@ def wiki_documents(root: Path) -> list[Path]:
     paths = sorted(path for path in wiki_dir.glob("*.md") if path.is_file())
     paths.extend(sorted((root / config["source_notes_dir"]).glob("*.md")))
     paths.extend(sorted((root / config["concepts_dir"]).glob("*.md")))
+    paths.extend(sorted((root / config.get("projects_dir", "wiki/projects")).glob("*.md")))
     paths.extend(sorted((root / config["derived_wiki_dir"]).glob("*.md")))
     return [path for path in paths if path.exists()]
 

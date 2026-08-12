@@ -20,6 +20,15 @@ WHERE note_type = "concept"
 SORT source_count DESC, file.name ASC
 ```
 
+## Projects
+
+```dataview
+TABLE project_level AS Level, parent_project_id AS Parent, project_status AS Status, snapshot_date AS Snapshot, related AS Related
+FROM "wiki/projects"
+WHERE note_type = "project"
+SORT project_status ASC, file.name ASC
+```
+
 ## Recently Converted PDFs
 
 ```dataview

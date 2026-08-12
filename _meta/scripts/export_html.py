@@ -84,6 +84,12 @@ details > :last-child {
   line-height: 1.2;
   font-family: "Linux Libertine", "Georgia", serif;
 }
+.brand h1 a {
+  color: var(--text);
+}
+.brand h1 a:hover {
+  text-decoration: none;
+}
 .brand p {
   margin: 8px 0 0;
   color: var(--muted);
@@ -600,6 +606,621 @@ img {
 .compact-box p {
   color: var(--muted);
 }
+.home-page {
+  min-width: 320px;
+  background: #f7f8f6;
+  color: #1f2925;
+  line-height: 1.5;
+}
+.home-page h1,
+.home-page h2,
+.home-page h3,
+.home-page p {
+  letter-spacing: 0;
+}
+.home-page a {
+  color: #2056a0;
+}
+.home-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid #dfe3df;
+  background: rgba(255, 255, 255, 0.96);
+}
+.home-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1120px, calc(100% - 48px));
+  min-height: 64px;
+  margin: 0 auto;
+  gap: 24px;
+}
+.home-brand {
+  color: #1f2925 !important;
+  font-family: "Linux Libertine", Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.home-brand:hover {
+  text-decoration: none;
+}
+.home-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.home-nav a {
+  color: #53605a;
+  font-size: 0.92rem;
+}
+.home-nav a:hover {
+  color: #1f2925;
+  text-decoration: none;
+}
+.home-main {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+}
+.home-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 48px;
+  padding: 72px 0 48px;
+  border-bottom: 1px solid #dfe3df;
+}
+.home-kicker {
+  margin: 0 0 12px;
+  color: #6a756f;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.home-intro h1 {
+  margin: 0;
+  color: #17201c;
+  font-size: 3rem;
+  line-height: 1.05;
+}
+.home-lede {
+  max-width: 620px;
+  margin: 18px 0 0;
+  color: #53605a;
+  font-size: 1.1rem;
+}
+.home-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.home-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 9px 15px;
+  border: 1px solid #c9d0cb;
+  border-radius: 6px;
+  background: #fff;
+  color: #26322d !important;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.home-action:hover {
+  border-color: #8b9891;
+  text-decoration: none;
+}
+.home-action.primary {
+  border-color: #285947;
+  background: #285947;
+  color: #fff !important;
+}
+.home-action.primary:hover {
+  background: #214b3c;
+}
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid #dfe3df;
+}
+.home-stat {
+  min-width: 0;
+  padding: 24px 20px;
+  border-right: 1px solid #dfe3df;
+}
+.home-stat:first-child {
+  padding-left: 0;
+}
+.home-stat:last-child {
+  border-right: 0;
+}
+.home-stat dt {
+  color: #6a756f;
+  font-size: 0.82rem;
+}
+.home-stat dd {
+  margin: 5px 0 0;
+  color: #17201c;
+  font-family: "Linux Libertine", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.home-projects {
+  padding: 42px 0 20px;
+  border-bottom: 1px solid #dfe3df;
+}
+.home-project-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 28px;
+  padding: 22px 0;
+  border-bottom: 1px solid #e2e6e3;
+}
+.home-project-row:last-child {
+  border-bottom: 0;
+}
+.home-project-row.is-subproject {
+  padding-left: 22px;
+  border-left: 3px solid #dce8e1;
+}
+.home-project-meta {
+  display: grid;
+  gap: 5px;
+  margin: 2px 0 0;
+  color: #285947;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.home-project-meta span {
+  color: #7a857f;
+  font-weight: 500;
+}
+.home-project-row h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 1.08rem;
+  line-height: 1.4;
+}
+.home-project-row h3 a {
+  color: #26322d;
+}
+.home-project-row h3 a:hover {
+  color: #2056a0;
+}
+.home-project-row p:not(.home-project-meta) {
+  max-width: 720px;
+  margin: 7px 0 0;
+  color: #65716b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.home-project-open {
+  margin-top: 1px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+.home-project-empty {
+  margin: 20px 0;
+  color: #7a857f;
+}
+.home-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 72px;
+  padding: 52px 0 24px;
+}
+.home-section {
+  min-width: 0;
+}
+.home-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 8px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #bfc7c2;
+}
+.home-section-heading h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #17201c;
+  font-size: 1.35rem;
+}
+.home-section-heading a {
+  flex: none;
+  font-size: 0.86rem;
+}
+.home-area-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid #e2e6e3;
+}
+.home-area-row h3 {
+  margin: 0;
+  color: #26322d;
+  font-family: inherit;
+  font-size: 1rem;
+}
+.home-area-row p {
+  margin: 6px 0 0;
+  color: #6a756f;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.home-area-row p a {
+  color: #53605a;
+}
+.home-area-count {
+  color: #8a948f;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.home-source-row {
+  padding: 16px 0 17px;
+  border-bottom: 1px solid #e2e6e3;
+}
+.home-source-row h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.home-source-row h3 a {
+  color: #26322d;
+}
+.home-source-row h3 a:hover {
+  color: #2056a0;
+}
+.home-source-meta {
+  margin: 0 0 5px;
+  color: #7a857f;
+  font-size: 0.8rem;
+}
+.home-source-summary {
+  display: -webkit-box;
+  margin: 7px 0 0;
+  overflow: hidden;
+  color: #65716b;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.home-concepts {
+  padding: 36px 0 48px;
+}
+.home-concept-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.home-concept-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e6e3;
+}
+.home-concept-list a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.home-concept-list span {
+  flex: none;
+  color: #8a948f;
+  font-size: 0.8rem;
+}
+.home-utility {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 20px 0;
+  border-top: 1px solid #bfc7c2;
+  border-bottom: 1px solid #dfe3df;
+}
+.home-utility strong {
+  color: #53605a;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+.home-utility a {
+  font-size: 0.88rem;
+}
+.home-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 0 40px;
+  color: #7a857f;
+  font-size: 0.82rem;
+}
+.tool-page {
+  min-width: 320px;
+  background: #f7f8f6;
+  color: #1f2925;
+  line-height: 1.5;
+}
+.tool-page a {
+  color: #2056a0;
+}
+.home-nav a.current {
+  color: #1f2925;
+  font-weight: 650;
+}
+.tool-main {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+}
+.tool-intro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 56px 0 32px;
+  border-bottom: 1px solid #dfe3df;
+}
+.tool-kicker {
+  margin: 0 0 10px;
+  color: #6a756f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.tool-intro h1 {
+  margin: 0;
+  color: #17201c;
+  font-size: 2.5rem;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+.tool-lede {
+  max-width: 640px;
+  margin: 14px 0 0;
+  color: #53605a;
+  font-size: 1rem;
+}
+.tool-meta {
+  flex: none;
+  margin: 0;
+  color: #6a756f;
+  font-size: 0.86rem;
+}
+.provider-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.provider-status::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a5ada8;
+  content: "";
+}
+.provider-status.connected::before {
+  background: #2d7659;
+}
+.provider-status.unavailable::before {
+  background: #ad4c3b;
+}
+.search-workspace {
+  padding: 32px 0 48px;
+}
+.tool-search-box {
+  position: relative;
+  max-width: 820px;
+}
+.tool-search-box input {
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 16px;
+  border: 1px solid #aeb8b2;
+  border-radius: 6px;
+  background: #fff;
+  color: #17201c;
+  font: inherit;
+  font-size: 1rem;
+}
+.tool-search-box input:focus,
+.tool-page textarea:focus {
+  outline: 3px solid rgba(32, 86, 160, 0.14);
+  border-color: #2056a0;
+}
+.tool-search-status {
+  min-height: 24px;
+  margin: 12px 0 0;
+  color: #6a756f;
+  font-size: 0.86rem;
+}
+.tool-search-results {
+  max-width: 920px;
+  margin-top: 20px;
+  border-top: 1px solid #bfc7c2;
+}
+.tool-result {
+  padding: 20px 0 22px;
+  border-bottom: 1px solid #dfe3df;
+}
+.tool-result h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  font-size: 1.06rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+.tool-result h2 a {
+  color: #26322d;
+}
+.tool-result h2 a:hover {
+  color: #2056a0;
+}
+.tool-result p {
+  max-width: 88ch;
+  margin: 8px 0 0;
+  color: #5f6b65;
+  font-size: 0.9rem;
+}
+.tool-result .result-meta {
+  gap: 6px;
+  margin: 10px 0 0;
+}
+.tool-result .pill {
+  padding: 3px 7px;
+  border: 1px solid #dbe0dc;
+  border-radius: 4px;
+  background: #edf0ed;
+  color: #65716b;
+  font-size: 0.76rem;
+}
+.tool-result .result-path {
+  color: #87918c;
+  font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.76rem;
+}
+.tool-empty {
+  padding: 28px 0;
+  color: #6a756f;
+}
+.ask-workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+  gap: 52px;
+  padding: 36px 0 52px;
+}
+.ask-question-pane {
+  min-width: 0;
+  padding-right: 52px;
+  border-right: 1px solid #dfe3df;
+}
+.ask-question-pane h2,
+.ask-answer-pane h2 {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  color: #17201c;
+  font-size: 1.25rem;
+  letter-spacing: 0;
+}
+.tool-page .ask-form {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.tool-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #53605a;
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+.tool-page .ask-form textarea {
+  min-height: 190px;
+  padding: 13px 14px;
+  border: 1px solid #aeb8b2;
+  border-radius: 6px;
+  background: #fff;
+  color: #17201c;
+  line-height: 1.5;
+}
+.tool-page .ask-actions {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.tool-page .primary-button {
+  min-height: 42px;
+  padding: 9px 18px;
+  border-radius: 6px;
+  background: #285947;
+}
+.tool-page .primary-button:hover {
+  background: #214b3c;
+  filter: none;
+}
+.tool-page .checkbox-row {
+  color: #65716b;
+  font-size: 0.82rem;
+}
+.tool-page .checkbox-row input {
+  accent-color: #285947;
+}
+.tool-page .server-note {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #d9c9a9;
+  border-radius: 6px;
+  background: #fffaf0;
+  color: #675d49;
+  font-size: 0.86rem;
+}
+.ask-answer-pane {
+  min-width: 0;
+}
+.ask-answer-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.ask-answer-heading h2 {
+  margin-bottom: 0;
+}
+.ask-status {
+  color: #6a756f;
+  font-size: 0.82rem;
+}
+.tool-page .answer-shell {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.tool-page .answer-output {
+  min-height: 260px;
+  margin: 0;
+  padding: 18px;
+  border: 1px solid #d5dbd7;
+  border-radius: 6px;
+  background: #fff;
+  color: #344039;
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+.tool-page .answer-meta {
+  gap: 5px;
+  margin: 0 0 14px;
+  color: #6a756f;
+  font-size: 0.78rem;
+}
+.tool-page .answer-meta code {
+  border-radius: 3px;
+}
+.tool-page .home-footer {
+  border-top: 1px solid #dfe3df;
+}
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;
@@ -610,18 +1231,154 @@ img {
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
+  .sidebar .nav-group {
+    display: none;
+  }
+  .sidebar-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .content-shell {
     padding: 20px 16px 28px;
   }
   .content {
     padding: 28px 20px 32px;
     border-radius: 2px;
+    overflow-wrap: anywhere;
+  }
+  .content table {
+    display: block;
+    overflow-x: auto;
   }
   .lead-layout,
   .portal-grid,
   .toc-columns,
   .catalog-grid {
     grid-template-columns: 1fr;
+  }
+  .home-dashboard {
+    gap: 48px;
+  }
+  .home-project-row {
+    grid-template-columns: 130px minmax(0, 1fr);
+  }
+  .home-project-open {
+    grid-column: 2;
+  }
+  .ask-workspace {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .ask-question-pane {
+    padding-right: 0;
+    padding-bottom: 36px;
+    border-right: 0;
+    border-bottom: 1px solid #dfe3df;
+  }
+}
+@media (max-width: 760px) {
+  .content h1 {
+    font-size: 1.85rem;
+    line-height: 1.12;
+  }
+  .home-header-inner,
+  .home-main,
+  .tool-main {
+    width: min(100% - 32px, 1120px);
+  }
+  .home-header-inner {
+    min-height: 58px;
+    gap: 16px;
+  }
+  .home-nav {
+    gap: 14px;
+  }
+  .home-nav .browse-link {
+    display: none;
+  }
+  .home-intro {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 48px 0 36px;
+  }
+  .home-intro h1 {
+    font-size: 2.35rem;
+  }
+  .home-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .home-stat {
+    padding: 18px 14px;
+    border-bottom: 1px solid #dfe3df;
+  }
+  .home-stat:first-child {
+    padding-left: 0;
+  }
+  .home-stat:nth-child(2) {
+    border-right: 0;
+  }
+  .home-stat:nth-child(3) {
+    padding-left: 0;
+    border-bottom: 0;
+  }
+  .home-stat:nth-child(4) {
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .home-dashboard {
+    grid-template-columns: 1fr;
+    gap: 44px;
+    padding-top: 40px;
+  }
+  .home-projects {
+    padding-top: 34px;
+  }
+  .home-project-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 18px 0;
+  }
+  .home-project-open {
+    grid-column: auto;
+  }
+  .home-concept-list {
+    grid-template-columns: 1fr;
+  }
+  .home-footer {
+    display: block;
+  }
+  .home-footer span {
+    display: block;
+    margin-top: 6px;
+  }
+  .tool-intro {
+    display: block;
+    padding: 42px 0 28px;
+  }
+  .tool-intro h1 {
+    font-size: 2.15rem;
+  }
+  .tool-meta {
+    margin-top: 18px;
+  }
+  .search-workspace {
+    padding-top: 26px;
+  }
+  .ask-workspace {
+    padding-top: 28px;
+  }
+  .tool-page .ask-actions {
+    display: grid;
+    justify-content: stretch;
+  }
+  .tool-page .primary-button {
+    width: 100%;
+  }
+  .ask-answer-heading {
+    display: block;
+  }
+  .ask-status {
+    display: block;
+    margin-top: 6px;
   }
 }
 """.strip()
@@ -731,6 +1488,7 @@ def collect_export_docs(root: Path) -> list[Path]:
     docs = sorted(path for path in wiki_dir.glob("*.md") if path.is_file())
     docs.extend(sorted((root / config["source_notes_dir"]).glob("*.md")))
     docs.extend(sorted((root / config["concepts_dir"]).glob("*.md")))
+    docs.extend(sorted((root / config.get("projects_dir", "wiki/projects")).glob("*.md")))
     docs.extend(sorted((root / config["derived_wiki_dir"]).glob("*.md")))
     agents_path = root / config["schema_path"]
     if agents_path.exists():
@@ -754,6 +1512,8 @@ def nav_group_for(export_path: Path) -> str:
         return "Sources"
     if export_path.parts[0] == "concepts":
         return "Concepts"
+    if export_path.parts[0] == "projects":
+        return "Projects"
     if export_path.parts[0] == "derived":
         return "Derived"
     return "Other"
@@ -784,8 +1544,15 @@ def build_doc_index(root: Path) -> tuple[list[dict[str, object]], dict[str, Path
             "venue": parse_scalar_field(text, "venue"),
             "concept_group": parse_scalar_field(text, "concept_group"),
             "source_count": parse_scalar_field(text, "source_count"),
+            "project_id": parse_scalar_field(text, "project_id"),
+            "project_name": parse_scalar_field(text, "project_name"),
+            "project_level": parse_scalar_field(text, "project_level"),
+            "parent_project_id": parse_scalar_field(text, "parent_project_id"),
+            "project_status": parse_scalar_field(text, "project_status"),
+            "snapshot_date": parse_scalar_field(text, "snapshot_date"),
             "concepts": parse_list_field(text, "concepts"),
             "related": parse_list_field(text, "related"),
+            "github_links": parse_list_field(text, "github_links"),
         }
         docs.append(doc)
         lookup_values = {title, path.stem, path.stem.upper(), path.stem.replace("_", " ")}
@@ -812,6 +1579,11 @@ def build_search_index(root: Path, docs: list[dict[str, object]]) -> dict[str, o
         venue = parse_scalar_field(text, "venue")
         doi = parse_scalar_field(text, "doi")
         arxiv_id = parse_scalar_field(text, "arxiv_id")
+        project_id = parse_scalar_field(text, "project_id")
+        project_level = parse_scalar_field(text, "project_level")
+        parent_project_id = parse_scalar_field(text, "parent_project_id")
+        project_status = parse_scalar_field(text, "project_status")
+        github_links = parse_list_field(text, "github_links")
         searchable = " ".join(
             part
             for part in [
@@ -824,6 +1596,11 @@ def build_search_index(root: Path, docs: list[dict[str, object]]) -> dict[str, o
                 venue or "",
                 doi or "",
                 arxiv_id or "",
+                project_id or "",
+                project_level or "",
+                parent_project_id or "",
+                project_status or "",
+                " ".join(github_links),
                 source_path.relative_to(root).as_posix(),
                 compact_text(body, limit=6000),
             ]
@@ -842,6 +1619,11 @@ def build_search_index(root: Path, docs: list[dict[str, object]]) -> dict[str, o
                 "venue": venue,
                 "doi": doi,
                 "arxiv_id": arxiv_id,
+                "project_id": project_id,
+                "project_level": project_level,
+                "parent_project_id": parent_project_id,
+                "project_status": project_status,
+                "github_links": github_links,
                 "search_text": searchable.lower(),
             }
         )
@@ -1162,6 +1944,7 @@ def collection_counts(docs: list[dict[str, object]]) -> dict[str, int]:
     return {
         "sources": sum(1 for doc in docs if doc["group"] == "Sources"),
         "concepts": sum(1 for doc in docs if doc["group"] == "Concepts"),
+        "projects": sum(1 for doc in docs if doc["note_type"] == "project"),
         "derived": sum(1 for doc in docs if doc["group"] == "Derived"),
         "system": sum(1 for doc in docs if doc["group"] == "System"),
     }
@@ -1181,6 +1964,7 @@ def render_portal_sidebar(docs: list[dict[str, object]], current_export_path: Pa
     overview_doc = find_doc(docs, "SYSTEM_OVERVIEW.html")
     lint_doc = find_doc(docs, "LINT_AND_HEAL.html")
     dashboard_doc = find_doc(docs, "DASHBOARD.html")
+    projects_doc = find_doc(docs, "projects/README.html")
     home_href = relative_href(Path("index.html"), current_export_path)
     search_href = relative_href(Path("search.html"), current_export_path)
     ask_href = relative_href(Path("ask.html"), current_export_path)
@@ -1194,6 +1978,8 @@ def render_portal_sidebar(docs: list[dict[str, object]], current_export_path: Pa
         " · ",
         f'<strong>{counts["concepts"]}</strong> concepts',
         " · ",
+        f'<strong>{counts["projects"]}</strong> projects',
+        " · ",
         f'<strong>{counts["derived"]}</strong> derived notes',
         "</div>",
         '<nav class="nav-group"><h2>Navigation</h2><ul>',
@@ -1202,6 +1988,10 @@ def render_portal_sidebar(docs: list[dict[str, object]], current_export_path: Pa
     if overview_doc:
         parts.append(
             f'<li><a href="{html.escape(relative_href(Path(overview_doc["export_path"]), current_export_path), quote=True)}">System Overview</a></li>'
+        )
+    if projects_doc:
+        parts.append(
+            f'<li><a href="{html.escape(relative_href(Path(projects_doc["export_path"]), current_export_path), quote=True)}">Projects</a></li>'
         )
     parts.append("</ul></nav>")
     parts.extend(
@@ -1228,15 +2018,16 @@ def render_portal_sidebar(docs: list[dict[str, object]], current_export_path: Pa
 def render_sidebar(docs: list[dict[str, object]], current_export_path: Path) -> str:
     if is_portal_page(current_export_path):
         return render_portal_sidebar(docs, current_export_path)
-    groups: dict[str, list[dict[str, object]]] = {"System": [], "Sources": [], "Concepts": [], "Derived": [], "Other": []}
+    groups: dict[str, list[dict[str, object]]] = {"System": [], "Projects": [], "Sources": [], "Concepts": [], "Derived": [], "Other": []}
     for doc in docs:
         groups[str(doc["group"])].append(doc)
 
     search_current = " current" if current_export_path == Path("search.html") else ""
     ask_current = " current" if current_export_path == Path("ask.html") else ""
+    home_href = relative_href(Path("index.html"), current_export_path)
     parts = [
         '<div class="brand">',
-        "<h1>Research Wiki</h1>",
+        f'<h1><a href="{html.escape(home_href, quote=True)}">Research Wiki</a></h1>',
         "<p>User-facing HTML export of the compiled vault.</p>",
         "</div>",
         '<div class="sidebar-actions">',
@@ -1244,11 +2035,12 @@ def render_sidebar(docs: list[dict[str, object]], current_export_path: Path) -> 
         f'<a class="search-link{ask_current}" href="{html.escape(relative_href(Path("ask.html"), current_export_path), quote=True)}">Ask The Wiki</a>',
         "</div>",
     ]
-    for group_name in ("System", "Sources", "Concepts", "Derived", "Other"):
+    for group_name in ("System", "Projects", "Sources", "Concepts", "Derived", "Other"):
         items = groups[group_name]
         if not items:
             continue
-        parts.append(f'<nav class="nav-group"><h2>{html.escape(group_name)}</h2><ul>')
+        group_class = slugify(group_name) or "other"
+        parts.append(f'<nav class="nav-group nav-{group_class}"><h2>{html.escape(group_name)}</h2><ul>')
         for item in items:
             export_path = item["export_path"]
             href = relative_href(export_path, current_export_path)
@@ -1268,38 +2060,20 @@ def render_index_page(
     title_to_export: dict[str, Path],
     source_to_export: dict[Path, Path],
 ) -> str:
-    del export_root, source_to_export
+    del root, export_root, title_to_export, source_to_export
     export_path = Path("index.html")
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
-    sidebar_html = render_sidebar(docs, export_path)
-    server_command = ".venv/bin/python _meta/scripts/wiki_cli.py serve-html --root ."
-    local_server_url = "http://127.0.0.1:8765/ask.html"
-    ask_script = ask_widget_script(server_command, local_server_url)
-    ask_widget = ask_widget_markup(
-        compact=True,
-        show_file_into_wiki=False,
-        placeholder="Ask a question about the research wiki.",
-    )
     source_docs = [item for item in docs if item["group"] == "Sources"]
     concept_docs = [item for item in docs if item["group"] == "Concepts"]
-    system_docs = [item for item in docs if item["group"] == "System" and Path(item["export_path"]) != export_path]
-    derived_docs = [item for item in docs if item["group"] == "Derived"]
+    project_docs = [item for item in docs if item["note_type"] == "project"]
     counts = collection_counts(docs)
     overview_doc = find_doc(docs, "SYSTEM_OVERVIEW.html")
     last_compiled = str(doc.get("last_compiled") or (overview_doc or {}).get("last_compiled") or "Unknown")
-    overview_summary = (
-        "Sources remain immutable in raw/, transcript artifacts and compiler state live in _meta/, "
-        "the wiki compiler maintains linked source and concept pages in wiki/, and useful answers can be filed back into the vault as new knowledge."
-    )
 
     featured_sources = sorted(
         source_docs,
         key=lambda item: (-coerce_int(item.get("year")), str(item["title"]).lower()),
     )[:6]
-    source_library = sorted(
-        source_docs,
-        key=lambda item: (-coerce_int(item.get("year")), str(item["title"]).lower()),
-    )
     grouped_concepts: dict[str, list[dict[str, object]]] = defaultdict(list)
     for concept_doc in concept_docs:
         grouped_concepts[str(concept_doc.get("concept_group") or "Other")].append(concept_doc)
@@ -1311,59 +2085,22 @@ def render_index_page(
         key=lambda item: (-coerce_int(item.get("source_count")), str(item["title"]).lower()),
     )[:12]
 
-    collection_boxes = [
-        {
-            "title": "Source Pages",
-            "count": counts["sources"],
-            "href": "#source-library",
-            "body": "One article per source document, with citation metadata, abstract, key concepts, and provenance.",
-        },
-        {
-            "title": "Concept Pages",
-            "count": counts["concepts"],
-            "href": "#concept-atlas",
-            "body": "Cross-source synthesis pages that connect methods, domains, and recurring research themes.",
-        },
-        {
-            "title": "Search",
-            "count": None,
-            "href": "search.html",
-            "body": "Full-text search across titles, concepts, DOI, arXiv, venues, and compiled summaries.",
-        },
-        {
-            "title": "Q&A",
-            "count": None,
-            "href": "ask.html",
-            "body": "Ask the wiki a question and render answers as markdown, slides, or filed-back notes.",
-        },
-    ]
-
-    collections_html = []
-    for box in collection_boxes:
-        count_html = f'<div class="box-count">{box["count"]}</div>' if box["count"] is not None else ""
-        href = box["href"]
-        collections_html.append(
-            f"""<article class="portal-box">
-  <h3><a href="{html.escape(href, quote=True)}">{html.escape(box["title"])}</a></h3>
-  {count_html}
-  <p>{html.escape(box["body"])}</p>
-</article>"""
-        )
-
     research_areas_html = []
     for group_name, items in ordered_groups:
-        top_items = items[:4]
+        top_items = items[:3]
         links = []
         for item in top_items:
             href = relative_href(Path(item["export_path"]), export_path)
             links.append(
-                f'<li><a href="{html.escape(href, quote=True)}">{html.escape(str(item["title"]))}</a> <span>{coerce_int(item.get("source_count"))}</span></li>'
+                f'<a href="{html.escape(href, quote=True)}">{html.escape(str(item["title"]))}</a>'
             )
         research_areas_html.append(
-            f"""<article class="portal-box">
-  <h3>{html.escape(group_name)}</h3>
-  <p>{len(items)} concept pages in this cluster.</p>
-  <ul class="portal-list">{''.join(links)}</ul>
+            f"""<article class="home-area-row">
+  <div>
+    <h3>{html.escape(group_name)}</h3>
+    <p>{" · ".join(links)}</p>
+  </div>
+  <span class="home-area-count">{len(items)} topics</span>
 </article>"""
         )
 
@@ -1371,74 +2108,71 @@ def render_index_page(
     for source_doc in featured_sources:
         href = relative_href(Path(source_doc["export_path"]), export_path)
         meta_parts = [value for value in [source_doc.get("year"), source_doc.get("lead_author"), source_doc.get("venue")] if value]
-        meta_html = f'<p class="meta-line">{" • ".join(html.escape(str(part)) for part in meta_parts)}</p>' if meta_parts else ""
-        tags_html = render_doc_tags(list(source_doc.get("concepts") or []), export_path, title_to_export)
-        summary = summarize_text(str(source_doc.get("summary") or ""))
+        meta_html = " · ".join(html.escape(str(part)) for part in meta_parts)
+        summary = summarize_text(str(source_doc.get("summary") or ""), 150)
         featured_sources_html.append(
-            f"""<article class="portal-box source-box">
+            f"""<article class="home-source-row">
+  <p class="home-source-meta">{meta_html}</p>
   <h3><a href="{html.escape(href, quote=True)}">{html.escape(str(source_doc["title"]))}</a></h3>
-  {meta_html}
-  <p>{html.escape(summary)}</p>
-  {tags_html}
+  <p class="home-source-summary">{html.escape(summary)}</p>
 </article>"""
-        )
-
-    source_library_html = []
-    for source_doc in source_library:
-        href = relative_href(Path(source_doc["export_path"]), export_path)
-        meta_parts = [value for value in [source_doc.get("year"), source_doc.get("lead_author")] if value]
-        if source_doc.get("venue"):
-            meta_parts.append(source_doc["venue"])
-        source_library_html.append(
-            f"""<li class="catalog-item">
-  <a href="{html.escape(href, quote=True)}">{html.escape(str(source_doc["title"]))}</a>
-  <span class="meta-line">{" • ".join(html.escape(str(part)) for part in meta_parts if part)}</span>
-</li>"""
-        )
-
-    concept_group_html = []
-    for group_name, items in ordered_groups:
-        tags = []
-        for item in items[:8]:
-            href = relative_href(Path(item["export_path"]), export_path)
-            tags.append(
-                f'<a class="tag" href="{html.escape(href, quote=True)}">{html.escape(str(item["title"]))}</a>'
-            )
-        concept_group_html.append(
-            f"""<section class="concept-group-block">
-  <h3>{html.escape(group_name)}</h3>
-  <div class="tag-row">{''.join(tags)}</div>
-</section>"""
-        )
-
-    system_html = []
-    for system_doc in sorted(system_docs, key=lambda item: str(item["title"]).lower()):
-        href = relative_href(Path(system_doc["export_path"]), export_path)
-        summary = summarize_text(str(system_doc.get("summary") or ""), 160)
-        system_html.append(
-            f"""<article class="portal-box compact-box">
-  <h3><a href="{html.escape(href, quote=True)}">{html.escape(str(system_doc["title"]))}</a></h3>
-  <p>{html.escape(summary)}</p>
-</article>"""
-        )
-
-    derived_html = []
-    for derived_doc in sorted(derived_docs, key=lambda item: str(item["title"]).lower()):
-        href = relative_href(Path(derived_doc["export_path"]), export_path)
-        summary = summarize_text(str(derived_doc.get("summary") or ""), 140)
-        derived_html.append(
-            f"""<li class="catalog-item">
-  <a href="{html.escape(href, quote=True)}">{html.escape(str(derived_doc["title"]))}</a>
-  <span class="meta-line">{html.escape(summary)}</span>
-</li>"""
         )
 
     top_concept_links = []
     for concept_doc in top_concepts:
         href = relative_href(Path(concept_doc["export_path"]), export_path)
         top_concept_links.append(
-            f'<li><a href="{html.escape(href, quote=True)}">{html.escape(str(concept_doc["title"]))}</a> <span>{coerce_int(concept_doc.get("source_count"))}</span></li>'
+            f'<li><a href="{html.escape(href, quote=True)}">{html.escape(str(concept_doc["title"]))}</a><span>{coerce_int(concept_doc.get("source_count"))}</span></li>'
         )
+
+    project_rows = []
+    ordered_projects = sorted(
+        project_docs,
+        key=lambda item: (
+            str(item.get("parent_project_id") or item.get("project_id") or item["title"]).lower(),
+            bool(item.get("parent_project_id")),
+            str(item["title"]).lower(),
+        ),
+    )
+    for project_doc in ordered_projects:
+        href = relative_href(Path(project_doc["export_path"]), export_path)
+        project_name = str(project_doc.get("project_name") or project_doc["title"])
+        project_id = str(project_doc.get("project_id") or "").upper()
+        status = str(project_doc.get("project_status") or "active").upper()
+        parent_project_id = str(project_doc.get("parent_project_id") or "")
+        display_name = (
+            f"{project_name} ({project_id})"
+            if project_id and not parent_project_id and project_id not in project_name.upper()
+            else project_name
+        )
+        meta_label = f"{status} · {parent_project_id.upper()} SUBPROJECT" if parent_project_id else status
+        snapshot = str(project_doc.get("snapshot_date") or "Current")
+        summary = summarize_text(str(project_doc.get("summary") or ""), 260)
+        row_class = "home-project-row is-subproject" if parent_project_id else "home-project-row"
+        open_label = "Open subproject" if parent_project_id else "Open project"
+        project_rows.append(
+            f"""<article class="{row_class}">
+  <p class="home-project-meta">{html.escape(meta_label)}<span>Snapshot {html.escape(snapshot)}</span></p>
+  <div>
+    <h3><a href="{html.escape(href, quote=True)}">{html.escape(display_name)}</a></h3>
+    <p>{html.escape(summary)}</p>
+  </div>
+  <a class="home-project-open" href="{html.escape(href, quote=True)}">{open_label}</a>
+</article>"""
+        )
+
+    utility_links = []
+    utility_pages = [
+        ("System overview", overview_doc),
+        ("Dashboard", find_doc(docs, "DASHBOARD.html")),
+        ("Health checks", find_doc(docs, "LINT_AND_HEAL.html")),
+        ("Project catalog", find_doc(docs, "projects/README.html")),
+        ("Derived notes", find_doc(docs, "derived/README.html")),
+    ]
+    for label, utility_doc in utility_pages:
+        if utility_doc:
+            href = relative_href(Path(utility_doc["export_path"]), export_path)
+            utility_links.append(f'<a href="{html.escape(href, quote=True)}">{html.escape(label)}</a>')
 
     return f"""<!doctype html>
 <html lang="en">
@@ -1446,134 +2180,86 @@ def render_index_page(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Research Wiki</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      {sidebar_html}
-    </aside>
-    <div class="content-shell index-shell">
-      <main class="content index-content">
-        <div class="breadcrumb"><span>wiki/INDEX.md</span></div>
-        <section class="lead-layout" id="overview">
-          <div class="lead-copy">
-            <div class="section-kicker">Compiled main page</div>
-            <h1>Research Wiki</h1>
-            <p class="lead-text">A living reference built from local research sources in <code>raw/</code>, compiled into linked source pages, concept pages, and derived outputs inside <code>wiki/</code>.</p>
-            <p class="overview-note">{html.escape(overview_summary)}</p>
-          </div>
-          <aside class="home-infobox">
-            <h2>At a glance</h2>
-            <table>
-              <tbody>
-                <tr><th>Last compiled</th><td>{html.escape(last_compiled)}</td></tr>
-                <tr><th>Source pages</th><td>{counts["sources"]}</td></tr>
-                <tr><th>Concept pages</th><td>{counts["concepts"]}</td></tr>
-                <tr><th>Derived notes</th><td>{counts["derived"]}</td></tr>
-                <tr><th>Vault root</th><td><code>{html.escape(root.as_posix())}</code></td></tr>
-              </tbody>
-            </table>
-          </aside>
-        </section>
-
-        <section class="ask-inline-section" id="ask-the-wiki">
-          <h2>Ask The Wiki</h2>
-          {ask_widget}
-        </section>
-
-        <section class="toc-box">
-          <h2>Contents</h2>
-          <div class="toc-columns">
-            <ul>
-              <li><a href="#collections">Collections</a></li>
-              <li><a href="#research-areas">Research areas</a></li>
-              <li><a href="#featured-sources">Featured source pages</a></li>
-            </ul>
-            <ul>
-              <li><a href="#source-library">Source library</a></li>
-              <li><a href="#concept-atlas">Concept atlas</a></li>
-              <li><a href="#system-notes">System notes and derived work</a></li>
-            </ul>
-          </div>
-        </section>
-
-        <section class="portal-section" id="collections">
-          <div class="portal-heading">
-            <h2>Collections</h2>
-            <p>The homepage is organized as a reference portal rather than a raw dump of the markdown index.</p>
-          </div>
-          <div class="portal-grid">
-            {''.join(collections_html)}
-          </div>
-        </section>
-
-        <section class="portal-section" id="research-areas">
-          <div class="portal-heading">
-            <h2>Research Areas</h2>
-            <p>Concept pages are grouped by major research clusters so the wiki reads more like an encyclopedia than a file tree.</p>
-          </div>
-          <div class="portal-grid">
-            {''.join(research_areas_html)}
-          </div>
-        </section>
-
-        <section class="portal-section" id="featured-sources">
-          <div class="portal-heading">
-            <h2>Featured Source Pages</h2>
-            <p>Recent or high-signal source pages that are good starting points for exploration.</p>
-          </div>
-          <div class="portal-grid">
-            {''.join(featured_sources_html)}
-          </div>
-        </section>
-
-        <section class="portal-section" id="source-library">
-          <div class="portal-heading">
-            <h2>Source Library</h2>
-            <p>Compact index of compiled source pages.</p>
-          </div>
-          <ul class="catalog-grid">
-            {''.join(source_library_html)}
-          </ul>
-        </section>
-
-        <section class="portal-section" id="concept-atlas">
-          <div class="portal-heading">
-            <h2>Concept Atlas</h2>
-            <p>Top concept pages and grouped browse lists.</p>
-          </div>
-          <div class="portal-grid concept-overview-grid">
-            <article class="portal-box">
-              <h3>Most Referenced Concepts</h3>
-              <ul class="portal-list">{''.join(top_concept_links)}</ul>
-            </article>
-            <article class="portal-box">
-              <h3>Browse by Group</h3>
-              {''.join(concept_group_html)}
-            </article>
-          </div>
-        </section>
-
-        <section class="portal-section" id="system-notes">
-          <div class="portal-heading">
-            <h2>System Notes and Derived Work</h2>
-            <p>Operational pages that define the compiler, schemas, health checks, and filed-back outputs.</p>
-          </div>
-          <div class="portal-grid">
-            {''.join(system_html)}
-          </div>
-          <h3>Derived Notes</h3>
-          <ul class="catalog-grid">
-            {''.join(derived_html)}
-          </ul>
-        </section>
-
-        <div class="footer">Exported from the local research wiki at <code>{html.escape(root.as_posix())}</code>.</div>
-      </main>
+<body class="home-page">
+  <header class="home-header">
+    <div class="home-header-inner">
+      <a class="home-brand" href="index.html">Research Wiki</a>
+      <nav class="home-nav" aria-label="Primary">
+        <a href="#projects">Projects</a>
+        <a class="browse-link" href="#research-areas">Browse</a>
+        <a href="search.html">Search</a>
+        <a href="ask.html">Ask</a>
+      </nav>
     </div>
-  </div>
-  <script>{ask_script}</script>
+  </header>
+
+  <main class="home-main">
+    <section class="home-intro">
+      <div>
+        <p class="home-kicker">Personal research library</p>
+        <h1>Research Wiki</h1>
+        <p class="home-lede">Projects, sources, concepts, and durable notes organized for quick retrieval.</p>
+      </div>
+      <div class="home-actions">
+        <a class="home-action primary" href="search.html">Search library</a>
+        <a class="home-action" href="ask.html">Ask the wiki</a>
+      </div>
+    </section>
+
+    <dl class="home-stats">
+      <div class="home-stat"><dt>Sources</dt><dd>{counts["sources"]}</dd></div>
+      <div class="home-stat"><dt>Concepts</dt><dd>{counts["concepts"]}</dd></div>
+      <div class="home-stat"><dt>Projects</dt><dd>{counts["projects"]}</dd></div>
+      <div class="home-stat"><dt>Updated</dt><dd>{html.escape(last_compiled)}</dd></div>
+    </dl>
+
+    <section class="home-projects" id="projects">
+      <div class="home-section-heading">
+        <h2>Projects</h2>
+        <a href="projects/README.html">Project catalog</a>
+      </div>
+      {''.join(project_rows) if project_rows else '<p class="home-project-empty">No active projects yet.</p>'}
+    </section>
+
+    <div class="home-dashboard">
+      <section class="home-section" id="research-areas">
+        <div class="home-section-heading">
+          <h2>Research areas</h2>
+          <a href="#top-concepts">Top concepts</a>
+        </div>
+        {''.join(research_areas_html)}
+      </section>
+
+      <section class="home-section" id="recent-sources">
+        <div class="home-section-heading">
+          <h2>Recent sources</h2>
+          <a href="search.html">View all {counts["sources"]}</a>
+        </div>
+        {''.join(featured_sources_html)}
+      </section>
+    </div>
+
+    <section class="home-concepts" id="top-concepts">
+      <div class="home-section-heading">
+        <h2>Top concepts</h2>
+        <a href="search.html">Search concepts</a>
+      </div>
+      <ul class="home-concept-list">{''.join(top_concept_links)}</ul>
+    </section>
+
+    <nav class="home-utility" aria-label="System pages">
+      <strong>System</strong>
+      {''.join(utility_links)}
+    </nav>
+
+    <footer class="home-footer">
+      <span>Local research wiki</span>
+      <span>Last compiled {html.escape(last_compiled)}</span>
+    </footer>
+  </main>
 </body>
 </html>
 """
@@ -1603,6 +2289,7 @@ def render_document_page(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html.escape(title)} · Research Wiki</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
 <body>
@@ -1624,9 +2311,10 @@ def render_document_page(
 
 
 def render_search_page(docs: list[dict[str, object]], root: Path, search_index: dict[str, object]) -> str:
+    del docs, root
     export_path = Path("search.html")
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
-    sidebar_html = render_sidebar(docs, export_path)
+    record_count = len(search_index.get("documents", []))
     search_data = json_for_html(search_index)
     script = """
 const searchInput = document.querySelector('[data-search-input]');
@@ -1652,7 +2340,7 @@ const tokenize = (query) =>
 const scoreRecord = (record, tokens) => {
   const title = record.title.toLowerCase();
   const aliases = (record.aliases || []).join(' ').toLowerCase();
-  const meta = [record.group, record.note_type, record.year, record.venue, record.doi, record.arxiv_id]
+  const meta = [record.group, record.note_type, record.project_id, record.project_level, record.parent_project_id, record.project_status, record.year, record.venue, record.doi, record.arxiv_id, ...(record.github_links || [])]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
@@ -1690,8 +2378,8 @@ const scoreRecord = (record, tokens) => {
 const renderCards = (query) => {
   const tokens = tokenize(query);
   if (!tokens.length) {
-    statusEl.textContent = 'Search title, aliases, concepts, DOI, arXiv, venue, or summaries.';
-    resultsEl.innerHTML = '<div class="empty-state">Start typing to search the exported wiki.</div>';
+    statusEl.textContent = 'Search title, aliases, concepts, DOI, arXiv, GitHub, venue, or summaries.';
+    resultsEl.innerHTML = '<div class="tool-empty">Start typing to search the exported wiki.</div>';
     return;
   }
   const ranked = records
@@ -1703,22 +2391,26 @@ const renderCards = (query) => {
     ? `${ranked.length} result${ranked.length === 1 ? '' : 's'} for "${query}".`
     : `No results for "${query}".`;
   if (!ranked.length) {
-    resultsEl.innerHTML = '<div class="empty-state">No matching pages yet. Try a concept name, author, DOI, venue, or year.</div>';
+    resultsEl.innerHTML = '<div class="tool-empty">No matching pages yet. Try a concept name, author, GitHub repo, DOI, venue, or year.</div>';
     return;
   }
   resultsEl.innerHTML = ranked.map(({ record }) => {
     const pills = [
       record.group,
       record.note_type,
+      record.project_level,
+      record.parent_project_id,
+      record.project_status,
       record.year,
       record.venue
     ].filter(Boolean).map((value) => `<span class="pill">${escapeHtml(String(value))}</span>`).join('');
     const ids = [
       record.doi ? `<span class="pill">DOI ${escapeHtml(record.doi)}</span>` : '',
-      record.arxiv_id ? `<span class="pill">arXiv ${escapeHtml(record.arxiv_id)}</span>` : ''
+      record.arxiv_id ? `<span class="pill">arXiv ${escapeHtml(record.arxiv_id)}</span>` : '',
+      (record.github_links || []).length ? `<span class="pill">GitHub</span>` : ''
     ].join('');
     return `
-      <article class="result-card">
+      <article class="tool-result">
         <h2><a href="${escapeHtml(record.href)}">${escapeHtml(record.title)}</a></h2>
         <div class="result-meta">${pills}${ids}</div>
         <p>${escapeHtml(record.summary || 'No summary yet.')}</p>
@@ -1763,29 +2455,45 @@ init();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Search The Wiki · Research Wiki</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      {sidebar_html}
-    </aside>
-    <div class="content-shell">
-      <main class="content">
-        <div class="breadcrumb"><span>output/html/search.html</span></div>
-        <section class="search-hero">
-          <h1>Search The Wiki</h1>
-          <p>Search across compiled pages, concept notes, derived notes, and bibliographic metadata like DOI, arXiv ID, venue, and year.</p>
-        </section>
-        <div class="search-box">
-          <input type="search" data-search-input placeholder="Try: neural operators, 10.1038, arXiv 2210.06636, Science Advances" autofocus>
-        </div>
-        <div class="search-hint" data-search-status>Loading search index...</div>
-        <section class="search-results" data-search-results></section>
-        <div class="footer">Exported from the local research wiki at <code>{html.escape(root.as_posix())}</code>.</div>
-      </main>
+<body class="tool-page">
+  <header class="home-header">
+    <div class="home-header-inner">
+      <a class="home-brand" href="index.html">Research Wiki</a>
+      <nav class="home-nav" aria-label="Primary">
+        <a href="index.html#projects">Projects</a>
+        <a class="browse-link" href="index.html#research-areas">Browse</a>
+        <a class="current" href="search.html">Search</a>
+        <a href="ask.html">Ask</a>
+      </nav>
     </div>
-  </div>
+  </header>
+
+  <main class="tool-main">
+    <section class="tool-intro">
+      <div>
+        <p class="tool-kicker">Library search</p>
+        <h1>Search</h1>
+        <p class="tool-lede">Find source pages, concepts, authors, venues, identifiers, and compiled summaries.</p>
+      </div>
+      <p class="tool-meta">{record_count} pages indexed</p>
+    </section>
+
+    <section class="search-workspace" aria-label="Wiki search">
+      <div class="tool-search-box">
+        <input type="search" data-search-input aria-label="Search the research wiki" placeholder="Search papers, concepts, authors, DOI, arXiv...">
+      </div>
+      <div class="tool-search-status" data-search-status aria-live="polite">Loading search index...</div>
+      <section class="tool-search-results" data-search-results></section>
+    </section>
+
+    <footer class="home-footer">
+      <span>Local research wiki</span>
+      <a href="index.html">Back to overview</a>
+    </footer>
+  </main>
   <script id="search-index-data" type="application/json">{search_data}</script>
   <script>{script}</script>
 </body>
@@ -1802,8 +2510,16 @@ const statusEl = document.querySelector('[data-ask-status]');
 const resultEl = document.querySelector('[data-ask-result]');
 const metaEl = document.querySelector('[data-ask-meta]');
 const serverNoteEl = document.querySelector('[data-server-note]');
+const providerEl = document.querySelector('[data-provider-status]');
+const fileIntoWikiEl = document.querySelector('[data-file-into-wiki]');
 const localServerUrl = {json.dumps(local_server_url)};
 const apiBase = window.location.protocol === 'file:' ? 'http://127.0.0.1:8765' : '';
+const queryToken = new URLSearchParams(window.location.search).get('wiki_token') || '';
+if (queryToken) {{
+  window.sessionStorage.setItem('research-wiki-token', queryToken);
+}}
+const wikiToken = queryToken || window.sessionStorage.getItem('research-wiki-token') || '';
+const apiHeaders = wikiToken ? {{ 'X-Wiki-Token': wikiToken }} : {{}};
 let timerId = null;
 let requestStartedAt = 0;
 
@@ -1818,6 +2534,7 @@ const escapeHtml = (value) =>
 
 const renderMeta = (payload) => {{
   const lines = [
+    payload.provider ? `Provider: <code>${{escapeHtml(payload.provider)}}</code>` : '',
     payload.output ? `Output: <code>${{escapeHtml(payload.output)}}</code>` : '',
     payload.filed_into_wiki ? `Filed into wiki: <code>${{escapeHtml(payload.filed_into_wiki)}}</code>` : '',
     payload.context_mode ? `Context mode: <code>${{escapeHtml(payload.context_mode)}}</code>` : '',
@@ -1829,6 +2546,9 @@ const renderMeta = (payload) => {{
 }};
 
 const setUnavailable = () => {{
+  providerEl.textContent = 'Subscription unavailable';
+  providerEl.classList.remove('connected');
+  providerEl.classList.add('unavailable');
   serverNoteEl.hidden = false;
   if (window.location.protocol === 'file:') {{
     serverNoteEl.innerHTML = `This static page can ask the wiki through the local server, but the server is not reachable right now. Open <a href="${{localServerUrl}}"><code>${{localServerUrl}}</code></a> after starting <code>{server_command}</code>.`;
@@ -1861,10 +2581,16 @@ const clearLoading = () => {{
 
 const checkServer = async () => {{
   try {{
-    const response = await fetch(`${{apiBase}}/api/health`, {{ method: 'GET' }});
+    const response = await fetch(`${{apiBase}}/api/health`, {{ method: 'GET', headers: apiHeaders }});
     if (!response.ok) {{
       throw new Error('Health check failed.');
     }}
+    const payload = await response.json();
+    providerEl.textContent = payload.provider === 'codex-subscription'
+      ? 'GPT subscription connected'
+      : (payload.provider || 'Q&A connected');
+    providerEl.classList.remove('unavailable');
+    providerEl.classList.add('connected');
     submitEl.disabled = false;
     serverNoteEl.hidden = true;
     serverNoteEl.innerHTML = '';
@@ -1889,10 +2615,10 @@ formEl.addEventListener('submit', async (event) => {{
   try {{
     const response = await fetch(`${{apiBase}}/api/ask`, {{
       method: 'POST',
-      headers: {{ 'Content-Type': 'application/json' }},
+      headers: {{ ...apiHeaders, 'Content-Type': 'application/json' }},
       body: JSON.stringify({{
         question,
-        file_into_wiki: true
+        file_into_wiki: Boolean(fileIntoWikiEl && fileIntoWikiEl.checked)
       }})
     }});
     const payload = await response.json();
@@ -1926,21 +2652,28 @@ def ask_widget_markup(*, compact: bool, show_file_into_wiki: bool, placeholder: 
         checkbox_html = """
                 <label class="checkbox-row">
                   <input data-file-into-wiki type="checkbox">
-                  <span>File the answer back into <code>wiki/derived</code></span>
+                  <span>Save to <code>wiki/derived</code></span>
                 </label>"""
     return f"""
-        <div class="ask-layout">
-          <section class="{form_class}">
+        <div class="ask-workspace">
+          <section class="ask-question-pane">
+            <h2>Your question</h2>
+            <div class="{form_class}">
             <form data-ask-form>
-              <textarea data-ask-input placeholder="{html.escape(placeholder, quote=True)}"></textarea>
+              <label class="tool-label" for="wiki-question">Question</label>
+              <textarea id="wiki-question" data-ask-input placeholder="{html.escape(placeholder, quote=True)}"></textarea>
               <div class="ask-actions">
                 <button class="primary-button" data-ask-submit type="submit">Ask</button>{checkbox_html}
               </div>
             </form>
+            </div>
+            <div class="server-note" data-server-note hidden></div>
           </section>
-          <div class="server-note" data-server-note hidden></div>
-          <section class="{answer_class}">
-            <div class="search-hint" data-ask-status>Waiting for a question.</div>
+          <section class="ask-answer-pane {answer_class}">
+            <div class="ask-answer-heading">
+              <h2>Answer</h2>
+              <span class="ask-status" data-ask-status aria-live="polite">Waiting for a question.</span>
+            </div>
             <div class="answer-meta" data-ask-meta></div>
             <pre class="answer-output" data-ask-result>Answers will appear here.</pre>
           </section>
@@ -1955,8 +2688,8 @@ def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
     local_server_url = "http://127.0.0.1:8765/ask.html"
     script = ask_widget_script(server_command, local_server_url)
     widget_html = ask_widget_markup(
-        compact=True,
-        show_file_into_wiki=False,
+        compact=False,
+        show_file_into_wiki=True,
         placeholder="Ask a question about the research wiki.",
     )
     return f"""<!doctype html>
@@ -1965,12 +2698,38 @@ def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ask The Wiki · Research Wiki</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
-<body>
-  <main class="content ask-page-minimal ask-standalone">
-    <h1>Ask The Wiki</h1>
+<body class="tool-page">
+  <header class="home-header">
+    <div class="home-header-inner">
+      <a class="home-brand" href="index.html">Research Wiki</a>
+      <nav class="home-nav" aria-label="Primary">
+        <a href="index.html#projects">Projects</a>
+        <a class="browse-link" href="index.html#research-areas">Browse</a>
+        <a href="search.html">Search</a>
+        <a class="current" href="ask.html">Ask</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="tool-main">
+    <section class="tool-intro">
+      <div>
+        <p class="tool-kicker">Grounded Q&amp;A</p>
+        <h1>Ask the Wiki</h1>
+        <p class="tool-lede">Answers are grounded in the compiled research wiki and its linked source pages.</p>
+      </div>
+      <p class="tool-meta provider-status" data-provider-status>Checking subscription</p>
+    </section>
+
     {widget_html}
+
+    <footer class="home-footer">
+      <span>Local research wiki</span>
+      <a href="index.html">Back to overview</a>
+    </footer>
   </main>
   <script>{script}</script>
 </body>
