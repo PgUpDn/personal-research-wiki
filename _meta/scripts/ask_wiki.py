@@ -6,16 +6,15 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
-
-import anthropic
 
 from wiki_pipeline import (
     DEFAULT_ROOT,
     append_log_entry,
     detect_title,
-    load_claude_api_key,
     load_config,
     parse_root_arg,
     read_text,
@@ -27,6 +26,11 @@ from wiki_pipeline import (
     write_text_if_changed,
 )
 
+CODEX_CLI_CANDIDATES = (
+    Path("/Applications/ChatGPT.app/Contents/Resources/codex"),
+    Path.home() / "Applications/ChatGPT.app/Contents/Resources/codex",
+)
+
 
 def collect_wiki_documents(root: Path) -> list[dict[str, Any]]:
     config = load_config(root)
@@ -34,6 +38,7 @@ def collect_wiki_documents(root: Path) -> list[dict[str, Any]]:
     concepts_dir = root / config["concepts_dir"]
     sources_dir = root / config["source_notes_dir"]
     derived_dir = root / config["derived_wiki_dir"]
+    projects_dir = root / config.get("projects_dir", "wiki/projects")
 
     docs = []
     top_level_priority = {
@@ -57,6 +62,10 @@ def collect_wiki_documents(root: Path) -> list[dict[str, Any]]:
     for path in sorted(concepts_dir.glob("*.md")):
         text = read_text(path)
         docs.append({"path": path, "title": detect_title(text, path), "text": text, "priority": 60})
+
+    for path in sorted(projects_dir.glob("*.md")):
+        text = read_text(path)
+        docs.append({"path": path, "title": detect_title(text, path), "text": text, "priority": 75})
 
     for path in sorted(derived_dir.glob("*.md")):
         text = read_text(path)
@@ -146,45 +155,93 @@ def build_prompt(question: str, output_format: str, context_mode: str, context_d
     return "\n".join(base)
 
 
-def ask_claude(root: Path, question: str, output_format: str) -> tuple[str, list[dict[str, Any]], str]:
+def resolve_codex_cli(root: Path) -> str:
     config = load_config(root)
-    api_key = load_claude_api_key(root)
-    model = config.get("qa_model") or config["claude_model"]
-    max_tokens = int(config.get("qa_max_tokens", 3000))
+    configured = str(config.get("codex_cli", "codex")).strip() or "codex"
+    configured_path = Path(configured).expanduser()
+    if configured_path.is_file():
+        return str(configured_path)
+    resolved = shutil.which(configured)
+    if resolved:
+        return resolved
+    for candidate in CODEX_CLI_CANDIDATES:
+        if candidate.is_file():
+            return str(candidate)
+    checked = ", ".join(str(path) for path in CODEX_CLI_CANDIDATES)
+    raise RuntimeError(f"Codex CLI is unavailable. Checked PATH and: {checked}")
+
+
+def codex_subscription_status(root: Path) -> dict[str, str]:
+    codex_cli = resolve_codex_cli(root)
+    try:
+        result = subprocess.run(
+            [codex_cli, "login", "status"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("Codex login status check timed out.") from exc
+    details = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+    if result.returncode != 0 or "Logged in using ChatGPT" not in details:
+        raise RuntimeError(f"Codex is not logged in through ChatGPT. {details or 'No login status returned.'}")
+    return {
+        "status": "ok",
+        "provider": "codex-subscription",
+        "auth": "chatgpt",
+        "codex_cli": codex_cli,
+    }
+
+
+def ask_codex(root: Path, question: str, output_format: str) -> tuple[str, list[dict[str, Any]], str]:
+    config = load_config(root)
+    auth = codex_subscription_status(root)
     docs, context_mode = select_context(root, question)
     prompt = build_prompt(question, output_format, context_mode, docs)
-
     context_chunks = []
     for doc in docs:
         context_chunks.append(f"# {doc['title']}\nPath: {doc['path'].relative_to(root).as_posix()}\n\n{doc['text']}")
+    request = prompt + "\n\nWiki context:\n\n" + "\n\n".join(context_chunks)
+    timeout_seconds = float(config.get("qa_timeout_seconds", 300))
+    codex_cli = auth["codex_cli"]
 
-    timeout_seconds = 180.0
-    client = anthropic.Anthropic(api_key=api_key, timeout=timeout_seconds, max_retries=2)
-    try:
-        response = client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt + "\n\nWiki context:\n\n" + "\n\n".join(context_chunks)},
-                    ],
-                }
-            ],
-            timeout=timeout_seconds,
-        )
-    except (anthropic.APITimeoutError, anthropic.APIConnectionError, anthropic.APIStatusError, anthropic.APIError) as exc:
-        raise RuntimeError(f"Claude SDK request failed for question '{question}': {exc}") from exc
+    with tempfile.TemporaryDirectory(prefix="research-wiki-codex-") as temp_dir:
+        response_path = Path(temp_dir) / "answer.md"
+        command = [
+            codex_cli,
+            "exec",
+            "--ephemeral",
+            "--skip-git-repo-check",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--sandbox",
+            "read-only",
+            "--color",
+            "never",
+            "--output-last-message",
+            str(response_path),
+            "-",
+        ]
+        try:
+            result = subprocess.run(
+                command,
+                cwd=root,
+                input=request,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"Codex subscription request timed out after {timeout_seconds:g}s.") from exc
 
-    text_blocks = [
-        block.text.strip()
-        for block in response.content
-        if getattr(block, "type", None) == "text" and getattr(block, "text", "").strip()
-    ]
-    answer = "\n\n".join(block for block in text_blocks if block).strip()
+        if result.returncode != 0:
+            details = (result.stderr or result.stdout or "Unknown Codex CLI error.").strip()
+            raise RuntimeError(f"Codex subscription request failed: {details[-1600:]}")
+        answer = response_path.read_text(encoding="utf-8").strip() if response_path.exists() else ""
+
     if not answer:
-        raise RuntimeError("Claude returned no answer text.")
+        raise RuntimeError("Codex returned no answer text.")
     return answer, docs, context_mode
 
 
@@ -225,7 +282,7 @@ def file_back_into_wiki(root: Path, source_path: Path) -> Path:
 
 
 def run_question(root: Path, question: str, output_format: str = "markdown", file_into_wiki: bool = False) -> dict[str, Any]:
-    answer, docs, context_mode = ask_claude(root, question, output_format)
+    answer, docs, context_mode = ask_codex(root, question, output_format)
     rendered = render_answer_file(root, question, answer, docs, context_mode)
 
     destination = output_path(root, question, output_format)
@@ -239,6 +296,7 @@ def run_question(root: Path, question: str, output_format: str = "markdown", fil
         "question": question,
         "answer": answer,
         "output": destination.relative_to(root).as_posix(),
+        "provider": "codex-subscription",
         "context_mode": context_mode,
         "context_files": [doc["path"].relative_to(root).as_posix() for doc in docs],
     }
@@ -251,6 +309,7 @@ def run_question(root: Path, question: str, output_format: str = "markdown", fil
         question[:120],
         [
             f"Output: {destination.relative_to(root).as_posix()}",
+            "Provider: Codex via ChatGPT subscription",
             f"Context mode: {context_mode}",
             f"Context files: {', '.join(doc['path'].relative_to(root).as_posix() for doc in docs[:8])}",
             *([f"Filed back into wiki: {filed_path.relative_to(root).as_posix()}"] if filed_path is not None else []),

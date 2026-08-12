@@ -3,12 +3,12 @@ title: "Page Formats"
 aliases:
   - "Page Formats"
 note_type: "system"
-last_compiled: 2026-04-14
+last_compiled: 2026-08-06
 ---
 
 # Page Formats
 
-- Last refreshed: 2026-04-14
+- Last refreshed: 2026-08-06
 - Schema version: `research-wiki-pdf-v1`
 
 ## Design Goals
@@ -34,6 +34,7 @@ Frontmatter:
 - `venue`
 - `doi`
 - `arxiv_id`
+- `github_links`
 - `page_count`
 - `page_image_dir`
 - `converted_at`
@@ -44,6 +45,31 @@ Frontmatter:
 Sections:
 - `## Conversion Snapshot`
 - `## Preview`
+- `## Extracted Markdown`
+
+## LaTeX Cache Notes
+
+Location: `_meta/converted_sources/*.md`
+
+Frontmatter:
+- `title`
+- `note_type: source_cache`
+- `schema_version`
+- `source_id`
+- `source_tex`
+- `source_kind: raw_tex`
+- `authors`
+- `year`
+- `converted_at`
+- `conversion_pipeline: pandoc-latex-to-markdown`
+- `cache_role: latex-source-cache`
+- `source_digest`
+- `dependencies`
+- `tags`
+
+Sections:
+- `## Conversion Snapshot`
+- `## Abstract` when present
 - `## Extracted Markdown`
 
 ## Source Pages
@@ -65,6 +91,7 @@ Frontmatter:
 - `doi`
 - `arxiv_id`
 - `authors`
+- `github_links`
 - `sources`
 - `cache_path`
 - `page_image_dir`
@@ -110,6 +137,32 @@ Sections:
 - `## Related Concepts`
 - `## Representative sources`
 - `## Provenance`
+
+## Project Pages
+
+Location: `wiki/projects/*.md`
+
+Frontmatter:
+- `title`
+- `aliases`
+- `note_type: project`
+- `project_id`
+- `project_name`
+- `project_level: programme | subproject`
+- `parent_project_id` for subprojects
+- `project_status`
+- `snapshot_date`
+- `sources`
+- `related`
+- `tags`
+
+Sections:
+- `## Programme Thesis` or `## Project Thesis`
+- `## Evidence Ledger`
+- `## Milestone Gates`
+- `## Negative Evidence and Open Gaps`
+- `## Next Execution Focus`
+- `## Source Package`
 
 ## Querying Notes
 

@@ -11,6 +11,7 @@ from pathlib import Path
 from ask_wiki import ask_main
 from export_html import export_html_main
 from serve_html import serve_html_main
+from zotero_import import add_zotero_arguments, run_zotero_args
 from wiki_pipeline import (
     compile_main,
     convert_main,
@@ -32,6 +33,7 @@ def wiki_documents(root: Path) -> list[Path]:
     paths = sorted(path for path in wiki_dir.glob("*.md") if path.is_file())
     paths.extend(sorted((root / config["source_notes_dir"]).glob("*.md")))
     paths.extend(sorted((root / config["concepts_dir"]).glob("*.md")))
+    paths.extend(sorted((root / config.get("projects_dir", "wiki/projects")).glob("*.md")))
     paths.extend(sorted((root / config["derived_wiki_dir"]).glob("*.md")))
     return [path for path in paths if path.exists()]
 
@@ -150,6 +152,12 @@ def main(argv: list[str] | None = None) -> int:
     serve_parser.add_argument("--host", default="127.0.0.1")
     serve_parser.add_argument("--port", type=int, default=8765)
 
+    zotero_parser = subparsers.add_parser(
+        "zotero-import",
+        help="copy PDFs from a local Zotero collection into a source directory",
+    )
+    add_zotero_arguments(zotero_parser)
+
     args = parser.parse_args(argv)
 
     if args.command == "compile":
@@ -211,6 +219,9 @@ def main(argv: list[str] | None = None) -> int:
                 str(args.port),
             ]
         )
+
+    if args.command == "zotero-import":
+        return run_zotero_args(args)
 
     return 2
 
