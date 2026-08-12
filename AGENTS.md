@@ -6,10 +6,11 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 
 1. Never modify source documents in `raw/` or `Clippings/`.
 2. Never move source documents out of `raw/` or `Clippings/`.
-3. Put PDF transcription caches, rendered page images, and other machine-generated intermediates in `_meta/`.
-4. Treat `wiki/` as fully LLM-owned. Create, revise, and link pages there freely.
-5. Keep `wiki/INDEX.md` and `wiki/LOG.md` current whenever the wiki changes.
-6. Prefer `[[wiki-links]]` between wiki pages.
+3. Treat Zotero as an external source of truth: open its SQLite database read-only and copy selected attachments into `raw/zotero/`; never write back to Zotero.
+4. Put PDF transcription caches, rendered page images, and other machine-generated intermediates in `_meta/`.
+5. Treat `wiki/` as fully LLM-owned. Create, revise, and link pages there freely.
+6. Keep `wiki/INDEX.md` and `wiki/LOG.md` current whenever the wiki changes.
+7. Prefer `[[wiki-links]]` between wiki pages.
 
 ## Directory Roles
 
@@ -22,13 +23,14 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 - `output/`: generated artifacts that may or may not later be filed back into `wiki/derived/`.
 - `_meta/converted_sources/`: machine-generated markdown caches for PDFs.
 - `_meta/source_page_images/`: rendered page images used during PDF transcription.
+- `_meta/zotero_imports/`: local, redacted summaries of Zotero attachment imports.
 - `wiki/LOG.md`: append-only chronology of compiles, queries, and lint passes.
 
 ## Ingest Workflow
 
 When new sources appear:
 
-1. Read the new raw source.
+1. Read the new raw source. For Zotero, preview a narrowly selected collection with `wiki_cli.py zotero-import --dry-run` before copying its PDF attachments into `raw/zotero/`.
 2. If it is a PDF, transcribe it into `_meta/converted_sources/` without changing the original PDF. If an adjacent same-stem `.tex` exists, compile the LaTeX source with Pandoc and retain the PDF as the visual snapshot instead of creating duplicate source pages.
 3. Create or update a source page in `wiki/sources/`.
 4. Update the relevant concept pages in `wiki/concepts/`.

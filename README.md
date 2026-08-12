@@ -52,6 +52,7 @@ Common commands:
 .venv/bin/python _meta/scripts/wiki_cli.py compile --root .
 .venv/bin/python _meta/scripts/wiki_cli.py watch --root . --once
 .venv/bin/python _meta/scripts/wiki_cli.py search --root . "meshgraphnets"
+.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --list-collections
 .venv/bin/python _meta/scripts/wiki_cli.py ask --root . "What are the most common themes in the CFD papers?" --file-into-wiki
 .venv/bin/python _meta/scripts/wiki_cli.py export-html --root .
 ```
@@ -72,6 +73,23 @@ python3 -m venv .venv
 The LaTeX backend requires `pandoc` on `PATH` (`brew install pandoc` on macOS). Backend names and executable locations can be overridden in `_meta/config.json`.
 
 MarkItDown extracts embedded text but is not an OCR engine. Image-only or scanned PDFs can therefore return empty Markdown; the compiler reports these conversion failures and exits non-zero instead of silently treating stale caches as successful output. Configure the optional `claude-vision` backend when OCR-style transcription is required.
+
+### Zotero connection
+
+The Zotero connector reads the local `zotero.sqlite` database in SQLite read-only mode and copies PDF attachments from one selected collection into `raw/zotero/<collection>/`. It never writes to Zotero. Imported PDFs, local import summaries, conversion caches, and newly created compiled pages are covered by the repository's privacy-oriented ignore rules. Because the compiler can still update already tracked example pages, stage framework files explicitly rather than using `git add -A`.
+
+List collections, preview an import without writing anything, then import and compile:
+
+```bash
+.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --list-collections
+.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --collection "My Collection" --include-subcollections --dry-run
+.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --collection "My Collection" --include-subcollections
+.venv/bin/python _meta/scripts/wiki_cli.py compile --root .
+```
+
+The default [Zotero data directory](https://www.zotero.org/support/zotero_data) is `~/Zotero`; override it with `--zotero-data-dir`, or pass a database explicitly with `--database`. Collection names are case-insensitive. If a name occurs in more than one Zotero library, add `--library-id` or select its collection key with `--collection-key`. Subcollections are included only when `--include-subcollections` is present.
+
+[Stored and linked attachments](https://www.zotero.org/support/attaching_files) are supported, including standalone PDF attachments filed directly in a collection. Stored attachments are resolved below Zotero's `storage/` directory. For Zotero paths beginning with `attachments:`, provide the linked-file base directory with `--linked-base-dir`. Make sure attachment files are available locally before importing. The importer de-duplicates exact PDF content by SHA-256, verifies every copy, writes only a redacted summary under `_meta/zotero_imports/`, and treats `--dry-run` as a strict no-write operation. Run the watcher instead of the final `compile` command if you want future Zotero imports compiled automatically.
 
 ### Subscription-backed Q&A
 
