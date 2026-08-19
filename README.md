@@ -74,6 +74,25 @@ The LaTeX backend requires `pandoc` on `PATH` (`brew install pandoc` on macOS). 
 
 MarkItDown extracts embedded text but is not an OCR engine. Image-only or scanned PDFs can therefore return empty Markdown; the compiler reports these conversion failures and exits non-zero instead of silently treating stale caches as successful output. Configure the optional `claude-vision` backend when OCR-style transcription is required.
 
+### Clipping Mermaid reconstruction
+
+Obsidian Web Clipper captures are immutable inputs. When a clipping contains a rendered Mermaid CSS/SVG artifact, the compiler can replace it in a generated reading copy under `_meta/converted_sources/_sanitized_clippings/<source-hash>/` while leaving the file in `Clippings/` unchanged. The separate, hashed namespace prevents a same-stem clipping PDF and Markdown file from sharing a cache. Ordinary code fences and surrounding article text are preserved.
+
+The default workflow is offline. Add recovered Mermaid definitions to the ignored local file `_meta/clipping_mermaid_sources.json`, keyed by the clipping's `source` URL and in document order:
+
+```json
+{
+  "https://example.com/article": [
+    "flowchart TD\n  A --> B",
+    "mindmap\n  root((Topic))"
+  ]
+}
+```
+
+A cache is generated only when the number of valid definitions exactly matches the number of recognized render artifacts. The cache records digests of both the clipping and Mermaid definitions, so either change invalidates it. The mapping, sanitized caches, and site-specific clipper templates are ignored and are not part of the public framework.
+
+Compilation never fetches the clipping's source URL. Inspect or export the Mermaid definitions separately, then place them in the local mapping. This keeps compilation offline and deterministic, avoids disclosing private URLs, and preserves the original clipping whenever recovery is incomplete.
+
 ### Zotero connection
 
 The Zotero connector reads the local `zotero.sqlite` database in SQLite read-only mode and copies PDF attachments from one selected collection into `raw/zotero/<collection>/`. It never writes to Zotero. Imported PDFs, local import summaries, conversion caches, and newly created compiled pages are covered by the repository's privacy-oriented ignore rules. Because the compiler can still update already tracked example pages, stage framework files explicitly rather than using `git add -A`.

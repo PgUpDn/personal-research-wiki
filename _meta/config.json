@@ -33,6 +33,7 @@
   "pdf2md_entrypoint": "_meta/node_tools/pdf2md/node_modules/pdf2md/bin/index.js",
   "pdf2md_workspace_dir": "_meta/pdf2md_work",
   "raw_images_dir": "raw/images",
+  "sanitized_clippings_dir": "_meta/converted_sources/_sanitized_clippings",
   "zotero_data_dir": "~/Zotero",
   "zotero_import_dir": "raw/zotero",
   "zotero_report_dir": "_meta/zotero_imports",

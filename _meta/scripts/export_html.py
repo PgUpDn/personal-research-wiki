@@ -1688,13 +1688,14 @@ def relative_href(target: Path, current_export_path: Path) -> str:
 
 def copy_asset(source_abs: Path, root: Path, export_root: Path) -> Path:
     try:
-        rel = source_abs.relative_to(root)
+        rel = source_abs.resolve().relative_to(root.resolve())
     except ValueError:
         rel = Path(source_abs.name)
-    destination = export_root / "_files" / rel
+    destination_rel = Path("_files") / rel
+    destination = export_root / destination_rel
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source_abs, destination)
-    return destination
+    return destination_rel
 
 
 def resolve_wikilink(target: str, current_export_path: Path, title_to_export: dict[str, Path]) -> str:
@@ -1718,6 +1719,8 @@ def resolve_markdown_target(
     source_to_export: dict[Path, Path],
 ) -> str:
     target = raw_target.strip()
+    if target.startswith("<") and target.endswith(">"):
+        target = target[1:-1].strip()
     if not target or target.startswith("#") or target.startswith(EXTERNAL_PREFIXES):
         return target
     absolute = (source_path.parent / target).resolve()

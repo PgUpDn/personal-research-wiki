@@ -21,7 +21,7 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 - `wiki/projects/`: active research programmes and hierarchical subproject dossiers connecting evidence, milestones, gaps, and next actions.
 - `wiki/derived/`: answers, comparisons, and other outputs worth filing back into the knowledge base.
 - `output/`: generated artifacts that may or may not later be filed back into `wiki/derived/`.
-- `_meta/converted_sources/`: machine-generated markdown caches for PDFs.
+- `_meta/converted_sources/`: machine-generated Markdown caches for PDFs, LaTeX packages, and sanitized clipping copies.
 - `_meta/source_page_images/`: rendered page images used during PDF transcription.
 - `_meta/zotero_imports/`: local, redacted summaries of Zotero attachment imports.
 - `wiki/LOG.md`: append-only chronology of compiles, queries, and lint passes.
@@ -31,7 +31,7 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 When new sources appear:
 
 1. Read the new raw source. For Zotero, preview a narrowly selected collection with `wiki_cli.py zotero-import --dry-run` before copying its PDF attachments into `raw/zotero/`.
-2. If it is a PDF, transcribe it into `_meta/converted_sources/` without changing the original PDF. If an adjacent same-stem `.tex` exists, compile the LaTeX source with Pandoc and retain the PDF as the visual snapshot instead of creating duplicate source pages.
+2. If it is a PDF, transcribe it into `_meta/converted_sources/` without changing the original PDF. If an adjacent same-stem `.tex` exists, compile the LaTeX source with Pandoc and retain the PDF as the visual snapshot instead of creating duplicate source pages. If a clipping contains rendered Mermaid SVG/CSS artifacts, write a sanitized copy under `_meta/converted_sources/_sanitized_clippings/` and compile that copy without changing the clipping.
 3. Create or update a source page in `wiki/sources/`.
 4. Update the relevant concept pages in `wiki/concepts/`.
 5. Refresh `wiki/INDEX.md`.
@@ -157,6 +157,21 @@ Record lint outcomes in `wiki/LINT_AND_HEAL.md` and append a lint entry to `wiki
   - `## Conversion Snapshot`
   - `## Abstract` when present
   - `## Extracted Markdown`
+
+### 2b. Reconstructed Clipping Cache Notes
+
+- Location: `_meta/converted_sources/_sanitized_clippings/<source-hash>/*.md`
+- Role: machine-oriented reading copies that replace rendered Mermaid SVG/CSS artifacts with editable Mermaid source while keeping immutable Web Clipper captures unchanged
+- Preserve the clipping's original frontmatter and add:
+  - `sanitized_from`
+  - `sanitization_pipeline`
+  - `source_digest`
+  - `sanitized_artifact_blocks`
+  - `reconstructed_mermaid_blocks`
+  - `mermaid_recovery_source`
+  - `mermaid_sources_digest`
+- Recover Mermaid definitions from the clipping's source page and replace only high-confidence rendered artifact fences in document order; retain ordinary code fences and all surrounding article text.
+- Reuse a matching reconstructed cache on later compiles. If complete Mermaid source cannot be recovered, preserve the original clipping content rather than silently omitting a diagram.
 
 ### 3. Concept Pages
 
