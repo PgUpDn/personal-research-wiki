@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
@@ -296,6 +297,263 @@ class ProjectCatalogTest(unittest.TestCase):
             self.assertIn("Part of [[Research Programme]]", catalog)
             self.assertNotIn("## Other Projects", catalog)
 
+
+class ClippingSanitizationTest(unittest.TestCase):
+    @staticmethod
+    def rendered_mermaid_artifact() -> str:
+        return (
+            "#mermaid-1787117213896{font-family:trebuchet ms;}"
+            "@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}"
+            "#mermaid-1787117213896 .edge-animation-slow{animation:dash 50s linear infinite;}"
+            "#mermaid-1787117213896 .flowchart-link{stroke-width:2px;fill:none;}"
+            "#mermaid-1787117213896 .mindmap-node-label{text-anchor:middle;}"
+            "#mermaid-1787117213896 :root{--mermaid-font-family:trebuchet ms;}"
+            + "fill:#fff;stroke-width:1px;font-family:arial;animation:dash 20s;" * 30
+        )
+
+    def test_mermaid_sources_are_extracted_from_escaped_page_markdown(self) -> None:
+        page_html = r'''<script>```mermaid\nmindmap\n  root((AI Research))\n```</script>
+<script>```mermaid\nflowchart TD\n  A[\"Propose\"] --> B[\"Verify\"]\n```</script>'''
+
+        sources = wiki_pipeline.extract_mermaid_sources_from_html(page_html)
+
+        self.assertEqual(len(sources), 2)
+        self.assertEqual(sources[0], "mindmap\n  root((AI Research))")
+        self.assertIn('A["Propose"] --> B["Verify"]', sources[1])
+
+    def test_only_rendered_mermaid_artifact_fences_are_reconstructed(self) -> None:
+        artifact = self.rendered_mermaid_artifact()
+        markdown = (
+            "# Example\n\n"
+            "```python\nprint('keep me')\n```\n\n"
+            f"```\n{artifact}\n```\n"
+        )
+
+        reconstructed_markdown, reconstructed = wiki_pipeline.sanitize_clipping_markdown(
+            markdown,
+            ["flowchart TD\n  A --> B"],
+        )
+
+        self.assertEqual(reconstructed, 1)
+        self.assertIn("print('keep me')", reconstructed_markdown)
+        self.assertIn("```mermaid\nflowchart TD\n  A --> B\n```", reconstructed_markdown)
+        self.assertNotIn("#mermaid-1787117213896", reconstructed_markdown)
+
+    def test_local_mermaid_sources_are_available_when_article_is_offline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_file = root / "_meta/clipping_mermaid_sources.json"
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text(
+                json.dumps({"https://example.com/article": ["mindmap\n  root((Recovered))"]}),
+                encoding="utf-8",
+            )
+
+            sources = wiki_pipeline.local_mermaid_sources(root, "https://example.com/article")
+
+            self.assertEqual(sources, ["mindmap\n  root((Recovered))"])
+
+    def test_clipping_uses_generated_cache_without_modifying_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            clipping_dir = root / "Clippings"
+            clipping_dir.mkdir(parents=True)
+            source_url = "https://example.com/article"
+            artifact = self.rendered_mermaid_artifact()
+            original = (
+                "---\n"
+                'title: "Example Article"\n'
+                f'source: "{source_url}"\n'
+                "---\n"
+                "Readable paragraph.\n\n"
+                f"```\n{artifact}\n```\n"
+            )
+            clipping_path = clipping_dir / "Example Article.md"
+            clipping_path.write_text(original, encoding="utf-8")
+            source_file = root / "_meta/clipping_mermaid_sources.json"
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text(
+                json.dumps({source_url: ["mindmap\n  root((Recovered))"]}),
+                encoding="utf-8",
+            )
+
+            record = next(
+                item
+                for item in wiki_pipeline.source_input_records(root)
+                if item["source"] == "Clippings/Example Article.md"
+            )
+
+            self.assertEqual(clipping_path.read_text(encoding="utf-8"), original)
+            self.assertEqual(record["sanitized_artifact_blocks"], 1)
+            self.assertEqual(record["reconstructed_mermaid_blocks"], 1)
+            self.assertEqual(
+                record["content_path"],
+                wiki_pipeline.converted_raw_markdown_path(root, clipping_path),
+            )
+            cache = record["content_path"].read_text(encoding="utf-8")
+            self.assertIn('sanitization_pipeline: "clipper-mermaid-reconstruction-v2"', cache)
+            self.assertIn("reconstructed_mermaid_blocks: 1", cache)
+            self.assertIn("mermaid_sources_digest:", cache)
+            self.assertIn("Readable paragraph.", cache)
+            self.assertIn("```mermaid\nmindmap\n  root((Recovered))\n```", cache)
+            self.assertNotIn("#mermaid-1787117213896", cache)
+            first_digest = wiki_pipeline.frontmatter_scalar(cache, "mermaid_sources_digest")
+            source_file.write_text(
+                json.dumps({source_url: ["flowchart TD\n  A --> B"]}),
+                encoding="utf-8",
+            )
+            cached_path, reconstructed = wiki_pipeline.prepared_raw_markdown_content_path(
+                root,
+                clipping_path,
+            )
+            self.assertEqual(cached_path, record["content_path"])
+            self.assertEqual(reconstructed, 1)
+            updated_cache = cached_path.read_text(encoding="utf-8")
+            self.assertIn("```mermaid\nflowchart TD\n  A --> B\n```", updated_cache)
+            self.assertNotEqual(
+                first_digest,
+                wiki_pipeline.frontmatter_scalar(updated_cache, "mermaid_sources_digest"),
+            )
+
+            source_file.unlink()
+            original_path, reconstructed = wiki_pipeline.prepared_raw_markdown_content_path(
+                root,
+                clipping_path,
+            )
+            self.assertEqual(original_path, clipping_path)
+            self.assertEqual(reconstructed, 0)
+
+    def test_missing_local_mapping_preserves_the_original_clipping(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            clipping_dir = root / "Clippings"
+            clipping_dir.mkdir(parents=True)
+            clipping_path = clipping_dir / "Offline.md"
+            clipping_path.write_text(
+                "---\n"
+                'title: "Offline"\n'
+                'source: "https://example.com/article"\n'
+                "---\n\n"
+                f"```\n{self.rendered_mermaid_artifact()}\n```\n",
+                encoding="utf-8",
+            )
+
+            content_path, reconstructed = wiki_pipeline.prepared_raw_markdown_content_path(
+                root,
+                clipping_path,
+            )
+
+            self.assertEqual(content_path, clipping_path)
+            self.assertEqual(reconstructed, 0)
+
+    def test_local_mapping_requires_an_exact_diagram_count(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            clipping_dir = root / "Clippings"
+            clipping_dir.mkdir(parents=True)
+            clipping_path = clipping_dir / "Counted.md"
+            clipping_path.write_text(
+                "---\n"
+                'title: "Counted"\n'
+                'source: "https://example.com/article"\n'
+                "---\n\n"
+                f"```\n{self.rendered_mermaid_artifact()}\n```\n",
+                encoding="utf-8",
+            )
+            source_file = root / "_meta/clipping_mermaid_sources.json"
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text(
+                json.dumps(
+                    {
+                        "https://example.com/article": [
+                            "flowchart TD\n  A --> B",
+                            "mindmap\n  root((Extra))",
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            content_path, reconstructed = wiki_pipeline.prepared_raw_markdown_content_path(
+                root,
+                clipping_path,
+            )
+
+            self.assertEqual(content_path, clipping_path)
+            self.assertEqual(reconstructed, 0)
+
+    def test_non_clipping_markdown_cannot_overwrite_pdf_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_dir = root / "raw"
+            raw_dir.mkdir()
+            (raw_dir / "shared.md").write_text(
+                f"```\n{self.rendered_mermaid_artifact()}\n```\n",
+                encoding="utf-8",
+            )
+            (raw_dir / "shared.pdf").write_bytes(b"%PDF-1.4\n%%EOF\n")
+            pdf_cache = root / "_meta/converted_sources/shared.md"
+            pdf_cache.parent.mkdir(parents=True)
+            pdf_cache.write_text("PDF CACHE SENTINEL\n", encoding="utf-8")
+
+            records = wiki_pipeline.source_input_records(root)
+            markdown_record = next(item for item in records if item["source"] == "raw/shared.md")
+
+            self.assertEqual(markdown_record["content_path"], raw_dir / "shared.md")
+            self.assertEqual(pdf_cache.read_text(encoding="utf-8"), "PDF CACHE SENTINEL\n")
+
+    def test_same_stem_clipping_markdown_and_pdf_use_distinct_caches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            clipping_dir = root / "Clippings"
+            clipping_dir.mkdir()
+            source_url = "https://example.com/article"
+            markdown_path = clipping_dir / "shared.md"
+            markdown_path.write_text(
+                "---\n"
+                f'source: "{source_url}"\n'
+                "---\n\n"
+                f"```\n{self.rendered_mermaid_artifact()}\n```\n",
+                encoding="utf-8",
+            )
+            pdf_path = clipping_dir / "shared.pdf"
+            pdf_path.write_bytes(b"%PDF-1.4\n%%EOF\n")
+            source_file = root / "_meta/clipping_mermaid_sources.json"
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text(
+                json.dumps({source_url: ["flowchart TD\n  A --> B"]}),
+                encoding="utf-8",
+            )
+            pdf_cache = wiki_pipeline.converted_pdf_markdown_path(root, pdf_path)
+            pdf_cache.parent.mkdir(parents=True)
+            pdf_cache.write_text("PDF CACHE SENTINEL\n", encoding="utf-8")
+
+            records = wiki_pipeline.source_input_records(root)
+            markdown_record = next(item for item in records if item["source"] == "Clippings/shared.md")
+
+            self.assertNotEqual(markdown_record["content_path"], pdf_cache)
+            self.assertIn("_sanitized_clippings", markdown_record["content_path"].parts)
+            self.assertEqual(pdf_cache.read_text(encoding="utf-8"), "PDF CACHE SENTINEL\n")
+
+    def test_same_source_url_keeps_distinct_clipping_snapshots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            clipping_dir = root / "Clippings"
+            clipping_dir.mkdir(parents=True)
+            for name in ("Article.md", "Article annotated.md"):
+                (clipping_dir / name).write_text(
+                    "---\n"
+                    f'title: "{Path(name).stem}"\n'
+                    'source: "https://example.com/article"\n'
+                    "---\n\nReadable paragraph.\n",
+                    encoding="utf-8",
+                )
+
+            records = wiki_pipeline.source_input_records(root)
+
+            self.assertEqual(
+                [record["source"] for record in records],
+                ["Clippings/Article annotated.md", "Clippings/Article.md"],
+            )
 
 class CompileCommandTest(unittest.TestCase):
     def test_compile_returns_failure_when_conversion_fails(self) -> None:

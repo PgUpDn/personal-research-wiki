@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import html
 import json
 import os
 import re
@@ -29,6 +30,7 @@ import anthropic
 
 DEFAULT_ROOT = PROJECT_ROOT
 CONFIG_PATH = Path("_meta/config.json")
+CLIPPING_MERMAID_SOURCES_PATH = Path("_meta/clipping_mermaid_sources.json")
 SCHEMA_VERSION = "research-wiki-pdf-v1"
 
 STOPWORDS = {
@@ -569,6 +571,48 @@ THEME_PATTERNS = {
 }
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
+FENCED_MARKDOWN_BLOCK_RE = re.compile(
+    r"(?ms)^(?P<fence>`{3,}|~{3,})[^\n]*\n(?P<body>.*?)\n(?P=fence)[ \t]*$"
+)
+MERMAID_RENDER_ARTIFACT_MARKERS = (
+    "#mermaid-",
+    "@keyframes edge-animation-frame",
+    ".edge-animation-slow",
+    ".edge-animation-fast",
+    ".mindmap-node-label",
+    ".flowchart-link",
+    "--mermaid-font-family",
+    ".marker.cross",
+    ".edgepattern",
+)
+MERMAID_ESCAPED_FENCE_RE = re.compile(r"```mermaid\\n(.*?)\\n```", re.IGNORECASE | re.DOTALL)
+MERMAID_LITERAL_FENCE_RE = re.compile(r"```mermaid[ \t]*\r?\n(.*?)\r?\n```", re.IGNORECASE | re.DOTALL)
+MERMAID_DIAGRAM_PREFIXES = (
+    "architecture",
+    "block",
+    "classdiagram",
+    "erdiagram",
+    "flowchart",
+    "gantt",
+    "gitgraph",
+    "graph",
+    "journey",
+    "kanban",
+    "mindmap",
+    "packet",
+    "pie",
+    "quadrantchart",
+    "radar",
+    "requirementdiagram",
+    "sankey",
+    "sequencediagram",
+    "statediagram",
+    "timeline",
+    "treemap",
+    "xychart",
+    "zenuml",
+)
+CLIPPING_SANITIZATION_PIPELINE = "clipper-mermaid-reconstruction-v2"
 
 
 def load_config(root: Path) -> dict[str, Any]:
@@ -610,6 +654,7 @@ def load_config(root: Path) -> dict[str, Any]:
         "pdf2md_entrypoint": "_meta/node_tools/pdf2md/node_modules/pdf2md/bin/index.js",
         "pdf2md_workspace_dir": "_meta/pdf2md_work",
         "raw_images_dir": "raw/images",
+        "sanitized_clippings_dir": "_meta/converted_sources/_sanitized_clippings",
         "zotero_data_dir": "~/Zotero",
         "zotero_import_dir": "raw/zotero",
         "zotero_report_dir": "_meta/zotero_imports",
@@ -835,6 +880,187 @@ def converted_tex_markdown_path(root: Path, tex_path: Path) -> Path:
     return (root / config["converted_sources_dir"] / relative).with_suffix(".md")
 
 
+def converted_raw_markdown_path(root: Path, markdown_path: Path) -> Path:
+    config = load_config(root)
+    clippings_dir = root / "Clippings"
+    relative = markdown_path.relative_to(clippings_dir)
+    source_rel = markdown_path.relative_to(root).as_posix()
+    source_namespace = hashlib.sha256(source_rel.encode("utf-8")).hexdigest()[:12]
+    return root / config["sanitized_clippings_dir"] / source_namespace / relative
+
+
+def is_mermaid_render_artifact(block: str) -> bool:
+    lowered = block.lower()
+    if len(block) < 1000 or not re.search(r"#mermaid-\d+", lowered):
+        return False
+    marker_count = sum(marker in lowered for marker in MERMAID_RENDER_ARTIFACT_MARKERS)
+    css_signal_count = sum(
+        signal in lowered
+        for signal in ("stroke-width:", "fill:", "font-family:", "animation:", "text-anchor:")
+    )
+    return marker_count >= 3 and css_signal_count >= 3
+
+
+def mermaid_source_is_valid(source: str) -> bool:
+    for line in source.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("%%"):
+            continue
+        lowered = stripped.lower()
+        return any(lowered.startswith(prefix) for prefix in MERMAID_DIAGRAM_PREFIXES)
+    return False
+
+
+def decode_escaped_mermaid_source(source: str) -> str | None:
+    try:
+        decoded = json.loads(f'"{source}"')
+    except json.JSONDecodeError:
+        return None
+    normalized = html.unescape(decoded).replace("\r\n", "\n").strip()
+    return normalized if mermaid_source_is_valid(normalized) else None
+
+
+def extract_mermaid_sources_from_html(page_html: str) -> list[str]:
+    sources: list[str] = []
+    for match in MERMAID_ESCAPED_FENCE_RE.finditer(page_html):
+        source = decode_escaped_mermaid_source(match.group(1))
+        if source and source not in sources:
+            sources.append(source)
+    for match in MERMAID_LITERAL_FENCE_RE.finditer(page_html):
+        source = html.unescape(match.group(1)).replace("\r\n", "\n").strip()
+        if mermaid_source_is_valid(source) and source not in sources:
+            sources.append(source)
+    return sources
+
+
+def local_mermaid_source_entry(root: Path, source_url: str) -> tuple[list[str], bool]:
+    source_file = root / CLIPPING_MERMAID_SOURCES_PATH
+    if not source_file.exists() or not source_url:
+        return [], False
+    try:
+        configured = json.loads(source_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return [], False
+    if not isinstance(configured, dict) or source_url not in configured:
+        return [], False
+    sources = configured[source_url]
+    if not isinstance(sources, list):
+        return [], True
+    valid_sources = [
+        source.strip()
+        for source in sources
+        if isinstance(source, str) and mermaid_source_is_valid(source)
+    ]
+    return valid_sources, True
+
+
+def local_mermaid_sources(root: Path, source_url: str) -> list[str]:
+    return local_mermaid_source_entry(root, source_url)[0]
+
+
+def mermaid_sources_digest(sources: list[str]) -> str:
+    serialized = json.dumps(sources, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def rendered_mermaid_artifact_count(text: str) -> int:
+    return sum(
+        1
+        for match in FENCED_MARKDOWN_BLOCK_RE.finditer(text)
+        if is_mermaid_render_artifact(match.group("body"))
+    )
+
+
+def sanitize_clipping_markdown(text: str, mermaid_sources: list[str]) -> tuple[str, int]:
+    reconstructed = 0
+
+    def replace_artifact(match: re.Match[str]) -> str:
+        nonlocal reconstructed
+        if not is_mermaid_render_artifact(match.group("body")):
+            return match.group(0)
+        if reconstructed >= len(mermaid_sources):
+            return match.group(0)
+        source = mermaid_sources[reconstructed].strip()
+        reconstructed += 1
+        return f"```mermaid\n{source}\n```"
+
+    return FENCED_MARKDOWN_BLOCK_RE.sub(replace_artifact, text), reconstructed
+
+
+def sanitized_markdown_cache_content(
+    text: str,
+    source_rel: str,
+    source_digest: str,
+    reconstructed_blocks: int,
+    recovery_source: str,
+    sources_digest: str,
+) -> str:
+    metadata = [
+        f"sanitized_from: {json.dumps(source_rel, ensure_ascii=False)}",
+        f"sanitization_pipeline: {json.dumps(CLIPPING_SANITIZATION_PIPELINE)}",
+        f"source_digest: {json.dumps(source_digest)}",
+        f"sanitized_artifact_blocks: {reconstructed_blocks}",
+        f"reconstructed_mermaid_blocks: {reconstructed_blocks}",
+        f"mermaid_recovery_source: {json.dumps(recovery_source, ensure_ascii=False)}",
+        f"mermaid_sources_digest: {json.dumps(sources_digest)}",
+    ]
+    if text.startswith("---\n") and "\n---\n" in text[4:]:
+        frontmatter, body = text.split("\n---\n", 1)
+        return "\n".join([frontmatter, *metadata, "---", body])
+    return "\n".join(["---", *metadata, "---", text])
+
+
+def prepared_raw_markdown_content_path(
+    root: Path,
+    path: Path,
+) -> tuple[Path, int]:
+    try:
+        path.resolve().relative_to((root / "Clippings").resolve())
+    except ValueError:
+        return path, 0
+    original = read_text(path)
+    artifact_count = rendered_mermaid_artifact_count(original)
+    if not artifact_count:
+        return path, 0
+
+    cache_path = converted_raw_markdown_path(root, path)
+    source_rel = path.relative_to(root).as_posix()
+    source_digest = file_hash(path)
+    source_url = frontmatter_scalar(original, "source") or ""
+    local_sources = local_mermaid_sources(root, source_url)
+    mermaid_sources = local_sources if len(local_sources) == artifact_count else []
+    sources_digest = mermaid_sources_digest(mermaid_sources) if mermaid_sources else ""
+    if cache_path.exists():
+        cached = read_text(cache_path)
+        cached_count = int(frontmatter_scalar(cached, "reconstructed_mermaid_blocks") or 0)
+        cached_path_is_valid = bool(mermaid_sources) and (
+            frontmatter_scalar(cached, "sanitization_pipeline") == CLIPPING_SANITIZATION_PIPELINE
+            and frontmatter_scalar(cached, "source_digest") == source_digest
+            and cached_count == artifact_count
+            and rendered_mermaid_artifact_count(cached) == 0
+            and frontmatter_scalar(cached, "mermaid_sources_digest") == sources_digest
+        )
+        if cached_path_is_valid:
+            return cache_path, cached_count
+
+    if not mermaid_sources:
+        return path, 0
+    sanitized, reconstructed_blocks = sanitize_clipping_markdown(original, mermaid_sources)
+    if reconstructed_blocks != artifact_count:
+        return path, 0
+
+    cache_content = sanitized_markdown_cache_content(
+        sanitized,
+        source_rel,
+        source_digest,
+        reconstructed_blocks,
+        "local-map",
+        sources_digest,
+    )
+    write_text_if_changed(cache_path, cache_content)
+    return cache_path, reconstructed_blocks
+
+
 def configured_source_dirs(root: Path) -> list[Path]:
     config = load_config(root)
     configured = config.get("source_dirs")
@@ -923,12 +1149,18 @@ def source_input_records(root: Path) -> list[dict[str, Any]]:
     for path in raw_markdown_files(root):
         if path.name.lower() == "readme.md":
             continue
+        content_path, reconstructed_mermaid_blocks = prepared_raw_markdown_content_path(
+            root,
+            path,
+        )
         records.append(
             {
                 "source": path.relative_to(root).as_posix(),
                 "logical_path": path,
-                "content_path": path,
+                "content_path": content_path,
                 "source_kind": "raw_markdown",
+                "sanitized_artifact_blocks": reconstructed_mermaid_blocks,
+                "reconstructed_mermaid_blocks": reconstructed_mermaid_blocks,
             }
         )
 
@@ -2657,6 +2889,8 @@ def build_source_profile(root: Path, logical_path: Path, content_path: Path, sou
     venue = extract_venue(text, doi=doi, arxiv_id=arxiv_id)
     github_links = extract_github_links(text)
     transcription_mode = cache_transcription_mode(text) if source_kind in {"raw_pdf", "raw_tex"} else "raw_markdown"
+    sanitized_artifact_blocks = int(frontmatter_scalar(text, "sanitized_artifact_blocks") or 0)
+    reconstructed_mermaid_blocks = int(frontmatter_scalar(text, "reconstructed_mermaid_blocks") or 0)
     section_index = extract_section_headings(text, logical_path)
     body_signal = concept_body_signal(text, source_kind) if source_kind == "raw_markdown" or not abstract else ""
     concept_text = "\n\n".join(
@@ -2679,6 +2913,8 @@ def build_source_profile(root: Path, logical_path: Path, content_path: Path, sou
     tags = ["research/source", f"source/{source_kind.replace('_', '-')}"]
     if source_kind in {"raw_pdf", "raw_tex"}:
         tags.append(f"transcription/{transcription_mode.replace('_', '-')}")
+    if reconstructed_mermaid_blocks:
+        tags.append("transcription/mermaid-reconstructed")
     return {
         "source": source_rel,
         "source_files": [source_rel],
@@ -2686,6 +2922,8 @@ def build_source_profile(root: Path, logical_path: Path, content_path: Path, sou
         "source_kind": source_kind,
         "source_status": "compiled",
         "transcription_mode": transcription_mode,
+        "sanitized_artifact_blocks": sanitized_artifact_blocks,
+        "reconstructed_mermaid_blocks": reconstructed_mermaid_blocks,
         "title": title,
         "aliases": aliases,
         "schema_version": SCHEMA_VERSION,
@@ -2884,6 +3122,10 @@ def source_page_content(profile: dict[str, Any], compile_date: str) -> str:
         lines.append(f"page_image_dir: {json.dumps(profile['page_image_dir'], ensure_ascii=False)}")
     if profile.get("page_count"):
         lines.append(f"page_count: {profile['page_count']}")
+    if profile.get("sanitized_artifact_blocks"):
+        lines.append(f"sanitized_artifact_blocks: {profile['sanitized_artifact_blocks']}")
+    if profile.get("reconstructed_mermaid_blocks"):
+        lines.append(f"reconstructed_mermaid_blocks: {profile['reconstructed_mermaid_blocks']}")
     lines.extend(
         [
             f"last_compiled: {compile_date}",
@@ -2907,6 +3149,20 @@ def source_page_content(profile: dict[str, Any], compile_date: str) -> str:
                 "",
                 *[f"- {author}" for author in full_author_list],
                 "</details>",
+            ]
+        )
+    if profile.get("reconstructed_mermaid_blocks") and profile.get("content_path"):
+        clean_href = os.path.relpath(
+            profile["content_path"],
+            start=Path(profile["page"]).parent.as_posix(),
+        )
+        lines.extend(
+            [
+                "",
+                "## Reconstructed Reading Copy",
+                "",
+                f"- [Open the clean full-text Markdown](<{clean_href}>)",
+                f"- Reconstructed {profile['reconstructed_mermaid_blocks']} Mermaid diagram(s) from the article's original Markdown; the immutable clipping remains unchanged.",
             ]
         )
     lines.extend(["", "## TL;DR", "", profile.get("summary") or "No summary yet.", ""])
@@ -3287,6 +3543,21 @@ def render_page_formats(compile_date: str) -> str:
         "- `## Conversion Snapshot`",
         "- `## Abstract` when present",
         "- `## Extracted Markdown`",
+        "",
+        "## Reconstructed Clipping Cache Notes",
+        "",
+        "Location: `_meta/converted_sources/_sanitized_clippings/<source-hash>/*.md`",
+        "",
+        "Preserve the clipping's original frontmatter and add:",
+        "- `sanitized_from`",
+        "- `sanitization_pipeline`",
+        "- `source_digest`",
+        "- `sanitized_artifact_blocks`",
+        "- `reconstructed_mermaid_blocks`",
+        "- `mermaid_recovery_source`",
+        "- `mermaid_sources_digest`",
+        "",
+        "Replace only high-confidence rendered Mermaid artifact fences and retain ordinary code fences and surrounding article text. Generate a cache only when the recovered definition count exactly matches the artifact count; otherwise compile the immutable clipping unchanged.",
         "",
         "## Source Pages",
         "",

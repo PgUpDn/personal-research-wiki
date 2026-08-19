@@ -3,12 +3,12 @@ title: "Page Formats"
 aliases:
   - "Page Formats"
 note_type: "system"
-last_compiled: 2026-08-06
+last_compiled: 2026-08-19
 ---
 
 # Page Formats
 
-- Last refreshed: 2026-08-06
+- Last refreshed: 2026-08-19
 - Schema version: `research-wiki-pdf-v1`
 
 ## Design Goals
@@ -71,6 +71,21 @@ Sections:
 - `## Conversion Snapshot`
 - `## Abstract` when present
 - `## Extracted Markdown`
+
+## Reconstructed Clipping Cache Notes
+
+Location: `_meta/converted_sources/_sanitized_clippings/<source-hash>/*.md`
+
+Preserve the clipping's original frontmatter and add:
+- `sanitized_from`
+- `sanitization_pipeline`
+- `source_digest`
+- `sanitized_artifact_blocks`
+- `reconstructed_mermaid_blocks`
+- `mermaid_recovery_source`
+- `mermaid_sources_digest`
+
+Replace only high-confidence rendered Mermaid artifact fences and retain ordinary code fences and surrounding article text. Generate a cache only when the recovered definition count exactly matches the artifact count; otherwise compile the immutable clipping unchanged.
 
 ## Source Pages
 

@@ -95,5 +95,39 @@ class ProjectExportTest(unittest.TestCase):
             self.assertEqual(guardrail["parent_project_id"], "research-programme")
 
 
+class MarkdownAssetExportTest(unittest.TestCase):
+    def test_angle_wrapped_local_markdown_link_is_copied(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "wiki/sources").mkdir(parents=True)
+            (root / "wiki/INDEX.md").write_text("# Research Wiki Index\n", encoding="utf-8")
+            cache = root / "_meta/converted_sources/_sanitized_clippings/example/Example Article.md"
+            cache.parent.mkdir(parents=True)
+            cache.write_text("# Clean article\n", encoding="utf-8")
+            (root / "wiki/sources/example.md").write_text(
+                "---\n"
+                'title: "Example Article"\n'
+                'note_type: "source"\n'
+                "---\n\n"
+                "[Open clean copy](<../../_meta/converted_sources/_sanitized_clippings/example/Example Article.md>)\n",
+                encoding="utf-8",
+            )
+
+            export_html.export_html(root)
+
+            exported = (root / "output/html/sources/example.html").read_text(encoding="utf-8")
+            self.assertIn(
+                'href="../_files/_meta/converted_sources/_sanitized_clippings/example/Example Article.md"',
+                exported,
+            )
+            self.assertNotIn("&amp;lt;", exported)
+            self.assertTrue(
+                (
+                    root
+                    / "output/html/_files/_meta/converted_sources/_sanitized_clippings/example/Example Article.md"
+                ).is_file()
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
