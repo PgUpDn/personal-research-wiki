@@ -219,7 +219,7 @@ CACHE_SCAFFOLD_HEADINGS = {
     "Source Page Images",
 }
 
-SUPERSCRIPT_TRANSLATION = str.maketrans("", "", "¹²³⁴⁵⁶⁷⁸⁹⁰†‡✉*\\")
+SUPERSCRIPT_TRANSLATION = str.maketrans("", "", "¹²³⁴⁵⁶⁷⁸⁹⁰†‡✉*∗\\")
 
 GENERIC_HEADER_LINES = {
     "abstract",
@@ -1520,7 +1520,7 @@ def split_author_line(raw_line: str) -> list[str]:
     separated = separated.replace(r"\quad", ", ")
     separated = re.sub(r"\^\{[^}]*\}", ", ", separated)
     separated = re.sub(r"\^[A-Za-z0-9\\,*†‡]+", ", ", separated)
-    separated = re.sub(r"[¹²³⁴⁵⁶⁷⁸⁹⁰†‡✉]+", ", ", separated)
+    separated = re.sub(r"[¹²³⁴⁵⁶⁷⁸⁹⁰†‡✉∗]+", ", ", separated)
     separated = separated.replace(" · ", ", ").replace("•", ",").replace(";", ",")
     separated = re.sub(r"\band\b", ",", separated, flags=re.IGNORECASE)
     separated = re.sub(r"\s{2,}", ", ", separated)
@@ -1625,7 +1625,7 @@ def normalize_author_token(token: str) -> str:
     cleaned = re.sub(r"\$[^$]*\$", "", token)
     cleaned = re.sub(r"\^\{[^}]*\}", "", cleaned)
     cleaned = re.sub(r"\^\d+", "", cleaned)
-    cleaned = re.sub(r"[*†‡§¶#0-9]+", " ", cleaned)
+    cleaned = re.sub(r"[*∗†‡§¶#0-9]+", " ", cleaned)
     cleaned = re.sub(r"\([^)]*\)", " ", cleaned)
     cleaned = cleaned.translate(SUPERSCRIPT_TRANSLATION)
     cleaned = normalize_text(cleaned.replace("et al.", "").replace("et al", ""))
@@ -1716,7 +1716,8 @@ def author_names_from_mixed_line(raw_line: str) -> list[str]:
 def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[str]:
     declared_authors = frontmatter_list(markdown_text, "authors")
     if declared_authors:
-        return declared_authors
+        cleaned_authors = [normalize_text(re.sub(r"[∗*†‡§¶✉]+", " ", author)) for author in declared_authors]
+        return [author for author in cleaned_authors if author]
 
     region = bibliographic_region(markdown_text, max_lines=40)
     lines = [line.strip() for line in region.splitlines()]
@@ -2109,7 +2110,7 @@ def extract_abstract(markdown_text: str) -> str:
             return paragraph[:1600]
 
     abstract_match = re.search(
-        r"(?is)\babstract\b[:\s]*\n?(.*?)(?:\n\s*#|\n\s*##|\n\s*\d+\s+introduction\b|\n\s*introduction\b)",
+        r"(?is)\babstract\b[:\s]*\n?(.*?)(?:\n\s*#|\n\s*##|\n\s*\d+\.?\s+introduction\b|\n\s*introduction\b)",
         compact,
     )
     unlabeled = unlabeled_title_page_abstract(compact)

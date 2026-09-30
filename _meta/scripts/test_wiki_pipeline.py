@@ -359,6 +359,13 @@ class PandocLatexConversionTest(unittest.TestCase):
             "The introduction explains the differentiable physical solver and its intended role.",
         )
 
+    def test_declared_authors_drop_footnote_markers(self) -> None:
+        cache = '---\ntitle: Example\nauthors:\n  - "Tung Nguyen∗"\n  - "Arsh Koneru*†"\n---\n\nBody.\n'
+        self.assertEqual(
+            wiki_pipeline.extract_authors(cache, "Example", Path("raw/example.pdf")),
+            ["Tung Nguyen", "Arsh Koneru"],
+        )
+
     def test_unlabeled_title_page_abstract_beats_late_abstract_verb(self) -> None:
         abstract_lines = [
             "Scientific discovery is defined by the ability to identify the boundaries of existing knowledge and",
