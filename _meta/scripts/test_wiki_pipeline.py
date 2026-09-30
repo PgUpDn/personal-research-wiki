@@ -359,6 +359,31 @@ class PandocLatexConversionTest(unittest.TestCase):
             "The introduction explains the differentiable physical solver and its intended role.",
         )
 
+    def test_unlabeled_title_page_abstract_beats_late_abstract_verb(self) -> None:
+        abstract_lines = [
+            "Scientific discovery is defined by the ability to identify the boundaries of existing knowledge and",
+            "venture into unexplored territory. We introduce an autonomous multi-agent framework that takes an",
+            "initial problem as input, establishes baselines, formulates hypotheses and coordinates agents to",
+            "run an end-to-end discovery cycle, validated by a simulated peer-review rebuttal engine at scale.",
+        ]
+        cache = (
+            "---\ntitle: Example\nsource_kind: raw_pdf\n---\n\n"
+            "## Extracted Markdown\n\n"
+            "Example: Pioneering the Frontier\n"
+            "JaneDoe1,JohnRoe1,AnnSmith2 and\nBobLee1\n"
+            "1ExampleResearch,2UniversityofExample\n"
+            + "\n".join(abstract_lines)
+            + "\n1. Introduction\nScientific discovery has long been the hallmark of human ingenuity.\n"
+            + "Filler text. " * 900
+            + "\nabstract all stages (see Table 1) using pseudocode.\n"
+        )
+
+        abstract = wiki_pipeline.extract_abstract(cache)
+
+        self.assertTrue(abstract.startswith("Scientific discovery is defined"))
+        self.assertIn("peer-review rebuttal engine", abstract)
+        self.assertNotIn("JaneDoe", abstract)
+
     def test_adjacent_tex_is_indexed_instead_of_duplicate_pdf(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

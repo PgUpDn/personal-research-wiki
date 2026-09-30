@@ -2056,6 +2056,35 @@ def first_meaningful_paragraph(markdown_text: str, title: str = "", limit: int =
     return normalize_text(" ".join(snippets))[:limit]
 
 
+ABSTRACT_SEARCH_WINDOW = 8000
+AUTHOR_LINE_PATTERN = re.compile(r"[a-z]\d,\s?[A-Z]|(?:^|,)\s?\d[A-Z][a-z]|@")
+
+
+def unlabeled_title_page_abstract(body: str) -> str:
+    """Abstract printed without an 'Abstract' label, just before '1. Introduction'.
+
+    Walks back from the first numbered Introduction heading on the title page and
+    keeps the contiguous block of long prose lines, stopping at author or
+    affiliation lines (superscript markers such as ``Nam1,`` or ``1Google``).
+    """
+    window = body[:ABSTRACT_SEARCH_WINDOW]
+    intro = re.search(r"(?im)^\s*(?:#{1,3}\s*)?1\.?\s+Introduction\b", window)
+    if not intro:
+        return ""
+    lines = [line.strip() for line in window[: intro.start()].splitlines()]
+    block: list[str] = []
+    for line in reversed(lines):
+        if not line:
+            if block:
+                break
+            continue
+        if len(line) < 50 or AUTHOR_LINE_PATTERN.search(line) or line.startswith(("#", "<", "|")):
+            break
+        block.append(line)
+    text = normalize_text(" ".join(reversed(block)))
+    return text if len(text.split()) >= 40 else ""
+
+
 def extract_abstract(markdown_text: str) -> str:
     cache_body = strip_frontmatter(markdown_text)
     cache_abstract = re.search(
@@ -2083,6 +2112,9 @@ def extract_abstract(markdown_text: str) -> str:
         r"(?is)\babstract\b[:\s]*\n?(.*?)(?:\n\s*#|\n\s*##|\n\s*\d+\s+introduction\b|\n\s*introduction\b)",
         compact,
     )
+    unlabeled = unlabeled_title_page_abstract(compact)
+    if unlabeled and (not abstract_match or abstract_match.start() > ABSTRACT_SEARCH_WINDOW):
+        return unlabeled[:1600]
     if abstract_match:
         snippet = normalize_text(abstract_match.group(1))
         if snippet:
