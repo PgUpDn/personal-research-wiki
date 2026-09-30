@@ -71,6 +71,15 @@ class AskCodexTests(unittest.TestCase):
             ):
                 self.assertEqual(resolve_codex_cli(root), str(bundled_cli))
 
+    def test_candidates_include_current_chatgpt_bundle_layout(self) -> None:
+        from ask_wiki import CODEX_CLI_CANDIDATES
+
+        self.assertIn(
+            Path("/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex"),
+            CODEX_CLI_CANDIDATES,
+        )
+        self.assertIn(Path("/Applications/ChatGPT.app/Contents/Resources/codex"), CODEX_CLI_CANDIDATES)
+
     def test_ask_codex_uses_ephemeral_subscription_cli(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

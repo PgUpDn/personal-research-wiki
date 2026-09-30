@@ -26,9 +26,11 @@ from wiki_pipeline import (
     write_text_if_changed,
 )
 
-CODEX_CLI_CANDIDATES = (
-    Path("/Applications/ChatGPT.app/Contents/Resources/codex"),
-    Path.home() / "Applications/ChatGPT.app/Contents/Resources/codex",
+# ChatGPT.app bundles moved the CLI from Resources/codex to Resources/codex-cli/bin/codex (Sept 2026).
+CODEX_CLI_CANDIDATES = tuple(
+    app_dir / "Contents/Resources" / relative
+    for app_dir in (Path("/Applications/ChatGPT.app"), Path.home() / "Applications/ChatGPT.app")
+    for relative in ("codex-cli/bin/codex", "codex")
 )
 
 
