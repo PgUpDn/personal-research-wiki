@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.yangx2.research-wiki-html</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/yangx2/Documents/my-research/.venv/bin/python</string>
+    <string>/Users/yangx2/Documents/my-research/_meta/scripts/wiki_cli.py</string>
+    <string>serve-html</string>
+    <string>--root</string>
+    <string>/Users/yangx2/Documents/my-research</string>
+    <string>--host</string>
+    <string>127.0.0.1</string>
+    <string>--port</string>
+    <string>8765</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/yangx2/Documents/my-research</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/yangx2/Library/Logs/ResearchWiki/html-server.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/yangx2/Library/Logs/ResearchWiki/html-server.error.log</string>
+</dict>
+</plist>

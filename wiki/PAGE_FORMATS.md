@@ -3,12 +3,12 @@ title: "Page Formats"
 aliases:
   - "Page Formats"
 note_type: "system"
-last_compiled: 2026-08-19
+last_compiled: 2026-09-30
 ---
 
 # Page Formats
 
-- Last refreshed: 2026-08-19
+- Last refreshed: 2026-09-30
 - Schema version: `research-wiki-pdf-v1`
 
 ## Design Goals
@@ -17,6 +17,20 @@ last_compiled: 2026-08-19
 - Put Dataview-friendly metadata in frontmatter and graph-friendly wikilinks in body sections.
 - Keep generated source pages compact enough for browsing and Q&A, while preserving long transcripts in cache notes.
 - Prefer flat scalar and list properties over deeply nested YAML so Obsidian Properties and Dataview stay easy to query.
+
+## Open Knowledge Format Export
+
+The native `wiki/` schema remains optimized for Obsidian. A deterministic compatibility export under `output/okf/` targets Open Knowledge Format v0.2 without changing source or wiki documents.
+
+The export provides:
+- required OKF `type` metadata and standard Markdown links
+- structured `sources` provenance with stable identifiers and source timestamps when available
+- explicit `generated`, `status`, and active-project `stale_after` signals
+- optional explicit verification via flat native fields `okf_verified_by` and `okf_verified_at`
+- progressive `index.md` files and a newest-first `log.md`
+- `manifest.json`, `conformance.json`, and a portable ZIP archive
+
+Trust tiers are derived only from explicit verification events; compiler output is not mislabeled as human-reviewed content.
 
 ## PDF Cache Notes
 
@@ -139,6 +153,7 @@ Frontmatter:
 - `schema_version`
 - `concept_group`
 - `source_count`
+- `curated_note` only when `wiki/curated/<slug>.md` exists
 - `sources`
 - `source_pages`
 - `related`
@@ -147,11 +162,34 @@ Frontmatter:
 
 Sections:
 - `## Definition`
+- `## Curated notes` only when `wiki/curated/<slug>.md` exists (see Curated Concept Notes)
 - `## What The Sources Emphasize`
 - `## Coverage`
 - `## Related Concepts`
 - `## Representative sources`
 - `## Provenance`
+
+## Curated Concept Notes
+
+Location: `wiki/curated/<slug>.md`, at most one optional file per concept catalog slug (the slug is the file stem).
+
+Frontmatter:
+- `title`
+- `note_type: curated`
+- `concept: <slug>`
+- `sources` (raw paths the notes are distilled from)
+- `tags`
+- `last_edited`
+
+What compile does:
+- When `wiki/curated/<slug>.md` exists, `compile` strips its frontmatter and a leading H1 and inlines the body verbatim into `wiki/concepts/<slug>.md` as `## Curated notes`, placed right after `## Definition` and preceded by the italic line `Hand-maintained in wiki/curated/<slug>.md; the other sections are compiler output.` Wikilinks inside the curated text are preserved exactly as written.
+- A concept with a curated file, or with `keep_without_sources: true` in its catalog entry, is generated even when no source matches its aliases (`source_count: 0`, `Representative sources: none matched yet`) and is never deleted as stale.
+- Curated files are fragments, not pages. The lint orphan scan, `INDEX.md`, the OKF and HTML exports, and the CLI search corpus enumerate only the top-level `wiki/*.md`, `wiki/concepts/`, `wiki/sources/`, `wiki/projects/`, and `wiki/derived/`, so `wiki/curated/` never appears as a standalone document; the lint additionally skips any document declaring `note_type: curated`.
+- Curated text is the ONLY place hand-written concept prose survives: every other section of `wiki/concepts/*.md` is rewritten on each compile, so edit `wiki/curated/<slug>.md`, never the generated concept page.
+
+Writing guidance:
+- Use `###` headings inside the curated body (the generated page owns `#` and `##`).
+- Cite the raw source of record with a wikilink to its source page or a backticked `raw/` path; do not restate facts the source does not contain.
 
 ## Project Pages
 

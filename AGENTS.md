@@ -21,6 +21,8 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 - `wiki/projects/`: active research programmes and hierarchical subproject dossiers connecting evidence, milestones, gaps, and next actions.
 - `wiki/derived/`: answers, comparisons, and other outputs worth filing back into the knowledge base.
 - `output/`: generated artifacts that may or may not later be filed back into `wiki/derived/`.
+- `output/okf/`: deterministic Open Knowledge Format v0.2 compatibility bundle with standard Markdown links, structured provenance, lifecycle metadata, progressive indexes, a manifest, and a conformance report.
+- `output/research-wiki-okf.zip`: portable archive of the current OKF bundle.
 - `_meta/converted_sources/`: machine-generated Markdown caches for PDFs, LaTeX packages, and sanitized clipping copies.
 - `_meta/source_page_images/`: rendered page images used during PDF transcription.
 - `_meta/zotero_imports/`: local, redacted summaries of Zotero attachment imports.
@@ -30,7 +32,7 @@ This repository follows the "LLM wiki" pattern: `raw/` and `Clippings/` are the 
 
 When new sources appear:
 
-1. Read the new raw source. For Zotero, preview a narrowly selected collection with `wiki_cli.py zotero-import --dry-run` before copying its PDF attachments into `raw/zotero/`.
+1. Read the new raw source. For Zotero, preview the `AI` collection and all its descendants with `wiki_cli.py zotero-import --collection AI --include-subcollections --dry-run` before copying its PDF attachments into `raw/zotero/`.
 2. If it is a PDF, transcribe it into `_meta/converted_sources/` without changing the original PDF. If an adjacent same-stem `.tex` exists, compile the LaTeX source with Pandoc and retain the PDF as the visual snapshot instead of creating duplicate source pages. If a clipping contains rendered Mermaid SVG/CSS artifacts, write a sanitized copy under `_meta/converted_sources/_sanitized_clippings/` and compile that copy without changing the clipping.
 3. Create or update a source page in `wiki/sources/`.
 4. Update the relevant concept pages in `wiki/concepts/`.
@@ -58,6 +60,15 @@ Periodically check for:
 - low-coverage sources that only map to broad fallback concepts
 
 Record lint outcomes in `wiki/LINT_AND_HEAL.md` and append a lint entry to `wiki/LOG.md`.
+
+## Interchange Workflow
+
+1. Keep Obsidian-oriented `wiki/` pages as the native authoring and synthesis layer.
+2. Generate `output/okf/` with `wiki_cli.py export-okf`; HTML export, the local server, and the watcher also refresh it automatically.
+3. Preserve native provenance as OKF v0.2 `sources` objects and convert Obsidian wikilinks to standard bundle-relative Markdown links.
+4. Derive trust tiers only from explicit OKF verification events. Record a deliberate review with flat native fields `okf_verified_by` and `okf_verified_at`; use `human:<id>` for a person or the documented process/tool actor form for machine confirmation. Never infer human review from a project or manuscript being marked complete.
+5. Use absolute `stale_after` timestamps for active project snapshots; the default refresh window is 90 days.
+6. Require `conformance.json` to report a valid bundle before treating the export as ready to share.
 
 ## Style
 

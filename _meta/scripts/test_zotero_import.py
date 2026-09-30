@@ -6,10 +6,13 @@ import contextlib
 import io
 import json
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+import pymupdf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -292,35 +295,135 @@ class ZoteroImportTests(unittest.TestCase):
         self.assertEqual(before, after)
 
     def test_active_rollback_journal_is_rejected_without_touching_zotero(self) -> None:
-        writer = sqlite3.connect(self.database)
-        writer.execute("pragma journal_mode = delete")
-        writer.execute("pragma cache_size = 1")
-        writer.execute("begin immediate")
-        for index in range(50):
-            writer.execute(
-                "insert into collections values (?, ?, null, 1, ?)",
-                (1000 + index, "Uncommitted", f"TX{index:06d}"),
-            )
+        writer_script = """
+import sqlite3
+import sys
+
+connection = sqlite3.connect(sys.argv[1])
+connection.execute("pragma journal_mode = delete")
+connection.execute("pragma cache_size = 1")
+connection.execute("begin immediate")
+for index in range(50):
+    connection.execute(
+        "insert into collections values (?, ?, null, 1, ?)",
+        (1000 + index, "Uncommitted", f"TX{index:06d}"),
+    )
+print("ready", flush=True)
+sys.stdin.readline()
+connection.rollback()
+connection.close()
+"""
+        writer = subprocess.Popen(
+            [sys.executable, "-c", writer_script, str(self.database)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        self.assertIsNotNone(writer.stdout)
+        self.assertEqual(writer.stdout.readline().strip(), "ready")
+
+        try:
+            journal = Path(f"{self.database}-journal")
+            self.assertTrue(journal.is_file())
+            self.assertGreater(journal.stat().st_size, 0)
+
+            def snapshot() -> dict[str, tuple[int, int, str]]:
+                result = {}
+                for path in sorted(self.zotero.iterdir()):
+                    if path.is_file():
+                        metadata = path.stat()
+                        result[path.name] = (metadata.st_size, metadata.st_mtime_ns, file_hash(path))
+                return result
+
+            before = snapshot()
+            with self.assertRaisesRegex(RuntimeError, "Close Zotero and retry"):
+                import_zotero_collection(self._options(dry_run=True))
+            after = snapshot()
+
+            self.assertEqual(before, after)
+        finally:
+            self.assertIsNotNone(writer.stdin)
+            writer.stdin.write("\n")
+            writer.stdin.flush()
+            writer.communicate(timeout=5)
+
+    def test_inactive_zeroed_rollback_journal_is_ignored(self) -> None:
         journal = Path(f"{self.database}-journal")
-        self.assertTrue(journal.is_file())
-        self.assertGreater(journal.stat().st_size, 0)
+        journal.write_bytes(b"\0" * 4096)
+        before = file_hash(journal)
 
-        def snapshot() -> dict[str, tuple[int, int, str]]:
-            result = {}
-            for path in sorted(self.zotero.iterdir()):
-                if path.is_file():
-                    metadata = path.stat()
-                    result[path.name] = (metadata.st_size, metadata.st_mtime_ns, file_hash(path))
-            return result
+        result = import_zotero_collection(self._options(dry_run=True))
 
-        before = snapshot()
-        with self.assertRaisesRegex(RuntimeError, "Close Zotero and retry"):
-            import_zotero_collection(self._options(dry_run=True))
-        after = snapshot()
-        writer.rollback()
-        writer.close()
+        self.assertEqual(result["status"], "dry-run")
+        self.assertEqual(result["stats"]["would_import"], 3)
+        self.assertEqual(file_hash(journal), before)
 
-        self.assertEqual(before, after)
+    def test_binary_different_pdfs_with_identical_content_are_deduplicated(self) -> None:
+        first = self.zotero / "storage/VISUAL01/duplicate.pdf"
+        second = self.zotero / "storage/VISUAL02/duplicate.pdf"
+        for path, producer in ((first, "first"), (second, "second")):
+            path.parent.mkdir(parents=True)
+            document = pymupdf.open()
+            page = document.new_page()
+            page.insert_text((72, 72), "Same paper content")
+            document.set_metadata({"producer": producer})
+            document.save(path)
+            document.close()
+
+        connection = sqlite3.connect(self.database)
+        connection.executescript(
+            """
+            insert into items values (120, 'VISUAL01');
+            insert into items values (121, 'VISUAL02');
+            insert into collectionItems values (11, 120);
+            insert into collectionItems values (11, 121);
+            insert into itemAttachments values (120, null, 'application/pdf', 'storage:duplicate.pdf');
+            insert into itemAttachments values (121, null, 'application/pdf', 'storage:duplicate.pdf');
+            """
+        )
+        connection.commit()
+        connection.close()
+
+        result = import_zotero_collection(self._options(dry_run=True))
+
+        self.assertEqual(result["stats"]["skipped_duplicate_content"], 1)
+        self.assertEqual(result["stats"]["would_import"], 4)
+        duplicate = next(
+            item for item in result["skipped"] if item["reason"] == "duplicate_content"
+        )
+        self.assertTrue(duplicate["duplicate_of"].startswith("raw/zotero/Research/"))
+
+    def test_existing_clipping_title_prevents_duplicate_pdf_import(self) -> None:
+        clipping_dir = self.root / "Clippings"
+        clipping_dir.mkdir()
+        clipping = clipping_dir / "A Distinctive Existing Research Paper.md"
+        clipping.write_text("# A Distinctive Existing Research Paper\n", encoding="utf-8")
+        self._write_stored("TITLE001", "Author - 2026 - A Distinctive Existing Research Paper.pdf", PDF_C + b"title")
+
+        connection = sqlite3.connect(self.database)
+        connection.executescript(
+            """
+            insert into items values (130, 'TITLEPAR');
+            insert into items values (131, 'TITLE001');
+            insert into collectionItems values (11, 130);
+            insert into itemAttachments values (
+                131,
+                130,
+                'application/pdf',
+                'storage:Author - 2026 - A Distinctive Existing Research Paper.pdf'
+            );
+            """
+        )
+        connection.commit()
+        connection.close()
+
+        result = import_zotero_collection(self._options(dry_run=True))
+
+        self.assertEqual(result["stats"]["skipped_duplicate_title"], 1)
+        duplicate = next(
+            item for item in result["skipped"] if item["reason"] == "duplicate_title"
+        )
+        self.assertEqual(duplicate["duplicate_of"], "Clippings/A Distinctive Existing Research Paper.md")
 
     def test_filenames_fit_common_limits_and_avoid_windows_device_names(self) -> None:
         self.assertLessEqual(len(safe_pdf_filename("研究" * 120).encode("utf-8")), 255)

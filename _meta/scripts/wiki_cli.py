@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import shutil
+from collections.abc import Iterable
 from pathlib import Path
 
 from ask_wiki import ask_main
-from export_html import export_html_main
+from export_html import export_html_main, parse_aliases
+from export_okf import export_okf_main
 from serve_html import serve_html_main
 from zotero_import import add_zotero_arguments, run_zotero_args
 from wiki_pipeline import (
@@ -21,13 +24,29 @@ from wiki_pipeline import (
     parse_root_arg,
     read_text,
     slugify,
+    strip_frontmatter,
     timestamp_string,
-    top_terms,
     watch_main,
 )
 
 
-def wiki_documents(root: Path) -> list[Path]:
+SEARCH_STOPWORDS = frozenset(
+    """
+    a an and are as at be by do for from has have how if in into is it its of on or
+    than that the their then there these this to was were what when where which who
+    why will with vs
+    """.split()
+)
+# Field weights and per-term count caps. Caps stop long pages from winning by
+# length alone; the body cap is the only length control (no character cutoff).
+SEARCH_FIELD_WEIGHTS = {"title": 10, "aliases": 8, "headings": 3, "body": 1}
+SEARCH_FIELD_CAPS = {"title": 2, "aliases": 4, "headings": 6, "body": 20}
+SEARCH_PHRASE_BONUS = 20.0
+SEARCH_SNIPPET_CHARS = 220
+SEARCH_SNIPPET_LEAD = 60
+
+
+def wiki_documents(root: Path, include_raw: bool = False) -> list[Path]:
     config = load_config(root)
     wiki_dir = root / config["wiki_dir"]
     paths = sorted(path for path in wiki_dir.glob("*.md") if path.is_file())
@@ -35,52 +54,170 @@ def wiki_documents(root: Path) -> list[Path]:
     paths.extend(sorted((root / config["concepts_dir"]).glob("*.md")))
     paths.extend(sorted((root / config.get("projects_dir", "wiki/projects")).glob("*.md")))
     paths.extend(sorted((root / config["derived_wiki_dir"]).glob("*.md")))
-    return [path for path in paths if path.exists()]
+    if include_raw:
+        raw_dir = root / config.get("raw_dir", "raw")
+        paths.extend(sorted(path for path in raw_dir.rglob("*.md") if path.is_file()))
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for path in paths:
+        if path.exists() and path not in seen:
+            seen.add(path)
+            unique.append(path)
+    return unique
+
+
+def normalize_phrase(text: str) -> str:
+    """Lowercase and collapse every non-alphanumeric run to one space."""
+    return " ".join(re.findall(r"[a-z0-9]+", text.lower()))
 
 
 def search_terms(query: str) -> list[str]:
-    terms = set(top_terms(query, limit=10))
-    for token in re.findall(r"[a-zA-Z][a-zA-Z0-9\-]{2,}", query.lower()):
-        terms.add(token)
-    return sorted(terms)
+    """Query tokens: lowercase alphanumeric runs of length >= 2 (acronyms such as
+    FE/CL/FR survive), function words dropped, order kept, duplicates removed.
+    If every token is a function word the tokens are kept so the query still runs."""
+    tokens = [token for token in re.findall(r"[a-z0-9]+", query.lower()) if len(token) >= 2]
+    kept = [token for token in tokens if token not in SEARCH_STOPWORDS] or tokens
+    terms: list[str] = []
+    for token in kept:
+        if token not in terms:
+            terms.append(token)
+    return terms
 
 
-def search_score(text: str, title: str, terms: list[str]) -> int:
-    haystack = f"{title}\n{text[:20000]}".lower()
-    score = 0
+def term_regex(term: str) -> str:
+    """Word-boundary regex for one lowercase query token with a light plural stem.
+
+    Boundaries are alphanumeric lookarounds instead of ``\\b`` so that underscores,
+    dots and hyphens separate words: ``SHIPYARD_TANK_V17`` contains ``v17``,
+    ``T.BULKHEAD`` contains ``bulkhead``, ``physics-informed`` contains ``informed``,
+    while ``surrogate`` does not contain ``gate`` and ``meshgraphnet`` does not
+    contain ``net``. The stem accepts singular/plural pairs (slot/slots,
+    mesh/meshes, taxonomy/taxonomies) in either direction.
+    """
+    stem = term
+    if len(term) > 4 and term.endswith("ies"):
+        stem = term[:-3] + "y"
+    elif len(term) > 3 and term.endswith("s") and not term.endswith(("ss", "us", "is")):
+        stem = term[:-1]
+    if len(stem) > 3 and stem.endswith("y"):
+        core = re.escape(stem[:-1]) + "(?:y|ies)"
+    elif len(stem) >= 3:
+        core = re.escape(stem) + "(?:s|es)?"
+    else:
+        core = re.escape(stem)
+    return rf"(?<![a-z0-9]){core}(?![a-z0-9])"
+
+
+def search_patterns(terms: list[str]) -> dict[str, re.Pattern[str]]:
+    return {term: re.compile(term_regex(term)) for term in terms}
+
+
+def search_headings(body: str) -> str:
+    return "\n".join(
+        match.group(1).strip()
+        for match in re.finditer(r"^#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$", body, re.MULTILINE)
+    )
+
+
+def search_document(root: Path, path: Path) -> dict[str, object]:
+    text = read_text(path)
+    title = detect_title(text, path)
+    aliases = parse_aliases(text)
+    body = strip_frontmatter(text)
+    phrases = {normalize_phrase(title)} | {normalize_phrase(alias) for alias in aliases}
+    phrases.discard("")
+    return {
+        "path": path.relative_to(root).as_posix(),
+        "title": title,
+        "aliases": aliases,
+        "body": body or text,
+        "phrases": phrases,
+        "fields": {
+            "title": title.lower(),
+            "aliases": "\n".join(aliases).lower(),
+            "headings": search_headings(body).lower(),
+            "body": body.lower(),
+        },
+    }
+
+
+def search_term_counts(
+    fields: dict[str, str], patterns: dict[str, re.Pattern[str]]
+) -> dict[str, dict[str, int]]:
+    return {
+        term: {name: len(pattern.findall(value)) for name, value in fields.items()}
+        for term, pattern in patterns.items()
+    }
+
+
+def search_rarity(all_counts: list[dict[str, dict[str, int]]], terms: list[str]) -> dict[str, float]:
+    """Per-term weight log(1 + N/df) over the corpus of this call. Terms that occur
+    in no document are omitted so they neither score nor count as unmatched."""
+    total_docs = len(all_counts)
+    rarity: dict[str, float] = {}
     for term in terms:
-        score += haystack.count(term)
-        if term in title.lower():
-            score += 5
-    return score
+        document_frequency = sum(1 for counts in all_counts if any(counts[term].values()))
+        if document_frequency:
+            rarity[term] = math.log(1 + total_docs / document_frequency)
+    return rarity
 
 
-def search_snippet(text: str, terms: list[str]) -> str:
+def search_score(
+    counts: dict[str, dict[str, int]], rarity: dict[str, float], phrase_match: bool = False
+) -> tuple[float, int]:
+    """Field-weighted, capped, rarity-scaled term score; +SEARCH_PHRASE_BONUS when the
+    whole query equals the title or an alias; the total is multiplied by
+    (matched_terms / total_terms) ** 2 so documents holding every term win."""
+    score = 0.0
+    matched = 0
+    for term, weight in rarity.items():
+        per_field = counts.get(term, {})
+        contribution = sum(
+            SEARCH_FIELD_WEIGHTS[name] * min(per_field.get(name, 0), SEARCH_FIELD_CAPS[name])
+            for name in SEARCH_FIELD_WEIGHTS
+        )
+        if contribution > 0:
+            matched += 1
+            score += contribution * weight
+    if phrase_match:
+        score += SEARCH_PHRASE_BONUS
+    if rarity:
+        score *= (matched / len(rarity)) ** 2
+    return score, matched
+
+
+def search_snippet(text: str, patterns: Iterable[re.Pattern[str]]) -> str:
     compact = re.sub(r"\s+", " ", text).strip()
     lower = compact.lower()
-    positions = [lower.find(term) for term in terms if lower.find(term) >= 0]
+    positions = [match.start() for match in (pattern.search(lower) for pattern in patterns) if match]
     if not positions:
-        return compact[:220]
-    start = max(min(positions) - 60, 0)
-    end = min(start + 220, len(compact))
-    return compact[start:end]
+        return compact[:SEARCH_SNIPPET_CHARS]
+    start = max(min(positions) - SEARCH_SNIPPET_LEAD, 0)
+    return compact[start : start + SEARCH_SNIPPET_CHARS]
 
 
-def search_wiki(root: Path, query: str, limit: int) -> dict[str, object]:
+def search_wiki(root: Path, query: str, limit: int, include_raw: bool = False) -> dict[str, object]:
     terms = search_terms(query)
+    if not terms:
+        return {"query": query, "results": []}
+    patterns = search_patterns(terms)
+    documents = [search_document(root, path) for path in wiki_documents(root, include_raw=include_raw)]
+    all_counts = [search_term_counts(doc["fields"], patterns) for doc in documents]
+    rarity = search_rarity(all_counts, terms)
+    if not rarity:
+        return {"query": query, "results": []}
+    phrase = normalize_phrase(query)
     hits = []
-    for path in wiki_documents(root):
-        text = read_text(path)
-        title = detect_title(text, path)
-        score = search_score(text, title, terms)
+    for doc, counts in zip(documents, all_counts):
+        score, _matched = search_score(counts, rarity, bool(phrase) and phrase in doc["phrases"])
         if score <= 0:
             continue
         hits.append(
             {
-                "path": path.relative_to(root).as_posix(),
-                "title": title,
-                "score": score,
-                "snippet": search_snippet(text, terms),
+                "path": doc["path"],
+                "title": doc["title"],
+                "score": round(score, 2),
+                "snippet": search_snippet(str(doc["body"]), patterns.values()),
             }
         )
     hits.sort(key=lambda item: (-item["score"], item["title"].lower()))
@@ -137,6 +274,11 @@ def main(argv: list[str] | None = None) -> int:
     search_parser = subparsers.add_parser("search")
     search_parser.add_argument("--root", default=None)
     search_parser.add_argument("--limit", type=int, default=8)
+    search_parser.add_argument(
+        "--include-raw",
+        action="store_true",
+        help="also search raw/**/*.md (default: wiki pages only)",
+    )
     search_parser.add_argument("query", nargs="+")
 
     file_parser = subparsers.add_parser("file-output")
@@ -146,6 +288,9 @@ def main(argv: list[str] | None = None) -> int:
 
     html_parser = subparsers.add_parser("export-html")
     html_parser.add_argument("--root", default=None)
+
+    okf_parser = subparsers.add_parser("export-okf")
+    okf_parser.add_argument("--root", default=None)
 
     serve_parser = subparsers.add_parser("serve-html")
     serve_parser.add_argument("--root", default=None)
@@ -195,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "search":
         root = parse_root_arg(args.root)
         query = " ".join(args.query).strip()
-        result = search_wiki(root, query, args.limit)
+        result = search_wiki(root, query, args.limit, include_raw=args.include_raw)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
 
@@ -207,6 +352,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "export-html":
         return export_html_main(["--root", str(parse_root_arg(args.root))])
+
+    if args.command == "export-okf":
+        return export_okf_main(["--root", str(parse_root_arg(args.root))])
 
     if args.command == "serve-html":
         return serve_html_main(

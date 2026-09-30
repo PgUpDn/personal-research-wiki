@@ -14,6 +14,21 @@ import export_html
 
 
 class ProjectExportTest(unittest.TestCase):
+    def test_home_uses_complete_pdf_filename_for_truncated_uppercase_title(self) -> None:
+        doc = {
+            "title": "CACHE-TO-CACHE: DIRECT SEMANTIC COMMUNICA",
+            "text": (
+                "---\n"
+                "sources:\n"
+                '  - "raw/zotero/AI/Fu et al. - 2026 - Cache-to-Cache Direct Semantic Communication Between Large Language Models.pdf"\n'
+                "---\n"
+            ),
+        }
+        self.assertEqual(
+            export_html.home_source_title(doc),
+            "Cache-to-Cache Direct Semantic Communication Between Large Language Models",
+        )
+
     def test_project_page_is_exported_and_featured_on_home(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -68,7 +83,8 @@ class ProjectExportTest(unittest.TestCase):
 
             result = export_html.export_html(root)
 
-            self.assertEqual(result["pages_written"], 7)
+            self.assertEqual(result["pages_written"], 8)
+            self.assertTrue(result["okf_conformant"])
             self.assertTrue((root / "output/html/projects/research-programme.html").is_file())
             self.assertTrue((root / "output/html/projects/research-programme-solver.html").is_file())
             self.assertTrue((root / "output/html/projects/research-programme-guardrail.html").is_file())
@@ -76,9 +92,9 @@ class ProjectExportTest(unittest.TestCase):
             self.assertIn('id="projects"', home)
             self.assertIn("Research Automation", home)
             self.assertIn('href="projects/research-programme.html"', home)
-            self.assertIn('class="home-project-row is-subproject"', home)
-            self.assertIn("RESEARCH-PROGRAMME SUBPROJECT", home)
-            self.assertIn("COMPLETED · RESEARCH-PROGRAMME SUBPROJECT", home)
+            self.assertIn('class="home-project-group"', home)
+            self.assertIn('class="home-subproject-row"', home)
+            self.assertIn("<small>Completed</small>", home)
             search_index = json.loads(
                 (root / "output/html/assets/search-index.json").read_text(encoding="utf-8")
             )
@@ -93,6 +109,17 @@ class ProjectExportTest(unittest.TestCase):
             guardrail = next(item for item in search_index["documents"] if item["project_id"] == "guardrail")
             self.assertEqual(guardrail["project_status"], "completed")
             self.assertEqual(guardrail["parent_project_id"], "research-programme")
+            ask_page = (root / "output/html/ask.html").read_text(encoding="utf-8")
+            self.assertIn("redirectFilePageToServer", ask_page)
+            self.assertIn("mode: 'no-cors'", ask_page)
+            self.assertIn("window.location.replace(localServerUrl)", ask_page)
+            self.assertIn('data-file-into-wiki type="checkbox" checked', ask_page)
+            knowledge = (root / "output/html/knowledge.html").read_text(encoding="utf-8")
+            self.assertIn("Knowledge Map", knowledge)
+            self.assertIn('data-knowledge-canvas', knowledge)
+            self.assertIn("Open Knowledge Format · v0.2", knowledge)
+            self.assertTrue((root / "output/html/assets/research-wiki-okf.zip").is_file())
+            self.assertTrue((root / "output/html/assets/okf-manifest.json").is_file())
 
 
 class MarkdownAssetExportTest(unittest.TestCase):

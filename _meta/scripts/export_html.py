@@ -11,1377 +11,15 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 
+from export_okf import export_okf
 from wiki_pipeline import detect_title, load_config, note_blurb, parse_root_arg, read_text, slugify, strip_frontmatter
 
 
 EXTERNAL_PREFIXES = ("http://", "https://", "mailto:", "tel:")
 
-STYLE_CSS = """
-:root {
-  color-scheme: light;
-  --bg: #eaecf0;
-  --panel: #ffffff;
-  --panel-soft: #f8f9fa;
-  --text: #202122;
-  --muted: #54595d;
-  --accent: #3366cc;
-  --accent-soft: #eef3ff;
-  --border: #c8ccd1;
-  --code-bg: #f8f9fa;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
+from wiki_theme import icon, render_workspace_shell
 
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-}
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-code, pre {
-  font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-}
-details {
-  margin: 1rem 0;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel-soft);
-}
-summary {
-  cursor: pointer;
-  font-weight: 600;
-}
-details > :last-child {
-  margin-bottom: 0;
-}
-.layout {
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  min-height: 100vh;
-}
-.sidebar {
-  position: sticky;
-  top: 0;
-  align-self: start;
-  height: 100vh;
-  overflow: auto;
-  padding: 28px 22px 36px;
-  border-right: 1px solid var(--border);
-  background: var(--panel-soft);
-}
-.brand {
-  margin-bottom: 20px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
-}
-.brand h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  line-height: 1.2;
-  font-family: "Linux Libertine", "Georgia", serif;
-}
-.brand h1 a {
-  color: var(--text);
-}
-.brand h1 a:hover {
-  text-decoration: none;
-}
-.brand p {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-.nav-group {
-  margin-top: 18px;
-}
-.nav-group h2 {
-  margin: 0 0 8px;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.nav-group ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.nav-group li {
-  margin: 0;
-}
-.nav-group a {
-  display: block;
-  padding: 6px 8px;
-  border-radius: 8px;
-  color: var(--text);
-}
-.nav-group a.current {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 600;
-}
-.content-shell {
-  padding: 38px 48px 56px;
-}
-.content {
-  max-width: 980px;
-  margin: 0 auto;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  box-shadow: var(--shadow);
-  padding: 42px 48px 54px;
-}
-.breadcrumb {
-  margin-bottom: 14px;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-.breadcrumb span {
-  color: var(--muted);
-}
-h1, h2, h3, h4 {
-  line-height: 1.2;
-  scroll-margin-top: 24px;
-  font-family: "Linux Libertine", "Georgia", serif;
-}
-h1 { font-size: 2.2rem; margin-top: 0; margin-bottom: 1rem; }
-h2 {
-  margin-top: 2.2rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--border);
-  font-size: 1.45rem;
-}
-h3 { margin-top: 1.6rem; font-size: 1.18rem; }
-p, ul, ol, blockquote, pre, table { margin: 1rem 0; }
-blockquote {
-  margin-left: 0;
-  padding: 0.85rem 1rem;
-  border-left: 3px solid var(--border);
-  background: var(--panel-soft);
-}
-pre {
-  overflow: auto;
-  padding: 1rem;
-  border-radius: 2px;
-  background: var(--code-bg);
-  border: 1px solid var(--border);
-}
-code {
-  background: var(--code-bg);
-  padding: 0.12rem 0.35rem;
-  border-radius: 6px;
-}
-pre code {
-  background: transparent;
-  padding: 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-th, td {
-  padding: 0.72rem 0.8rem;
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
-  text-align: left;
-}
-thead th {
-  background: var(--panel-soft);
-}
-tbody tr:nth-child(even) td {
-  background: rgba(240, 232, 220, 0.35);
-}
-hr {
-  border: 0;
-  border-top: 1px solid var(--border);
-  margin: 2rem 0;
-}
-img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  box-shadow: 0 12px 26px rgba(78, 55, 34, 0.08);
-}
-.footer {
-  margin-top: 2.5rem;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-.search-link {
-  display: block;
-  margin-top: 14px;
-  padding: 10px 12px;
-  border-radius: 2px;
-  border: 1px solid var(--accent);
-  background: var(--panel);
-  color: var(--accent);
-  font-weight: 600;
-  text-align: center;
-}
-.search-link:hover {
-  text-decoration: none;
-  background: var(--accent-soft);
-}
-.search-link.current {
-  background: var(--accent);
-  color: #fff;
-}
-.sidebar-actions {
-  display: grid;
-  gap: 10px;
-}
-.sidebar-summary {
-  margin-top: 14px;
-  padding: 0 0 14px;
-  border-bottom: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-.sidebar-summary strong {
-  color: var(--text);
-  font-weight: 600;
-}
-.sidebar-actions.compact-actions {
-  margin-top: 16px;
-}
-.search-hero {
-  margin-bottom: 1.6rem;
-}
-.search-hero p {
-  color: var(--muted);
-  max-width: 58ch;
-}
-.search-box {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin: 1.2rem 0 1.4rem;
-}
-.search-box input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #fff;
-  font: inherit;
-}
-.search-hint {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-.search-results {
-  display: grid;
-  gap: 14px;
-  margin-top: 1.5rem;
-}
-.result-card {
-  padding: 18px 18px 16px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-}
-.result-card h2 {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 1.18rem;
-}
-.result-card p {
-  margin: 0.55rem 0 0;
-}
-.result-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0.85rem 0;
-}
-.pill {
-  display: inline-flex;
-  padding: 0.26rem 0.58rem;
-  border-radius: 999px;
-  background: var(--panel-soft);
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-.result-path {
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-.empty-state {
-  padding: 22px;
-  border: 1px dashed var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-  color: var(--muted);
-}
-.ask-layout {
-  display: grid;
-  gap: 18px;
-}
-.ask-form {
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-}
-.ask-form textarea {
-  width: 100%;
-  min-height: 140px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: #fff;
-  font: inherit;
-  resize: vertical;
-}
-.ask-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  margin-top: 14px;
-}
-.primary-button {
-  border: 0;
-  border-radius: 2px;
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  padding: 11px 16px;
-  cursor: pointer;
-}
-.primary-button:hover {
-  filter: brightness(1.05);
-}
-.primary-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-.checkbox-row {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  color: var(--muted);
-  font-size: 0.94rem;
-}
-.server-note {
-  padding: 18px;
-  border: 1px dashed var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-  color: var(--muted);
-}
-.answer-shell {
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--panel);
-}
-.answer-output {
-  white-space: pre-wrap;
-  font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.94rem;
-  line-height: 1.6;
-  background: var(--code-bg);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  padding: 16px;
-  overflow-x: auto;
-}
-.answer-meta {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.answer-meta code {
-  background: var(--code-bg);
-  padding: 0.12rem 0.35rem;
-  border-radius: 8px;
-}
-.ask-inline-section {
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid var(--border);
-  background: var(--panel-soft);
-}
-.ask-inline-section h2,
-.ask-page-minimal h1 {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
-.ask-intro {
-  margin: 0 0 14px;
-  color: var(--muted);
-  max-width: 60ch;
-}
-.compact-ask textarea {
-  min-height: 96px;
-}
-.ask-page-minimal {
-  max-width: 860px;
-}
-.ask-standalone {
-  max-width: 760px;
-  margin: 56px auto;
-  padding: 0 24px 56px;
-}
-.ask-standalone .ask-layout {
-  gap: 16px;
-}
-.index-shell {
-  padding-top: 28px;
-}
-.index-content {
-  max-width: 1160px;
-}
-.section-kicker {
-  margin-bottom: 10px;
-  color: var(--muted);
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-family: inherit;
-}
-.lead-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) 320px;
-  gap: 28px;
-  align-items: start;
-}
-.lead-copy h1 {
-  margin-bottom: 0.75rem;
-}
-.lead-text {
-  font-size: 1.08rem;
-}
-.overview-note {
-  color: var(--muted);
-  max-width: 68ch;
-}
-.home-infobox {
-  border: 1px solid var(--border);
-  background: var(--panel-soft);
-  padding: 16px;
-}
-.home-infobox h2 {
-  margin: 0 0 12px;
-  padding: 0;
-  border: 0;
-  font-size: 1.2rem;
-}
-.home-infobox table {
-  margin: 0;
-  background: var(--panel);
-  table-layout: fixed;
-}
-.home-infobox th,
-.home-infobox td,
-.home-infobox code {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.toc-box {
-  margin-top: 22px;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  background: var(--panel-soft);
-}
-.toc-box h2 {
-  margin: 0 0 12px;
-  padding: 0;
-  border: 0;
-}
-.toc-columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-.toc-box ul {
-  margin: 0;
-  padding-left: 18px;
-}
-.portal-section {
-  margin-top: 28px;
-}
-.portal-heading {
-  margin-bottom: 14px;
-}
-.portal-heading h2 {
-  margin-bottom: 0.35rem;
-}
-.portal-heading p {
-  margin: 0;
-  color: var(--muted);
-}
-.portal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-.portal-box {
-  padding: 16px 18px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-}
-.portal-box h3 {
-  margin: 0 0 0.55rem;
-  border: 0;
-  padding: 0;
-  font-size: 1.18rem;
-}
-.portal-box p {
-  margin: 0.55rem 0 0;
-}
-.box-count {
-  color: var(--muted);
-  font-size: 0.94rem;
-}
-.portal-list {
-  margin: 0.8rem 0 0;
-  padding-left: 18px;
-}
-.portal-list li {
-  margin: 0.28rem 0;
-}
-.portal-list span {
-  color: var(--muted);
-  margin-left: 0.4rem;
-  font-size: 0.88rem;
-}
-.meta-line {
-  display: block;
-  margin-top: 0.3rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 0.85rem;
-}
-.tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.22rem 0.52rem;
-  border: 1px solid var(--border);
-  background: var(--panel-soft);
-  color: var(--accent);
-  font-size: 0.84rem;
-}
-.tag:hover {
-  text-decoration: none;
-  background: var(--accent-soft);
-}
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 24px;
-  list-style: none;
-  padding: 0;
-}
-.catalog-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-.concept-group-block + .concept-group-block {
-  margin-top: 16px;
-}
-.concept-group-block h3 {
-  margin: 0 0 0.65rem;
-  padding: 0;
-  border: 0;
-}
-.compact-box p {
-  color: var(--muted);
-}
-.home-page {
-  min-width: 320px;
-  background: #f7f8f6;
-  color: #1f2925;
-  line-height: 1.5;
-}
-.home-page h1,
-.home-page h2,
-.home-page h3,
-.home-page p {
-  letter-spacing: 0;
-}
-.home-page a {
-  color: #2056a0;
-}
-.home-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  border-bottom: 1px solid #dfe3df;
-  background: rgba(255, 255, 255, 0.96);
-}
-.home-header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: min(1120px, calc(100% - 48px));
-  min-height: 64px;
-  margin: 0 auto;
-  gap: 24px;
-}
-.home-brand {
-  color: #1f2925 !important;
-  font-family: "Linux Libertine", Georgia, serif;
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-.home-brand:hover {
-  text-decoration: none;
-}
-.home-nav {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-.home-nav a {
-  color: #53605a;
-  font-size: 0.92rem;
-}
-.home-nav a:hover {
-  color: #1f2925;
-  text-decoration: none;
-}
-.home-main {
-  width: min(1120px, calc(100% - 48px));
-  margin: 0 auto;
-}
-.home-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 48px;
-  padding: 72px 0 48px;
-  border-bottom: 1px solid #dfe3df;
-}
-.home-kicker {
-  margin: 0 0 12px;
-  color: #6a756f;
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.home-intro h1 {
-  margin: 0;
-  color: #17201c;
-  font-size: 3rem;
-  line-height: 1.05;
-}
-.home-lede {
-  max-width: 620px;
-  margin: 18px 0 0;
-  color: #53605a;
-  font-size: 1.1rem;
-}
-.home-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.home-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 9px 15px;
-  border: 1px solid #c9d0cb;
-  border-radius: 6px;
-  background: #fff;
-  color: #26322d !important;
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-.home-action:hover {
-  border-color: #8b9891;
-  text-decoration: none;
-}
-.home-action.primary {
-  border-color: #285947;
-  background: #285947;
-  color: #fff !important;
-}
-.home-action.primary:hover {
-  background: #214b3c;
-}
-.home-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 0;
-  border-bottom: 1px solid #dfe3df;
-}
-.home-stat {
-  min-width: 0;
-  padding: 24px 20px;
-  border-right: 1px solid #dfe3df;
-}
-.home-stat:first-child {
-  padding-left: 0;
-}
-.home-stat:last-child {
-  border-right: 0;
-}
-.home-stat dt {
-  color: #6a756f;
-  font-size: 0.82rem;
-}
-.home-stat dd {
-  margin: 5px 0 0;
-  color: #17201c;
-  font-family: "Linux Libertine", Georgia, serif;
-  font-size: 1.55rem;
-  font-weight: 700;
-  line-height: 1.1;
-  overflow-wrap: anywhere;
-}
-.home-projects {
-  padding: 42px 0 20px;
-  border-bottom: 1px solid #dfe3df;
-}
-.home-project-row {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 28px;
-  padding: 22px 0;
-  border-bottom: 1px solid #e2e6e3;
-}
-.home-project-row:last-child {
-  border-bottom: 0;
-}
-.home-project-row.is-subproject {
-  padding-left: 22px;
-  border-left: 3px solid #dce8e1;
-}
-.home-project-meta {
-  display: grid;
-  gap: 5px;
-  margin: 2px 0 0;
-  color: #285947;
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-.home-project-meta span {
-  color: #7a857f;
-  font-weight: 500;
-}
-.home-project-row h3 {
-  margin: 0;
-  font-family: inherit;
-  font-size: 1.08rem;
-  line-height: 1.4;
-}
-.home-project-row h3 a {
-  color: #26322d;
-}
-.home-project-row h3 a:hover {
-  color: #2056a0;
-}
-.home-project-row p:not(.home-project-meta) {
-  max-width: 720px;
-  margin: 7px 0 0;
-  color: #65716b;
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-.home-project-open {
-  margin-top: 1px;
-  font-size: 0.86rem;
-  white-space: nowrap;
-}
-.home-project-empty {
-  margin: 20px 0;
-  color: #7a857f;
-}
-.home-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-  gap: 72px;
-  padding: 52px 0 24px;
-}
-.home-section {
-  min-width: 0;
-}
-.home-section-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 8px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid #bfc7c2;
-}
-.home-section-heading h2 {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  color: #17201c;
-  font-size: 1.35rem;
-}
-.home-section-heading a {
-  flex: none;
-  font-size: 0.86rem;
-}
-.home-area-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: start;
-  padding: 16px 0;
-  border-bottom: 1px solid #e2e6e3;
-}
-.home-area-row h3 {
-  margin: 0;
-  color: #26322d;
-  font-family: inherit;
-  font-size: 1rem;
-}
-.home-area-row p {
-  margin: 6px 0 0;
-  color: #6a756f;
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-.home-area-row p a {
-  color: #53605a;
-}
-.home-area-count {
-  color: #8a948f;
-  font-size: 0.82rem;
-  white-space: nowrap;
-}
-.home-source-row {
-  padding: 16px 0 17px;
-  border-bottom: 1px solid #e2e6e3;
-}
-.home-source-row h3 {
-  margin: 0;
-  font-family: inherit;
-  font-size: 0.98rem;
-  font-weight: 650;
-  line-height: 1.45;
-}
-.home-source-row h3 a {
-  color: #26322d;
-}
-.home-source-row h3 a:hover {
-  color: #2056a0;
-}
-.home-source-meta {
-  margin: 0 0 5px;
-  color: #7a857f;
-  font-size: 0.8rem;
-}
-.home-source-summary {
-  display: -webkit-box;
-  margin: 7px 0 0;
-  overflow: hidden;
-  color: #65716b;
-  font-size: 0.86rem;
-  line-height: 1.5;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-.home-concepts {
-  padding: 36px 0 48px;
-}
-.home-concept-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 28px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.home-concept-list li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 0;
-  padding: 12px 0;
-  border-bottom: 1px solid #e2e6e3;
-}
-.home-concept-list a {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.home-concept-list span {
-  flex: none;
-  color: #8a948f;
-  font-size: 0.8rem;
-}
-.home-utility {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  padding: 20px 0;
-  border-top: 1px solid #bfc7c2;
-  border-bottom: 1px solid #dfe3df;
-}
-.home-utility strong {
-  color: #53605a;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-}
-.home-utility a {
-  font-size: 0.88rem;
-}
-.home-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 22px 0 40px;
-  color: #7a857f;
-  font-size: 0.82rem;
-}
-.tool-page {
-  min-width: 320px;
-  background: #f7f8f6;
-  color: #1f2925;
-  line-height: 1.5;
-}
-.tool-page a {
-  color: #2056a0;
-}
-.home-nav a.current {
-  color: #1f2925;
-  font-weight: 650;
-}
-.tool-main {
-  width: min(1120px, calc(100% - 48px));
-  margin: 0 auto;
-}
-.tool-intro {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 48px;
-  padding: 56px 0 32px;
-  border-bottom: 1px solid #dfe3df;
-}
-.tool-kicker {
-  margin: 0 0 10px;
-  color: #6a756f;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.tool-intro h1 {
-  margin: 0;
-  color: #17201c;
-  font-size: 2.5rem;
-  line-height: 1.08;
-  letter-spacing: 0;
-}
-.tool-lede {
-  max-width: 640px;
-  margin: 14px 0 0;
-  color: #53605a;
-  font-size: 1rem;
-}
-.tool-meta {
-  flex: none;
-  margin: 0;
-  color: #6a756f;
-  font-size: 0.86rem;
-}
-.provider-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-.provider-status::before {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #a5ada8;
-  content: "";
-}
-.provider-status.connected::before {
-  background: #2d7659;
-}
-.provider-status.unavailable::before {
-  background: #ad4c3b;
-}
-.search-workspace {
-  padding: 32px 0 48px;
-}
-.tool-search-box {
-  position: relative;
-  max-width: 820px;
-}
-.tool-search-box input {
-  width: 100%;
-  min-height: 52px;
-  padding: 13px 16px;
-  border: 1px solid #aeb8b2;
-  border-radius: 6px;
-  background: #fff;
-  color: #17201c;
-  font: inherit;
-  font-size: 1rem;
-}
-.tool-search-box input:focus,
-.tool-page textarea:focus {
-  outline: 3px solid rgba(32, 86, 160, 0.14);
-  border-color: #2056a0;
-}
-.tool-search-status {
-  min-height: 24px;
-  margin: 12px 0 0;
-  color: #6a756f;
-  font-size: 0.86rem;
-}
-.tool-search-results {
-  max-width: 920px;
-  margin-top: 20px;
-  border-top: 1px solid #bfc7c2;
-}
-.tool-result {
-  padding: 20px 0 22px;
-  border-bottom: 1px solid #dfe3df;
-}
-.tool-result h2 {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-family: inherit;
-  font-size: 1.06rem;
-  line-height: 1.4;
-  letter-spacing: 0;
-}
-.tool-result h2 a {
-  color: #26322d;
-}
-.tool-result h2 a:hover {
-  color: #2056a0;
-}
-.tool-result p {
-  max-width: 88ch;
-  margin: 8px 0 0;
-  color: #5f6b65;
-  font-size: 0.9rem;
-}
-.tool-result .result-meta {
-  gap: 6px;
-  margin: 10px 0 0;
-}
-.tool-result .pill {
-  padding: 3px 7px;
-  border: 1px solid #dbe0dc;
-  border-radius: 4px;
-  background: #edf0ed;
-  color: #65716b;
-  font-size: 0.76rem;
-}
-.tool-result .result-path {
-  color: #87918c;
-  font-family: "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 0.76rem;
-}
-.tool-empty {
-  padding: 28px 0;
-  color: #6a756f;
-}
-.ask-workspace {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
-  gap: 52px;
-  padding: 36px 0 52px;
-}
-.ask-question-pane {
-  min-width: 0;
-  padding-right: 52px;
-  border-right: 1px solid #dfe3df;
-}
-.ask-question-pane h2,
-.ask-answer-pane h2 {
-  margin: 0 0 16px;
-  padding: 0;
-  border: 0;
-  color: #17201c;
-  font-size: 1.25rem;
-  letter-spacing: 0;
-}
-.tool-page .ask-form {
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-.tool-label {
-  display: block;
-  margin-bottom: 8px;
-  color: #53605a;
-  font-size: 0.86rem;
-  font-weight: 650;
-}
-.tool-page .ask-form textarea {
-  min-height: 190px;
-  padding: 13px 14px;
-  border: 1px solid #aeb8b2;
-  border-radius: 6px;
-  background: #fff;
-  color: #17201c;
-  line-height: 1.5;
-}
-.tool-page .ask-actions {
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-}
-.tool-page .primary-button {
-  min-height: 42px;
-  padding: 9px 18px;
-  border-radius: 6px;
-  background: #285947;
-}
-.tool-page .primary-button:hover {
-  background: #214b3c;
-  filter: none;
-}
-.tool-page .checkbox-row {
-  color: #65716b;
-  font-size: 0.82rem;
-}
-.tool-page .checkbox-row input {
-  accent-color: #285947;
-}
-.tool-page .server-note {
-  margin-top: 18px;
-  padding: 14px;
-  border: 1px solid #d9c9a9;
-  border-radius: 6px;
-  background: #fffaf0;
-  color: #675d49;
-  font-size: 0.86rem;
-}
-.ask-answer-pane {
-  min-width: 0;
-}
-.ask-answer-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 16px;
-}
-.ask-answer-heading h2 {
-  margin-bottom: 0;
-}
-.ask-status {
-  color: #6a756f;
-  font-size: 0.82rem;
-}
-.tool-page .answer-shell {
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-.tool-page .answer-output {
-  min-height: 260px;
-  margin: 0;
-  padding: 18px;
-  border: 1px solid #d5dbd7;
-  border-radius: 6px;
-  background: #fff;
-  color: #344039;
-  font-family: inherit;
-  font-size: 0.92rem;
-  line-height: 1.65;
-}
-.tool-page .answer-meta {
-  gap: 5px;
-  margin: 0 0 14px;
-  color: #6a756f;
-  font-size: 0.78rem;
-}
-.tool-page .answer-meta code {
-  border-radius: 3px;
-}
-.tool-page .home-footer {
-  border-top: 1px solid #dfe3df;
-}
-@media (max-width: 980px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-  .sidebar {
-    position: static;
-    height: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .sidebar .nav-group {
-    display: none;
-  }
-  .sidebar-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .content-shell {
-    padding: 20px 16px 28px;
-  }
-  .content {
-    padding: 28px 20px 32px;
-    border-radius: 2px;
-    overflow-wrap: anywhere;
-  }
-  .content table {
-    display: block;
-    overflow-x: auto;
-  }
-  .lead-layout,
-  .portal-grid,
-  .toc-columns,
-  .catalog-grid {
-    grid-template-columns: 1fr;
-  }
-  .home-dashboard {
-    gap: 48px;
-  }
-  .home-project-row {
-    grid-template-columns: 130px minmax(0, 1fr);
-  }
-  .home-project-open {
-    grid-column: 2;
-  }
-  .ask-workspace {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-  .ask-question-pane {
-    padding-right: 0;
-    padding-bottom: 36px;
-    border-right: 0;
-    border-bottom: 1px solid #dfe3df;
-  }
-}
-@media (max-width: 760px) {
-  .content h1 {
-    font-size: 1.85rem;
-    line-height: 1.12;
-  }
-  .home-header-inner,
-  .home-main,
-  .tool-main {
-    width: min(100% - 32px, 1120px);
-  }
-  .home-header-inner {
-    min-height: 58px;
-    gap: 16px;
-  }
-  .home-nav {
-    gap: 14px;
-  }
-  .home-nav .browse-link {
-    display: none;
-  }
-  .home-intro {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    padding: 48px 0 36px;
-  }
-  .home-intro h1 {
-    font-size: 2.35rem;
-  }
-  .home-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .home-stat {
-    padding: 18px 14px;
-    border-bottom: 1px solid #dfe3df;
-  }
-  .home-stat:first-child {
-    padding-left: 0;
-  }
-  .home-stat:nth-child(2) {
-    border-right: 0;
-  }
-  .home-stat:nth-child(3) {
-    padding-left: 0;
-    border-bottom: 0;
-  }
-  .home-stat:nth-child(4) {
-    border-right: 0;
-    border-bottom: 0;
-  }
-  .home-dashboard {
-    grid-template-columns: 1fr;
-    gap: 44px;
-    padding-top: 40px;
-  }
-  .home-projects {
-    padding-top: 34px;
-  }
-  .home-project-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 18px 0;
-  }
-  .home-project-open {
-    grid-column: auto;
-  }
-  .home-concept-list {
-    grid-template-columns: 1fr;
-  }
-  .home-footer {
-    display: block;
-  }
-  .home-footer span {
-    display: block;
-    margin-top: 6px;
-  }
-  .tool-intro {
-    display: block;
-    padding: 42px 0 28px;
-  }
-  .tool-intro h1 {
-    font-size: 2.15rem;
-  }
-  .tool-meta {
-    margin-top: 18px;
-  }
-  .search-workspace {
-    padding-top: 26px;
-  }
-  .ask-workspace {
-    padding-top: 28px;
-  }
-  .tool-page .ask-actions {
-    display: grid;
-    justify-content: stretch;
-  }
-  .tool-page .primary-button {
-    width: 100%;
-  }
-  .ask-answer-heading {
-    display: block;
-  }
-  .ask-status {
-    display: block;
-    margin-top: 6px;
-  }
-}
-""".strip()
+STYLE_CSS = Path(__file__).with_name("wiki_theme.css").read_text(encoding="utf-8")
 
 
 def parse_aliases(markdown_text: str) -> list[str]:
@@ -1602,7 +240,7 @@ def build_search_index(root: Path, docs: list[dict[str, object]]) -> dict[str, o
                 project_status or "",
                 " ".join(github_links),
                 source_path.relative_to(root).as_posix(),
-                compact_text(body, limit=6000),
+                compact_text(body, limit=60000),  # body cap: only INDEX.md (143k chars) is truncated
             ]
             if part
         )
@@ -1680,6 +318,42 @@ def summarize_text(value: str, limit: int = 180) -> str:
     if len(compact) <= limit:
         return compact
     return compact[: limit - 3].rstrip() + "..."
+
+
+def home_project_excerpt(markdown_text: str) -> str:
+    body = strip_frontmatter(markdown_text)
+    match = re.search(r"^-\s+\*\*What it is\*\*:\s*(.+)$", body, re.MULTILINE | re.IGNORECASE)
+    excerpt = match.group(1) if match else extract_section_excerpt(markdown_text, ("Programme Thesis", "Project Thesis"), 350)
+    if not excerpt:
+        return ""
+    excerpt = re.sub(r"\[\[([^]|]+)(?:\|([^]]+))?\]\]", lambda found: found.group(2) or found.group(1), excerpt)
+    excerpt = re.sub(r"\[([^]]+)\]\([^)]+\)", r"\1", excerpt)
+    excerpt = re.sub(r"[`*_]", "", excerpt)
+    excerpt = re.sub(r"\s+", " ", excerpt).strip()
+    first_sentence = re.split(r"(?<=[.!?])\s+", excerpt, maxsplit=1)[0]
+    return summarize_text(first_sentence, 185)
+
+
+def source_modified_at(root: Path, doc: dict[str, object]) -> float:
+    for source in parse_list_field(str(doc["text"]), "sources"):
+        if not source.startswith(("raw/", "Clippings/")):
+            continue
+        path = root / source
+        if path.is_file():
+            return path.stat().st_mtime
+    return 0.0
+
+
+def home_source_title(doc: dict[str, object]) -> str:
+    title = str(doc["title"])
+    if not title.isupper():
+        return title
+    for source in parse_list_field(str(doc["text"]), "sources"):
+        filename = Path(source).stem
+        match = re.match(r"^.+? - (?:19|20)\d{2} - (.+)$", filename)
+        if match and len(match.group(1)) > len(title) * 1.15:
+            return match.group(1)
+    return title
 
 
 def relative_href(target: Path, current_export_path: Path) -> str:
@@ -1954,7 +628,7 @@ def collection_counts(docs: list[dict[str, object]]) -> dict[str, int]:
 
 
 def is_portal_page(export_path: Path) -> bool:
-    return export_path in {Path("index.html"), Path("search.html"), Path("ask.html")}
+    return export_path in {Path("index.html"), Path("search.html"), Path("ask.html"), Path("knowledge.html")}
 
 
 def find_doc(docs: list[dict[str, object]], export_path: str) -> dict[str, object] | None:
@@ -1971,6 +645,7 @@ def render_portal_sidebar(docs: list[dict[str, object]], current_export_path: Pa
     home_href = relative_href(Path("index.html"), current_export_path)
     search_href = relative_href(Path("search.html"), current_export_path)
     ask_href = relative_href(Path("ask.html"), current_export_path)
+    knowledge_href = relative_href(Path("knowledge.html"), current_export_path)
     parts = [
         '<div class="brand">',
         "<h1>Research Wiki</h1>",
@@ -2002,6 +677,7 @@ def render_portal_sidebar(docs: list[dict[str, object]], current_export_path: Pa
             '<nav class="nav-group"><h2>Tools</h2><ul>',
             f'<li><a class="{"current" if current_export_path == Path("search.html") else ""}" href="{html.escape(search_href, quote=True)}">Search The Wiki</a></li>',
             f'<li><a class="{"current" if current_export_path == Path("ask.html") else ""}" href="{html.escape(ask_href, quote=True)}">Ask The Wiki</a></li>',
+            f'<li><a class="{"current" if current_export_path == Path("knowledge.html") else ""}" href="{html.escape(knowledge_href, quote=True)}">Knowledge Map</a></li>',
             "</ul></nav>",
             '<nav class="nav-group"><h2>System</h2><ul>',
         ]
@@ -2027,6 +703,7 @@ def render_sidebar(docs: list[dict[str, object]], current_export_path: Path) -> 
 
     search_current = " current" if current_export_path == Path("search.html") else ""
     ask_current = " current" if current_export_path == Path("ask.html") else ""
+    knowledge_current = " current" if current_export_path == Path("knowledge.html") else ""
     home_href = relative_href(Path("index.html"), current_export_path)
     parts = [
         '<div class="brand">',
@@ -2036,6 +713,7 @@ def render_sidebar(docs: list[dict[str, object]], current_export_path: Path) -> 
         '<div class="sidebar-actions">',
         f'<a class="search-link{search_current}" href="{html.escape(relative_href(Path("search.html"), current_export_path), quote=True)}">Search The Wiki</a>',
         f'<a class="search-link{ask_current}" href="{html.escape(relative_href(Path("ask.html"), current_export_path), quote=True)}">Ask The Wiki</a>',
+        f'<a class="search-link{knowledge_current}" href="{html.escape(relative_href(Path("knowledge.html"), current_export_path), quote=True)}">Knowledge Map</a>',
         "</div>",
     ]
     for group_name in ("System", "Projects", "Sources", "Concepts", "Derived", "Other"):
@@ -2063,7 +741,7 @@ def render_index_page(
     title_to_export: dict[str, Path],
     source_to_export: dict[Path, Path],
 ) -> str:
-    del root, export_root, title_to_export, source_to_export
+    del export_root, title_to_export, source_to_export
     export_path = Path("index.html")
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
     source_docs = [item for item in docs if item["group"] == "Sources"]
@@ -2074,8 +752,8 @@ def render_index_page(
     last_compiled = str(doc.get("last_compiled") or (overview_doc or {}).get("last_compiled") or "Unknown")
 
     featured_sources = sorted(
-        source_docs,
-        key=lambda item: (-coerce_int(item.get("year")), str(item["title"]).lower()),
+        (item for item in source_docs if item.get("year")),
+        key=lambda item: (-source_modified_at(root, item), str(item["title"]).lower()),
     )[:6]
     grouped_concepts: dict[str, list[dict[str, object]]] = defaultdict(list)
     for concept_doc in concept_docs:
@@ -2083,11 +761,6 @@ def render_index_page(
     ordered_groups = sorted(grouped_concepts.items(), key=lambda item: item[0].lower())
     for _, items in ordered_groups:
         items.sort(key=lambda item: (-coerce_int(item.get("source_count")), str(item["title"]).lower()))
-    top_concepts = sorted(
-        concept_docs,
-        key=lambda item: (-coerce_int(item.get("source_count")), str(item["title"]).lower()),
-    )[:12]
-
     research_areas_html = []
     for group_name, items in ordered_groups:
         top_items = items[:3]
@@ -2110,58 +783,56 @@ def render_index_page(
     featured_sources_html = []
     for source_doc in featured_sources:
         href = relative_href(Path(source_doc["export_path"]), export_path)
-        meta_parts = [value for value in [source_doc.get("year"), source_doc.get("lead_author"), source_doc.get("venue")] if value]
+        meta_parts = [value for value in [source_doc.get("year"), source_doc.get("venue")] if value]
         meta_html = " · ".join(html.escape(str(part)) for part in meta_parts)
-        summary = summarize_text(str(source_doc.get("summary") or ""), 150)
+        display_title = home_source_title(source_doc)
         featured_sources_html.append(
             f"""<article class="home-source-row">
   <p class="home-source-meta">{meta_html}</p>
-  <h3><a href="{html.escape(href, quote=True)}">{html.escape(str(source_doc["title"]))}</a></h3>
-  <p class="home-source-summary">{html.escape(summary)}</p>
+  <h3><a href="{html.escape(href, quote=True)}">{html.escape(display_title)}</a></h3>
 </article>"""
         )
 
-    top_concept_links = []
-    for concept_doc in top_concepts:
-        href = relative_href(Path(concept_doc["export_path"]), export_path)
-        top_concept_links.append(
-            f'<li><a href="{html.escape(href, quote=True)}">{html.escape(str(concept_doc["title"]))}</a><span>{coerce_int(concept_doc.get("source_count"))}</span></li>'
-        )
-
-    project_rows = []
-    ordered_projects = sorted(
-        project_docs,
-        key=lambda item: (
-            str(item.get("parent_project_id") or item.get("project_id") or item["title"]).lower(),
-            bool(item.get("parent_project_id")),
-            str(item["title"]).lower(),
-        ),
+    project_groups = []
+    programmes = sorted(
+        (item for item in project_docs if not item.get("parent_project_id")),
+        key=lambda item: str(item.get("project_name") or item["title"]).lower(),
     )
-    for project_doc in ordered_projects:
+    for project_doc in programmes:
+        project_id = str(project_doc.get("project_id") or "")
+        name = str(project_doc.get("project_name") or project_doc["title"])
+        display_name = re.sub(r"\s*\([^)]*\)$", "", name)
         href = relative_href(Path(project_doc["export_path"]), export_path)
-        project_name = str(project_doc.get("project_name") or project_doc["title"])
-        project_id = str(project_doc.get("project_id") or "").upper()
-        status = str(project_doc.get("project_status") or "active").upper()
-        parent_project_id = str(project_doc.get("parent_project_id") or "")
-        display_name = (
-            f"{project_name} ({project_id})"
-            if project_id and not parent_project_id and project_id not in project_name.upper()
-            else project_name
+        status = str(project_doc.get("project_status") or "active").capitalize()
+        summary = home_project_excerpt(str(project_doc["text"]))
+        children = sorted(
+            (item for item in project_docs if str(item.get("parent_project_id") or "") == project_id),
+            key=lambda item: str(item.get("project_name") or item["title"]).lower(),
         )
-        meta_label = f"{status} · {parent_project_id.upper()} SUBPROJECT" if parent_project_id else status
-        snapshot = str(project_doc.get("snapshot_date") or "Current")
-        summary = summarize_text(str(project_doc.get("summary") or ""), 260)
-        row_class = "home-project-row is-subproject" if parent_project_id else "home-project-row"
-        open_label = "Open subproject" if parent_project_id else "Open project"
-        project_rows.append(
-            f"""<article class="{row_class}">
-  <p class="home-project-meta">{html.escape(meta_label)}<span>Snapshot {html.escape(snapshot)}</span></p>
-  <div>
-    <h3><a href="{html.escape(href, quote=True)}">{html.escape(display_name)}</a></h3>
-    <p>{html.escape(summary)}</p>
+        child_rows = []
+        for child in children:
+            child_href = relative_href(Path(child["export_path"]), export_path)
+            child_name = re.sub(r"\s*\([^)]*\)$", "", str(child.get("project_name") or child["title"]))
+            child_status = str(child.get("project_status") or "active").capitalize()
+            child_rows.append(
+                f'<a class="home-subproject-row" href="{html.escape(child_href, quote=True)}">'
+                f'<span>{html.escape(child_name.replace("_", " "))}</span>'
+                f'<small>{html.escape(child_status)}</small>{icon("arrow")}</a>'
+            )
+        subprojects = (
+            f'<div class="home-subprojects"><p class="home-subproject-heading">Subprojects</p>{"".join(child_rows)}</div>'
+            if child_rows else ""
+        )
+        project_groups.append(
+            f"""<section class="home-project-group">
+  <div class="home-project-heading">
+    <div><p class="home-project-status">{html.escape(status)}</p>
+      <h3><a href="{html.escape(href, quote=True)}">{html.escape(display_name)}</a></h3></div>
+    <a class="home-project-open" href="{html.escape(href, quote=True)}" aria-label="Open {html.escape(display_name, quote=True)}">{icon("arrow")}</a>
   </div>
-  <a class="home-project-open" href="{html.escape(href, quote=True)}">{open_label}</a>
-</article>"""
+  <p class="home-project-description">{html.escape(summary)}</p>
+  {subprojects}
+</section>"""
         )
 
     utility_links = []
@@ -2176,39 +847,31 @@ def render_index_page(
         if utility_doc:
             href = relative_href(Path(utility_doc["export_path"]), export_path)
             utility_links.append(f'<a href="{html.escape(href, quote=True)}">{html.escape(label)}</a>')
+    utility_links.append('<a href="knowledge.html">Knowledge map</a>')
 
     return f"""<!doctype html>
 <html lang="en">
 <head>
+  <script src="assets/wiki-ui.js" defer></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Research Wiki</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
-<body class="home-page">
-  <header class="home-header">
-    <div class="home-header-inner">
-      <a class="home-brand" href="index.html">Research Wiki</a>
-      <nav class="home-nav" aria-label="Primary">
-        <a href="#projects">Projects</a>
-        <a class="browse-link" href="#research-areas">Browse</a>
-        <a href="search.html">Search</a>
-        <a href="ask.html">Ask</a>
-      </nav>
-    </div>
-  </header>
+<body class="workspace home-page">
+  {render_workspace_shell(docs, export_path, "Overview")}
 
-  <main class="home-main">
+  <main class="home-main" id="main-content">
     <section class="home-intro">
       <div>
-        <p class="home-kicker">Personal research library</p>
-        <h1>Research Wiki</h1>
-        <p class="home-lede">Projects, sources, concepts, and durable notes organized for quick retrieval.</p>
+        <p class="home-kicker">Research workspace</p>
+        <h1>Overview</h1>
+        <p class="home-lede">Last compiled {html.escape(last_compiled)}</p>
       </div>
       <div class="home-actions">
-        <a class="home-action primary" href="search.html">Search library</a>
-        <a class="home-action" href="ask.html">Ask the wiki</a>
+        <a class="home-action" href="search.html">{icon("search")} Search library</a>
+        <a class="home-action primary" href="ask.html">{icon("ask")} Ask the Wiki</a>
       </div>
     </section>
 
@@ -2216,7 +879,7 @@ def render_index_page(
       <div class="home-stat"><dt>Sources</dt><dd>{counts["sources"]}</dd></div>
       <div class="home-stat"><dt>Concepts</dt><dd>{counts["concepts"]}</dd></div>
       <div class="home-stat"><dt>Projects</dt><dd>{counts["projects"]}</dd></div>
-      <div class="home-stat"><dt>Updated</dt><dd>{html.escape(last_compiled)}</dd></div>
+      <div class="home-stat"><dt>Research notes</dt><dd>{counts["derived"]}</dd></div>
     </dl>
 
     <section class="home-projects" id="projects">
@@ -2224,34 +887,26 @@ def render_index_page(
         <h2>Projects</h2>
         <a href="projects/README.html">Project catalog</a>
       </div>
-      {''.join(project_rows) if project_rows else '<p class="home-project-empty">No active projects yet.</p>'}
+      <div class="project-grid">{''.join(project_groups) if project_groups else '<p class="home-project-empty">No projects yet.</p>'}</div>
     </section>
 
     <div class="home-dashboard">
       <section class="home-section" id="research-areas">
         <div class="home-section-heading">
           <h2>Research areas</h2>
-          <a href="#top-concepts">Top concepts</a>
+          <a href="search.html?group=Concepts">All concepts</a>
         </div>
         {''.join(research_areas_html)}
       </section>
 
       <section class="home-section" id="recent-sources">
         <div class="home-section-heading">
-          <h2>Recent sources</h2>
+          <h2>Recently added</h2>
           <a href="search.html">View all {counts["sources"]}</a>
         </div>
         {''.join(featured_sources_html)}
       </section>
     </div>
-
-    <section class="home-concepts" id="top-concepts">
-      <div class="home-section-heading">
-        <h2>Top concepts</h2>
-        <a href="search.html">Search concepts</a>
-      </div>
-      <ul class="home-concept-list">{''.join(top_concept_links)}</ul>
-    </section>
 
     <nav class="home-utility" aria-label="System pages">
       <strong>System</strong>
@@ -2284,8 +939,29 @@ def render_document_page(
     body_html = render_markdown_blocks(strip_frontmatter(text), source_path, export_path, root, export_root, title_to_export, source_to_export)
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
     breadcrumb = source_path.relative_to(root).as_posix()
-    sidebar_html = render_sidebar(docs, export_path)
     title = str(doc["title"])
+    # Keep original heading anchors and all content, while presenting the title once.
+    first_heading = re.search(r'<h1 id="([^"]*)">.*?</h1>', body_html, re.S)
+    title_id = first_heading.group(1) if first_heading else "document-title"
+    body_html = re.sub(r'<h1 id="[^"]*">.*?</h1>', "", body_html, count=1, flags=re.S)
+    toc = []
+    for anchor, heading in re.findall(r'<h2 id="([^"]*)">(.*?)</h2>', body_html, re.S):
+        label = html.unescape(re.sub(r'<[^>]+>', '', heading))
+        toc.append(f'<a href="#{html.escape(anchor, quote=True)}">{html.escape(label)}</a>')
+    body_html = body_html.replace('<table>', '<div class="table-scroll" role="region" aria-label="Research data table" tabindex="0"><table>').replace('</table>', '</table></div>')
+    is_project = doc.get("note_type") == "project"
+    category = "Subproject" if doc.get("parent_project_id") else "Research project" if is_project else str(doc["group"]).removesuffix("s")
+    status = str(doc.get("project_status") or "")
+    updated = str(doc.get("snapshot_date") or doc.get("last_compiled") or doc.get("year") or "")
+    status_html = f'<span class="status-pill" data-status="{html.escape(status, quote=True)}">{html.escape(status.title())}</span>' if status else ""
+    date_html = f'<span>Updated {html.escape(updated)}</span>' if updated else ""
+    parent = next((item for item in docs if item.get("project_id") and item.get("project_id") == doc.get("parent_project_id")), None)
+    parent_html = ""
+    if parent:
+        parent_href = relative_href(Path(parent["export_path"]), export_path)
+        parent_html = f'<a href="{html.escape(parent_href, quote=True)}">Part of {html.escape(str(parent.get("project_name") or parent["title"]))}</a>'
+    script_href = relative_href(Path("assets/wiki-ui.js"), export_path)
+    compact_title = str(doc.get("project_name") or title)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -2294,27 +970,32 @@ def render_document_page(
   <title>{html.escape(title)} · Research Wiki</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
+  <script src="{html.escape(script_href, quote=True)}" defer></script>
 </head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      {sidebar_html}
-    </aside>
-    <div class="content-shell">
-      <main class="content">
-        <div class="breadcrumb"><span>{html.escape(breadcrumb)}</span></div>
+<body class="workspace document-page">
+  {render_workspace_shell(docs, export_path, compact_title)}
+  <main class="document-main" id="main-content">
+    <header class="document-header">
+      <div class="document-eyebrow"><span>{html.escape(category)}</span>{status_html}</div>
+      <h1 id="{html.escape(title_id, quote=True)}">{html.escape(title)}</h1>
+      <div class="document-meta">{date_html}{parent_html}<span>{max(1, len(strip_frontmatter(text).split()) // 220)} min read</span></div>
+    </header>
+    <details class="mobile-toc"><summary>On this page</summary><nav aria-label="Page sections">{''.join(toc)}</nav></details>
+    <div class="document-layout">
+      <article class="content">
         {body_html}
-        <div class="footer">Exported from the local research wiki at <code>{html.escape(root.as_posix())}</code>.</div>
-      </main>
+        <footer class="document-footer">Source note <code>{html.escape(breadcrumb)}</code></footer>
+      </article>
+      <aside class="document-toc" aria-label="On this page"><p class="toc-label">On this page</p><nav class="toc-links">{''.join(toc)}</nav><a class="toc-top" href="#{html.escape(title_id, quote=True)}">Back to top ↑</a></aside>
     </div>
-  </div>
+  </main>
 </body>
 </html>
 """
 
 
 def render_search_page(docs: list[dict[str, object]], root: Path, search_index: dict[str, object]) -> str:
-    del docs, root
+    del root
     export_path = Path("search.html")
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
     record_count = len(search_index.get("documents", []))
@@ -2335,6 +1016,11 @@ const escapeHtml = (value) =>
   }[char]));
 
 const params = new URLSearchParams(window.location.search);
+const groupButtons = [...document.querySelectorAll('[data-search-group]')];
+const moreButton = document.querySelector('[data-search-more]');
+let selectedGroup = params.get('group') || '';
+if (!groupButtons.some(button => button.dataset.searchGroup === selectedGroup)) selectedGroup = '';
+let visibleCount = 30;
 const records = JSON.parse(searchDataEl.textContent || '{"documents": []}').documents || [];
 
 const tokenize = (query) =>
@@ -2380,19 +1066,15 @@ const scoreRecord = (record, tokens) => {
 
 const renderCards = (query) => {
   const tokens = tokenize(query);
-  if (!tokens.length) {
-    statusEl.textContent = 'Search title, aliases, concepts, DOI, arXiv, GitHub, venue, or summaries.';
-    resultsEl.innerHTML = '<div class="tool-empty">Start typing to search the exported wiki.</div>';
-    return;
-  }
-  const ranked = records
-    .map((record) => ({ record, score: scoreRecord(record, tokens) }))
+  groupButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.searchGroup === selectedGroup)));
+  const matches = records
+    .filter(record => !selectedGroup || record.group === selectedGroup)
+    .map((record) => ({ record, score: tokens.length ? scoreRecord(record, tokens) : 1 }))
     .filter((item) => item.score > 0)
-    .sort((left, right) => right.score - left.score || left.record.title.localeCompare(right.record.title))
-    .slice(0, 30);
-  statusEl.textContent = ranked.length
-    ? `${ranked.length} result${ranked.length === 1 ? '' : 's'} for "${query}".`
-    : `No results for "${query}".`;
+    .sort((left, right) => right.score - left.score || left.record.title.localeCompare(right.record.title));
+  const ranked = matches.slice(0, visibleCount);
+  moreButton.hidden = matches.length <= visibleCount;
+  statusEl.textContent = `${matches.length} page${matches.length === 1 ? '' : 's'}${selectedGroup ? ` in ${selectedGroup.toLowerCase()}` : ' in your library'}${query ? ` matching “${query}”` : ''} · Showing ${ranked.length}`;
   if (!ranked.length) {
     resultsEl.innerHTML = '<div class="tool-empty">No matching pages yet. Try a concept name, author, GitHub repo, DOI, venue, or year.</div>';
     return;
@@ -2400,9 +1082,6 @@ const renderCards = (query) => {
   resultsEl.innerHTML = ranked.map(({ record }) => {
     const pills = [
       record.group,
-      record.note_type,
-      record.project_level,
-      record.parent_project_id,
       record.project_status,
       record.year,
       record.venue
@@ -2431,8 +1110,10 @@ const updateSearch = () => {
   } else {
     nextParams.delete('q');
   }
+  if (selectedGroup) nextParams.set('group', selectedGroup);
+  else nextParams.delete('group');
   const nextUrl = `${window.location.pathname}${nextParams.toString() ? `?${nextParams.toString()}` : ''}`;
-  window.history.replaceState({}, '', nextUrl);
+  try { window.history.replaceState({}, '', nextUrl); } catch (_) { /* Some file viewers disallow history updates. */ }
   renderCards(query);
 };
 
@@ -2442,9 +1123,15 @@ const init = () => {
   renderCards(initialQuery);
 };
 
-searchInput.addEventListener('input', updateSearch);
+searchInput.addEventListener('input', () => { visibleCount = 30; updateSearch(); });
+groupButtons.forEach(button => button.addEventListener('click', () => {
+  selectedGroup = button.dataset.searchGroup;
+  visibleCount = 30;
+  updateSearch();
+}));
+moreButton.addEventListener('click', () => { visibleCount += 30; renderCards(searchInput.value.trim()); });
 window.addEventListener('keydown', (event) => {
-  if (event.key === '/' && document.activeElement !== searchInput) {
+  if (event.key === '/' && !event.target.closest('input,textarea,select,[contenteditable="true"]') && !event.ctrlKey && !event.metaKey && !event.altKey) {
     event.preventDefault();
     searchInput.focus();
   }
@@ -2455,30 +1142,21 @@ init();
     return f"""<!doctype html>
 <html lang="en">
 <head>
+  <script src="assets/wiki-ui.js" defer></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Search The Wiki · Research Wiki</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
-<body class="tool-page">
-  <header class="home-header">
-    <div class="home-header-inner">
-      <a class="home-brand" href="index.html">Research Wiki</a>
-      <nav class="home-nav" aria-label="Primary">
-        <a href="index.html#projects">Projects</a>
-        <a class="browse-link" href="index.html#research-areas">Browse</a>
-        <a class="current" href="search.html">Search</a>
-        <a href="ask.html">Ask</a>
-      </nav>
-    </div>
-  </header>
+<body class="workspace tool-page">
+  {render_workspace_shell(docs, export_path, "Search library")}
 
-  <main class="tool-main">
+  <main class="tool-main" id="main-content">
     <section class="tool-intro">
       <div>
         <p class="tool-kicker">Library search</p>
-        <h1>Search</h1>
+        <h1>Find your next connection<span class="title-dot">.</span></h1>
         <p class="tool-lede">Find source pages, concepts, authors, venues, identifiers, and compiled summaries.</p>
       </div>
       <p class="tool-meta">{record_count} pages indexed</p>
@@ -2486,10 +1164,19 @@ init();
 
     <section class="search-workspace" aria-label="Wiki search">
       <div class="tool-search-box">
-        <input type="search" data-search-input aria-label="Search the research wiki" placeholder="Search papers, concepts, authors, DOI, arXiv...">
+        {icon("search")}<input type="search" data-search-input aria-label="Search the research wiki" placeholder="Search papers, concepts, authors, DOI, arXiv...">
+      </div>
+      <div class="search-filters" role="group" aria-label="Filter library">
+        <button type="button" data-search-group="" aria-pressed="true">All pages</button>
+        <button type="button" data-search-group="Sources" aria-pressed="false">Sources</button>
+        <button type="button" data-search-group="Concepts" aria-pressed="false">Concepts</button>
+        <button type="button" data-search-group="Projects" aria-pressed="false">Projects</button>
+        <button type="button" data-search-group="Derived" aria-pressed="false">Research notes</button>
+        <button type="button" data-search-group="System" aria-pressed="false">System</button>
       </div>
       <div class="tool-search-status" data-search-status aria-live="polite">Loading search index...</div>
       <section class="tool-search-results" data-search-results></section>
+      <button type="button" class="search-more" data-search-more hidden>Show more pages</button>
     </section>
 
     <footer class="home-footer">
@@ -2498,6 +1185,367 @@ init();
     </footer>
   </main>
   <script id="search-index-data" type="application/json">{search_data}</script>
+  <script>{script}</script>
+</body>
+</html>
+"""
+
+
+def render_knowledge_page(
+    docs: list[dict[str, object]],
+    root: Path,
+    okf_result: dict[str, object],
+) -> str:
+    export_path = Path("knowledge.html")
+    native_to_html = {
+        Path(doc["source_path"]).relative_to(root).as_posix(): Path(doc["export_path"]).as_posix()
+        for doc in docs
+    }
+    manifest = dict(okf_result["manifest"])
+    graph_documents = []
+    for item in manifest["documents"]:
+        record = dict(item)
+        record["html_href"] = native_to_html.get(str(record.get("native_path") or ""), "")
+        record["collection"] = str(record["id"]).split("/", 1)[0]
+        graph_documents.append(record)
+    graph = {
+        "documents": graph_documents,
+        "relationships": manifest["relationships"],
+    }
+    graph_data = json_for_html(graph)
+    summary = manifest["summary"]
+    conformance = okf_result["conformance"]
+    reviewed = int(summary["trust"]["human_reviewed"]) + int(summary["trust"]["machine_confirmed"])
+    generated_at = str(manifest["generated_at"])
+    status_label = "Valid OKF v0.2" if conformance["valid"] else "Conformance issues"
+    script = r"""
+const data = JSON.parse(document.getElementById('knowledge-data').textContent || '{"documents":[],"relationships":[]}');
+const canvas = document.querySelector('[data-knowledge-canvas]');
+const shell = canvas.parentElement;
+const ctx = canvas.getContext('2d');
+const searchInput = document.querySelector('[data-knowledge-search]');
+const filterButtons = [...document.querySelectorAll('[data-knowledge-filter]')];
+const inspector = {
+  title: document.querySelector('[data-node-title]'),
+  type: document.querySelector('[data-node-type]'),
+  description: document.querySelector('[data-node-description]'),
+  status: document.querySelector('[data-node-status]'),
+  trust: document.querySelector('[data-node-trust]'),
+  provenance: document.querySelector('[data-node-provenance]'),
+  links: document.querySelector('[data-node-links]'),
+  updated: document.querySelector('[data-node-updated]'),
+  open: document.querySelector('[data-node-open]')
+};
+
+const palette = {
+  projects: '#b4473a',
+  concepts: '#287a5b',
+  sources: '#3972b7',
+  derived: '#8060a8',
+  system: '#8a6b2f'
+};
+const labels = {
+  projects: 'Projects',
+  concepts: 'Concepts',
+  sources: 'Sources',
+  derived: 'Derived',
+  system: 'System'
+};
+const zones = {
+  projects: [0.04, 0.09, 0.25, 0.33],
+  system: [0.04, 0.39, 0.25, 0.55],
+  derived: [0.04, 0.64, 0.25, 0.88],
+  concepts: [0.31, 0.09, 0.52, 0.91],
+  sources: [0.59, 0.06, 0.96, 0.94]
+};
+const nodeById = new Map(data.documents.map((node) => [node.id, node]));
+const adjacency = new Map(data.documents.map((node) => [node.id, new Set()]));
+for (const edge of data.relationships) {
+  if (!adjacency.has(edge.source) || !adjacency.has(edge.target)) continue;
+  adjacency.get(edge.source).add(edge.target);
+  adjacency.get(edge.target).add(edge.source);
+}
+
+let activeFilter = 'all';
+let query = '';
+let selected = data.documents.find((node) => node.id === 'projects/pfm') || data.documents.find((node) => node.collection === 'projects') || data.documents[0] || null;
+let hovered = null;
+let visibleNodes = [];
+let width = 0;
+let height = 0;
+
+const titleCase = (value) => value ? value.replace(/[-_]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Not recorded';
+const matchesQuery = (node) => {
+  if (!query) return true;
+  const haystack = `${node.title} ${node.description} ${node.type} ${node.native_path}`.toLowerCase();
+  return query.split(/\s+/).every((term) => haystack.includes(term));
+};
+
+const layoutGroup = (nodes, zone) => {
+  if (!nodes.length) return;
+  const [x1, y1, x2, y2] = zone;
+  const zoneWidth = Math.max((x2 - x1) * width, 1);
+  const zoneHeight = Math.max((y2 - y1) * height, 1);
+  const columns = Math.max(1, Math.ceil(Math.sqrt(nodes.length * zoneWidth / zoneHeight)));
+  const rows = Math.max(1, Math.ceil(nodes.length / columns));
+  nodes.forEach((node, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    node._x = x1 * width + ((column + 0.5) / columns) * zoneWidth;
+    node._y = y1 * height + ((row + 0.5) / rows) * zoneHeight;
+  });
+};
+
+const calculateLayout = () => {
+  visibleNodes = data.documents.filter((node) => activeFilter === 'all' || node.collection === activeFilter);
+  if (activeFilter === 'all') {
+    Object.keys(zones).forEach((group) => {
+      const members = visibleNodes
+        .filter((node) => node.collection === group)
+        .sort((a, b) => a.title.localeCompare(b.title));
+      layoutGroup(members, zones[group]);
+    });
+  } else {
+    layoutGroup([...visibleNodes].sort((a, b) => a.title.localeCompare(b.title)), [0.06, 0.1, 0.94, 0.9]);
+  }
+};
+
+const nodeRadius = (node) => {
+  if (node.collection === 'projects') return 6;
+  if (node.collection === 'derived') return 4.8;
+  if (node.collection === 'concepts') return 4;
+  if (node.collection === 'system') return 4.5;
+  return 2.4;
+};
+
+const draw = () => {
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = '#fafcfb';
+  ctx.fillRect(0, 0, width, height);
+  const visibleIds = new Set(visibleNodes.map((node) => node.id));
+  const matchedIds = new Set(visibleNodes.filter(matchesQuery).map((node) => node.id));
+  const focusId = (hovered || selected || {}).id;
+
+  if (activeFilter === 'all') {
+    ctx.font = '700 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textBaseline = 'top';
+    for (const [group, zone] of Object.entries(zones)) {
+      ctx.fillStyle = '#87918c';
+      ctx.fillText(labels[group].toUpperCase(), zone[0] * width, Math.max(10, zone[1] * height - 22));
+    }
+  }
+
+  ctx.lineWidth = 0.7;
+  for (const edge of data.relationships) {
+    if (!visibleIds.has(edge.source) || !visibleIds.has(edge.target)) continue;
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+    const focused = focusId && (edge.source === focusId || edge.target === focusId);
+    if (query && !matchedIds.has(edge.source) && !matchedIds.has(edge.target) && !focused) continue;
+    ctx.beginPath();
+    ctx.moveTo(source._x, source._y);
+    ctx.lineTo(target._x, target._y);
+    ctx.strokeStyle = focused ? 'rgba(30, 74, 58, 0.52)' : edge.kind === 'source' ? 'rgba(57, 114, 183, 0.075)' : 'rgba(46, 75, 62, 0.045)';
+    ctx.lineWidth = focused ? 1.4 : 0.65;
+    ctx.stroke();
+  }
+
+  for (const node of visibleNodes) {
+    const matched = matchesQuery(node);
+    const isSelected = selected && selected.id === node.id;
+    const isHovered = hovered && hovered.id === node.id;
+    const radius = nodeRadius(node) + (isSelected || isHovered ? 2.2 : 0);
+    ctx.beginPath();
+    ctx.arc(node._x, node._y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = palette[node.collection] || '#66736d';
+    ctx.globalAlpha = query && !matched && !isSelected ? 0.12 : 0.88;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    if (isSelected || isHovered) {
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#17201c';
+      ctx.stroke();
+    }
+  }
+};
+
+const resize = () => {
+  const bounds = shell.getBoundingClientRect();
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  width = Math.max(320, bounds.width);
+  height = Math.max(360, canvas.getBoundingClientRect().height);
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  calculateLayout();
+  draw();
+};
+
+const renderInspector = (node) => {
+  if (!node) return;
+  const connections = adjacency.get(node.id) || new Set();
+  inspector.title.textContent = node.title;
+  inspector.type.textContent = node.type;
+  inspector.description.textContent = node.description || 'No description recorded.';
+  inspector.status.textContent = titleCase(node.status);
+  inspector.trust.textContent = titleCase(node.trust_tier);
+  inspector.provenance.textContent = String(node.provenance_sources || 0);
+  inspector.links.textContent = String(connections.size);
+  inspector.updated.textContent = (node.generated_at || '').slice(0, 10) || 'Not recorded';
+  if (node.html_href) {
+    inspector.open.href = node.html_href;
+    inspector.open.hidden = false;
+  } else {
+    inspector.open.hidden = true;
+  }
+};
+
+const pointerNode = (event) => {
+  const bounds = canvas.getBoundingClientRect();
+  const x = event.clientX - bounds.left;
+  const y = event.clientY - bounds.top;
+  let nearest = null;
+  let distance = 11;
+  for (const node of visibleNodes) {
+    const current = Math.hypot(node._x - x, node._y - y);
+    if (current < distance) {
+      distance = current;
+      nearest = node;
+    }
+  }
+  return nearest;
+};
+
+canvas.addEventListener('mousemove', (event) => {
+  const next = pointerNode(event);
+  if ((next || {}).id === (hovered || {}).id) return;
+  hovered = next;
+  canvas.style.cursor = hovered ? 'pointer' : 'default';
+  draw();
+});
+canvas.addEventListener('mouseleave', () => {
+  hovered = null;
+  canvas.style.cursor = 'default';
+  draw();
+});
+canvas.addEventListener('click', (event) => {
+  const next = pointerNode(event);
+  if (!next) return;
+  selected = next;
+  renderInspector(selected);
+  draw();
+});
+
+filterButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    activeFilter = button.dataset.knowledgeFilter;
+    filterButtons.forEach((candidate) => candidate.setAttribute('aria-pressed', String(candidate === button)));
+    if (selected && activeFilter !== 'all' && selected.collection !== activeFilter) {
+      selected = data.documents.find((node) => node.collection === activeFilter) || selected;
+      renderInspector(selected);
+    }
+    calculateLayout();
+    draw();
+  });
+});
+searchInput.addEventListener('input', () => {
+  query = searchInput.value.trim().toLowerCase();
+  const firstMatch = visibleNodes.find(matchesQuery);
+  if (query && firstMatch) {
+    selected = firstMatch;
+    renderInspector(selected);
+  }
+  draw();
+});
+
+renderInspector(selected);
+new ResizeObserver(resize).observe(shell);
+resize();
+""".strip()
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <script src="assets/wiki-ui.js" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knowledge Map · Research Wiki</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body class="workspace tool-page knowledge-page">
+  {render_workspace_shell(docs, export_path, "Knowledge map")}
+
+  <main class="tool-main" id="main-content">
+    <section class="tool-intro">
+      <div>
+        <p class="tool-kicker">Open Knowledge Format · v0.2</p>
+        <h1>Knowledge Map</h1>
+        <p class="tool-lede">Projects, concepts, source evidence, and derived work as one portable knowledge graph.</p>
+      </div>
+      <div class="knowledge-actions">
+        <a href="assets/research-wiki-okf.zip" download>Download bundle</a>
+        <a href="assets/okf-manifest.json">Manifest</a>
+        <a href="assets/okf-conformance.json">Conformance</a>
+      </div>
+    </section>
+
+    <dl class="knowledge-stats">
+      <div><dt>Documents</dt><dd>{int(summary['documents']):,}</dd></div>
+      <div><dt>Relationships</dt><dd>{int(summary['relationships']):,}</dd></div>
+      <div><dt>Provenance records</dt><dd>{int(summary['provenance_sources']):,}</dd></div>
+      <div><dt>Explicit reviews</dt><dd>{reviewed:,}</dd></div>
+    </dl>
+
+    <section class="knowledge-controls" aria-label="Knowledge graph controls">
+      <div class="knowledge-filter" role="group" aria-label="Document collection">
+        <button type="button" data-knowledge-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-knowledge-filter="projects" aria-pressed="false">Projects</button>
+        <button type="button" data-knowledge-filter="concepts" aria-pressed="false">Concepts</button>
+        <button type="button" data-knowledge-filter="sources" aria-pressed="false">Sources</button>
+        <button type="button" data-knowledge-filter="derived" aria-pressed="false">Derived</button>
+        <button type="button" data-knowledge-filter="system" aria-pressed="false">System</button>
+      </div>
+      <input class="knowledge-search" type="search" data-knowledge-search aria-label="Find a node" placeholder="Find a project, concept, or paper">
+    </section>
+
+    <section class="knowledge-workspace">
+      <div class="knowledge-canvas-shell">
+        <canvas data-knowledge-canvas aria-label="Research knowledge graph"></canvas>
+        <ul class="knowledge-legend" aria-label="Graph legend">
+          <li><span class="knowledge-dot" style="--dot:#b4473a"></span>Projects</li>
+          <li><span class="knowledge-dot" style="--dot:#287a5b"></span>Concepts</li>
+          <li><span class="knowledge-dot" style="--dot:#3972b7"></span>Sources</li>
+          <li><span class="knowledge-dot" style="--dot:#8060a8"></span>Derived</li>
+          <li><span class="knowledge-dot" style="--dot:#8a6b2f"></span>System</li>
+        </ul>
+      </div>
+      <aside class="knowledge-inspector" aria-live="polite">
+        <p class="knowledge-inspector-label">Selected document</p>
+        <h2 data-node-title>Knowledge document</h2>
+        <p class="knowledge-inspector-type" data-node-type></p>
+        <p class="knowledge-inspector-description" data-node-description></p>
+        <dl>
+          <div><dt>Lifecycle</dt><dd data-node-status></dd></div>
+          <div><dt>Trust tier</dt><dd data-node-trust></dd></div>
+          <div><dt>Provenance</dt><dd data-node-provenance></dd></div>
+          <div><dt>Connections</dt><dd data-node-links></dd></div>
+          <div><dt>Updated</dt><dd data-node-updated></dd></div>
+        </dl>
+        <a class="knowledge-open" data-node-open href="#">Open document</a>
+      </aside>
+    </section>
+
+    <p class="knowledge-note">
+      <span><strong>{html.escape(status_label)}</strong> · {int(conformance['documents_checked']):,} Markdown files checked · {int(summary['stale_documents']):,} explicitly stale</span>
+      <span>Trust reflects recorded verification events, not inferred review.</span>
+    </p>
+
+    <footer class="home-footer">
+      <span>Generated {html.escape(generated_at)}</span>
+      <a href="index.html">Back to overview</a>
+    </footer>
+  </main>
+  <script id="knowledge-data" type="application/json">{graph_data}</script>
   <script>{script}</script>
 </body>
 </html>
@@ -2515,6 +1563,7 @@ const metaEl = document.querySelector('[data-ask-meta]');
 const serverNoteEl = document.querySelector('[data-server-note]');
 const providerEl = document.querySelector('[data-provider-status]');
 const fileIntoWikiEl = document.querySelector('[data-file-into-wiki]');
+const emptyAnswerEl = document.querySelector('[data-answer-empty]');
 const localServerUrl = {json.dumps(local_server_url)};
 const apiBase = window.location.protocol === 'file:' ? 'http://127.0.0.1:8765' : '';
 const queryToken = new URLSearchParams(window.location.search).get('wiki_token') || '';
@@ -2525,6 +1574,19 @@ const wikiToken = queryToken || window.sessionStorage.getItem('research-wiki-tok
 const apiHeaders = wikiToken ? {{ 'X-Wiki-Token': wikiToken }} : {{}};
 let timerId = null;
 let requestStartedAt = 0;
+
+const redirectFilePageToServer = async () => {{
+  if (window.location.protocol !== 'file:') {{
+    return false;
+  }}
+  try {{
+    await fetch(localServerUrl, {{ method: 'GET', mode: 'no-cors', cache: 'no-store' }});
+    window.location.replace(localServerUrl);
+    return true;
+  }} catch (error) {{
+    return false;
+  }}
+}};
 
 const escapeHtml = (value) =>
   value.replace(/[&<>\"']/g, (char) => ({{
@@ -2545,7 +1607,7 @@ const renderMeta = (payload) => {{
       ? `Context files: ${{payload.context_files.slice(0, 8).map((item) => `<code>${{escapeHtml(item)}}</code>`).join(' ')}}`
       : ''
   ].filter(Boolean);
-  metaEl.innerHTML = lines.join('<br>');
+  metaEl.innerHTML = lines.length ? '<details><summary>Sources &amp; saved answer</summary><div>' + lines.join('<br>') + '</div></details>' : '';
 }};
 
 const setUnavailable = () => {{
@@ -2561,6 +1623,7 @@ const setUnavailable = () => {{
     statusEl.textContent = 'Q&A server unavailable.';
   }}
   resultEl.textContent = 'The local Q&A server is currently unavailable.';
+  emptyAnswerEl.hidden = true;
   metaEl.innerHTML = '';
   submitEl.disabled = true;
 }};
@@ -2583,6 +1646,9 @@ const clearLoading = () => {{
 }};
 
 const checkServer = async () => {{
+  if (await redirectFilePageToServer()) {{
+    return;
+  }}
   try {{
     const response = await fetch(`${{apiBase}}/api/health`, {{ method: 'GET', headers: apiHeaders }});
     if (!response.ok) {{
@@ -2597,8 +1663,9 @@ const checkServer = async () => {{
     submitEl.disabled = false;
     serverNoteEl.hidden = true;
     serverNoteEl.innerHTML = '';
-    statusEl.textContent = 'Waiting for a question.';
-    resultEl.textContent = 'Answers will appear here.';
+    statusEl.textContent = 'Ready when you are';
+    resultEl.textContent = '';
+    emptyAnswerEl.hidden = false;
   }} catch (error) {{
     setUnavailable();
   }}
@@ -2612,6 +1679,8 @@ formEl.addEventListener('submit', async (event) => {{
     return;
   }}
   submitEl.disabled = true;
+  formEl.setAttribute('aria-busy', 'true');
+  emptyAnswerEl.hidden = true;
   setLoading();
   resultEl.textContent = '';
   metaEl.innerHTML = '';
@@ -2629,7 +1698,11 @@ formEl.addEventListener('submit', async (event) => {{
       throw new Error(payload.error || 'Q&A request failed.');
     }}
     statusEl.textContent = 'Answer ready.';
-    resultEl.textContent = payload.answer || '';
+    if (window.WikiUI) {{
+      window.WikiUI.renderAnswer(resultEl, payload.answer || 'No answer was returned. Try rephrasing your question.');
+    }} else {{
+      resultEl.textContent = payload.answer || '';
+    }}
     renderMeta(payload);
   }} catch (error) {{
     console.error(error);
@@ -2638,6 +1711,7 @@ formEl.addEventListener('submit', async (event) => {{
     metaEl.innerHTML = '';
   }} finally {{
     clearLoading();
+    formEl.removeAttribute('aria-busy');
     submitEl.disabled = false;
   }}
 }});
@@ -2654,37 +1728,44 @@ def ask_widget_markup(*, compact: bool, show_file_into_wiki: bool, placeholder: 
     if show_file_into_wiki:
         checkbox_html = """
                 <label class="checkbox-row">
-                  <input data-file-into-wiki type="checkbox">
-                  <span>Save to <code>wiki/derived</code></span>
+                  <input data-file-into-wiki type="checkbox" checked>
+                  <span>Save answer to research notes</span>
                 </label>"""
     return f"""
         <div class="ask-workspace">
           <section class="ask-question-pane">
-            <h2>Your question</h2>
+            <h2>{icon("ask")} Your question</h2>
             <div class="{form_class}">
             <form data-ask-form>
               <label class="tool-label" for="wiki-question">Question</label>
-              <textarea id="wiki-question" data-ask-input placeholder="{html.escape(placeholder, quote=True)}"></textarea>
+              <textarea id="wiki-question" data-ask-input rows="7" placeholder="{html.escape(placeholder, quote=True)}" required></textarea>
               <div class="ask-actions">
-                <button class="primary-button" data-ask-submit type="submit">Ask</button>{checkbox_html}
+                <button class="primary-button" data-ask-submit type="submit">Ask the Wiki {icon("arrow")}</button>{checkbox_html}
               </div>
             </form>
+            </div>
+            <div class="ask-suggestions">
+              <p>A few starting points</p>
+              <button type="button" data-question="What are the current milestones and open gaps across my active projects?">Where do my projects stand? {icon("arrow")}</button>
+              <button type="button" data-question="How do the subprojects of my largest research programme fit together?">Connect the subprojects {icon("arrow")}</button>
+              <button type="button" data-question="Compare neural operators and graph neural networks for learning physical simulations, using sources in the wiki.">Compare approaches to physics learning {icon("arrow")}</button>
             </div>
             <div class="server-note" data-server-note hidden></div>
           </section>
           <section class="ask-answer-pane {answer_class}">
             <div class="ask-answer-heading">
-              <h2>Answer</h2>
-              <span class="ask-status" data-ask-status aria-live="polite">Waiting for a question.</span>
+              <h2>Research answer</h2>
+              <span class="ask-status" data-ask-status aria-live="polite">Ready when you are</span>
             </div>
+            <div class="answer-empty" data-answer-empty>{icon("sources")}<h3>Start with a good question.</h3><p>Explore ideas across your projects and papers.<br>Your answer and source context will appear here.</p></div>
+            <div class="answer-output" data-ask-result></div>
             <div class="answer-meta" data-ask-meta></div>
-            <pre class="answer-output" data-ask-result>Answers will appear here.</pre>
           </section>
         </div>""".rstrip()
 
 
 def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
-    del docs, root
+    del root
     export_path = Path("ask.html")
     stylesheet_href = relative_href(Path("assets/wiki.css"), export_path)
     server_command = ".venv/bin/python _meta/scripts/wiki_cli.py serve-html --root ."
@@ -2693,36 +1774,27 @@ def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
     widget_html = ask_widget_markup(
         compact=False,
         show_file_into_wiki=True,
-        placeholder="Ask a question about the research wiki.",
+        placeholder="What would you like to explore? Ask about a project, compare methods, or follow an idea across your sources…",
     )
     return f"""<!doctype html>
 <html lang="en">
 <head>
+  <script src="assets/wiki-ui.js" defer></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ask The Wiki · Research Wiki</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{html.escape(stylesheet_href, quote=True)}">
 </head>
-<body class="tool-page">
-  <header class="home-header">
-    <div class="home-header-inner">
-      <a class="home-brand" href="index.html">Research Wiki</a>
-      <nav class="home-nav" aria-label="Primary">
-        <a href="index.html#projects">Projects</a>
-        <a class="browse-link" href="index.html#research-areas">Browse</a>
-        <a href="search.html">Search</a>
-        <a class="current" href="ask.html">Ask</a>
-      </nav>
-    </div>
-  </header>
+<body class="workspace tool-page ask-page">
+  {render_workspace_shell(docs, export_path, "Ask the Wiki")}
 
-  <main class="tool-main">
+  <main class="tool-main" id="main-content">
     <section class="tool-intro">
       <div>
-        <p class="tool-kicker">Grounded Q&amp;A</p>
-        <h1>Ask the Wiki</h1>
-        <p class="tool-lede">Answers are grounded in the compiled research wiki and its linked source pages.</p>
+        <p class="tool-kicker">A conversation with your research</p>
+        <h1>Ask the Wiki<span class="title-dot">.</span></h1>
+        <p class="tool-lede">From a question to a clearer picture, grounded in your library.</p>
       </div>
       <p class="tool-meta provider-status" data-provider-status>Checking subscription</p>
     </section>
@@ -2742,12 +1814,19 @@ def render_ask_page(docs: list[dict[str, object]], root: Path) -> str:
 
 def export_html(root: Path) -> dict[str, object]:
     config = load_config(root)
-    export_root = root / config.get("html_dir", "output/html")
+    published_root = root / config.get("html_dir", "output/html")
+    export_root = published_root.parent / f".{published_root.name}-build-{os.getpid()}"
     if export_root.exists():
         shutil.rmtree(export_root)
     export_root.mkdir(parents=True, exist_ok=True)
     (export_root / "assets").mkdir(parents=True, exist_ok=True)
     (export_root / "assets" / "wiki.css").write_text(STYLE_CSS + "\n", encoding="utf-8")
+    shutil.copy2(Path(__file__).with_name("wiki_ui.js"), export_root / "assets" / "wiki-ui.js")
+
+    okf_result = export_okf(root)
+    shutil.copy2(root / str(okf_result["archive_path"]), export_root / "assets" / "research-wiki-okf.zip")
+    shutil.copy2(root / str(okf_result["manifest_path"]), export_root / "assets" / "okf-manifest.json")
+    shutil.copy2(root / str(okf_result["conformance_path"]), export_root / "assets" / "okf-conformance.json")
 
     docs, title_to_export, source_to_export = build_doc_index(root)
     search_index = build_search_index(root, docs)
@@ -2757,25 +1836,42 @@ def export_html(root: Path) -> dict[str, object]:
         export_path.parent.mkdir(parents=True, exist_ok=True)
         html_text = render_document_page(doc, docs, root, export_root, title_to_export, source_to_export)
         export_path.write_text(html_text, encoding="utf-8")
-        written.append(export_path.relative_to(root).as_posix())
+        written.append((published_root / export_path.relative_to(export_root)).relative_to(root).as_posix())
 
     search_index_path = export_root / "assets" / "search-index.json"
     search_index_path.write_text(json.dumps(search_index, indent=2, ensure_ascii=False), encoding="utf-8")
-    written.append(search_index_path.relative_to(root).as_posix())
+    written.append((published_root / search_index_path.relative_to(export_root)).relative_to(root).as_posix())
 
     search_page_path = export_root / "search.html"
     search_page_path.write_text(render_search_page(docs, root, search_index), encoding="utf-8")
-    written.append(search_page_path.relative_to(root).as_posix())
+    written.append((published_root / search_page_path.relative_to(export_root)).relative_to(root).as_posix())
 
     ask_page_path = export_root / "ask.html"
     ask_page_path.write_text(render_ask_page(docs, root), encoding="utf-8")
-    written.append(ask_page_path.relative_to(root).as_posix())
+    written.append((published_root / ask_page_path.relative_to(export_root)).relative_to(root).as_posix())
+
+    knowledge_page_path = export_root / "knowledge.html"
+    knowledge_page_path.write_text(render_knowledge_page(docs, root, okf_result), encoding="utf-8")
+    written.append((published_root / knowledge_page_path.relative_to(export_root)).relative_to(root).as_posix())
+
+    previous_root = published_root.parent / f".{published_root.name}-previous-{os.getpid()}"
+    if previous_root.exists():
+        shutil.rmtree(previous_root)
+    if published_root.exists():
+        published_root.rename(previous_root)
+    export_root.rename(published_root)
+    if previous_root.exists():
+        shutil.rmtree(previous_root)
 
     return {
-        "export_root": export_root.relative_to(root).as_posix(),
-        "entrypoint": (export_root / "index.html").relative_to(root).as_posix(),
-        "search_page": search_page_path.relative_to(root).as_posix(),
-        "ask_page": ask_page_path.relative_to(root).as_posix(),
+        "export_root": published_root.relative_to(root).as_posix(),
+        "entrypoint": (published_root / "index.html").relative_to(root).as_posix(),
+        "search_page": (published_root / "search.html").relative_to(root).as_posix(),
+        "ask_page": (published_root / "ask.html").relative_to(root).as_posix(),
+        "knowledge_page": (published_root / "knowledge.html").relative_to(root).as_posix(),
+        "okf_bundle": okf_result["bundle_root"],
+        "okf_archive": okf_result["archive_path"],
+        "okf_conformant": okf_result["conformance"]["valid"],
         "pages_written": len(written),
         "written": written,
     }

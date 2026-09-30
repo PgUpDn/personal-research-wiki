@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import fitz
+import pymupdf
 
 sys.path.insert(0, Path(__file__).resolve().parent.as_posix())
 
@@ -33,6 +33,46 @@ class ClaudeApiKeyLoadingTest(unittest.TestCase):
 
 
 class MarkItDownPdfConversionTest(unittest.TestCase):
+    def test_pdf_author_line_before_collaboration_name(self) -> None:
+        text = (
+            "Discovery Foundation Models:\n"
+            "Toward Open-Ended Discovery Intelligence\n"
+            "Ling Yang Zhenfei Yin Yingcheng Wu\n"
+            "DFM Scientist Collaboration Program\n"
+            "Abstract\n"
+        )
+        path = Path("Yang et al. - 2026 - Discovery Foundation Models.pdf")
+        self.assertEqual(
+            wiki_pipeline.extract_authors(
+                text,
+                "Discovery Foundation Models Toward Open-Ended Discovery Intelligence",
+                path,
+            ),
+            ["Ling Yang", "Zhenfei Yin", "Yingcheng Wu"],
+        )
+
+    def test_spacing_recovery_uses_pdftotext_only_for_fused_words(self) -> None:
+        damaged = " ".join(["Foundationmodelshaveprogressedfromlearningandreasoning"] * 40)
+        recovered = " ".join(["Foundation models have progressed from learning and reasoning"] * 40)
+        with (
+            mock.patch.object(wiki_pipeline.shutil, "which", return_value="/usr/bin/pdftotext"),
+            mock.patch.object(
+                wiki_pipeline.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout=recovered),
+            ) as run,
+        ):
+            self.assertEqual(
+                wiki_pipeline.recover_markitdown_spacing(Path("paper.pdf"), damaged),
+                (recovered, "markitdown+pdftotext-spacing-recovery", "pdftotext-spacing-recovery"),
+            )
+            run.assert_called_once()
+            self.assertEqual(
+                wiki_pipeline.recover_markitdown_spacing(Path("paper.pdf"), recovered),
+                (recovered, "markitdown", "markitdown"),
+            )
+            run.assert_called_once()
+
     def test_convert_pdfs_uses_markitdown_cli_when_available(self) -> None:
         previous = os.environ.pop("ANTHROPIC_API_KEY", None)
         try:
@@ -42,7 +82,7 @@ class MarkItDownPdfConversionTest(unittest.TestCase):
                 raw_dir.mkdir()
                 pdf_path = raw_dir / "Example - 2026 - MarkItDown Test.pdf"
 
-                document = fitz.open()
+                document = pymupdf.open()
                 page = document.new_page()
                 page.insert_text((72, 72), "MarkItDown Test")
                 document.save(pdf_path)
@@ -74,8 +114,84 @@ class MarkItDownPdfConversionTest(unittest.TestCase):
             if previous is not None:
                 os.environ["ANTHROPIC_API_KEY"] = previous
 
+    def test_empty_markitdown_output_falls_back_to_local_ocr(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_dir = root / "raw"
+            raw_dir.mkdir()
+            pdf_path = raw_dir / "Example - 2026 - Scanned Paper.pdf"
+
+            document = pymupdf.open()
+            document.new_page()
+            document.save(pdf_path)
+            document.close()
+
+            work_dir = root / "_meta/pdf2md_work/scanned-paper"
+            work_dir.mkdir(parents=True)
+            image_path = work_dir / "page-001.png"
+            image_path.write_bytes(b"rendered page")
+
+            with (
+                mock.patch.object(
+                    wiki_pipeline,
+                    "run_markitdown",
+                    side_effect=RuntimeError("MarkItDown returned empty Markdown"),
+                ),
+                mock.patch.object(
+                    wiki_pipeline,
+                    "render_pdf_pages",
+                    return_value=([image_path], work_dir, "pymupdf"),
+                ),
+                mock.patch.object(
+                    wiki_pipeline,
+                    "tesseract_markdown_from_images",
+                    return_value="### Page 1\n\nOCR body.",
+                ),
+            ):
+                result = wiki_pipeline.convert_pdfs(root, force=True)
+
+            self.assertEqual(result["failures"], [])
+            cache_path = root / result["converted"][0]["cache_markdown"]
+            cache_text = cache_path.read_text(encoding="utf-8")
+            self.assertIn(
+                'conversion_pipeline: "markitdown+pymupdf+tesseract-ocr"',
+                cache_text,
+            )
+            self.assertIn('transcription_mode: "markitdown-ocr-fallback"', cache_text)
+            self.assertIn("OCR body.", cache_text)
+
 
 class MarkItDownTitleDetectionTest(unittest.TestCase):
+    def test_import_collision_digest_is_not_part_of_the_paper_title(self) -> None:
+        pdf_path = Path(
+            "Wu et al. - 2024 - Compositional Generative Inverse Design-752b308f.pdf"
+        )
+        expected = "Compositional Generative Inverse Design"
+        self.assertEqual(wiki_pipeline.paper_title_from_name(pdf_path.name), expected)
+        self.assertEqual(
+            wiki_pipeline.detect_title(
+                '---\ntitle: "Compositional Generative Inverse Design-752b308f"\n---\n',
+                pdf_path,
+            ),
+            expected,
+        )
+
+    def test_ocr_patent_title_is_recovered_from_the_document_body(self) -> None:
+        pdf_path = Path("opaque-download-token.pdf")
+        markdown = (
+            "### Page 3\n\n"
+            "WO 2026/064243 PCT/US2025/046388\n\n"
+            "MACHINE LEARNING BASED VIRTUAL SENSING OF WAFER\n"
+            "TEMPERATURES DURING REFLOW PROCESS IN A PHYSICAL VAPOR\n"
+            "DEPOSITION CHAMBER WITH UNCERTAIN CHAMBER PHYSICAL\n"
+            "PROPERTIES AND VARYING OPERATING CONDITIONS\n\n"
+            "BACKGROUND\n"
+        )
+        self.assertEqual(
+            wiki_pipeline.detect_title(markdown, pdf_path),
+            "Machine learning based virtual sensing of wafer temperatures during reflow process in a physical vapor deposition chamber with uncertain chamber physical properties and varying operating conditions",
+        )
+
     def test_table_shaped_title_falls_back_to_pdf_filename(self) -> None:
         pdf_path = Path(
             "Veličković et al. - 2018 - Graph Attention Networks.pdf"
@@ -112,6 +228,53 @@ class MarkItDownTitleDetectionTest(unittest.TestCase):
         self.assertEqual(
             wiki_pipeline.detect_title(markdown, pdf_path),
             "Evolutionary Ensemble of Agents",
+        )
+
+
+class SourceCanonicalizationTest(unittest.TestCase):
+    def test_title_equivalent_source_variants_merge_into_one_canonical_profile(self) -> None:
+        profiles = {
+            "Clippings/paper.md": {
+                "title": "Example Scientific Paper",
+                "aliases": ["Example Scientific Paper"],
+                "source": "Clippings/paper.md",
+                "source_files": ["Clippings/paper.md"],
+                "source_kind": "raw_markdown",
+                "concepts": ["ai-agents"],
+                "domains": [],
+                "themes": [],
+                "section_index": [],
+                "github_links": [],
+            },
+            "raw/zotero/AI/paper.pdf": {
+                "title": "Example Scientific Paper-1a2b3c4d",
+                "aliases": ["example2026paper"],
+                "source": "raw/zotero/AI/paper.pdf",
+                "source_files": ["raw/zotero/AI/paper.pdf"],
+                "source_kind": "raw_pdf",
+                "concepts": ["scientific-machine-learning"],
+                "domains": ["agents and automation"],
+                "themes": [],
+                "section_index": [],
+                "github_links": [],
+            },
+        }
+
+        canonical, duplicates = wiki_pipeline.canonical_source_profiles(profiles)
+
+        self.assertEqual(list(canonical), ["raw/zotero/AI/paper.pdf"])
+        profile = canonical["raw/zotero/AI/paper.pdf"]
+        self.assertEqual(
+            profile["source_files"],
+            ["Clippings/paper.md", "raw/zotero/AI/paper.pdf"],
+        )
+        self.assertEqual(
+            profile["concepts"],
+            ["ai-agents", "scientific-machine-learning"],
+        )
+        self.assertEqual(
+            duplicates,
+            {"Clippings/paper.md": "raw/zotero/AI/paper.pdf"},
         )
 
 
@@ -217,7 +380,7 @@ class PandocLatexConversionTest(unittest.TestCase):
             (source_dir / "dependency.tex").write_text("Tracked dependency.\n", encoding="utf-8")
 
             pdf_path = tex_path.with_suffix(".pdf")
-            document = fitz.open()
+            document = pymupdf.open()
             document.new_page().insert_text((72, 72), "Visual snapshot")
             document.save(pdf_path)
             document.close()
@@ -253,7 +416,7 @@ class PandocLatexConversionTest(unittest.TestCase):
                 encoding="utf-8",
             )
             unrelated_pdf = source_dir / "unrelated.pdf"
-            document = fitz.open()
+            document = pymupdf.open()
             document.new_page().insert_text((72, 72), "Independent source")
             document.save(unrelated_pdf)
             document.close()

@@ -24,7 +24,7 @@ VENV_SITE_PACKAGES = sorted((PROJECT_ROOT / ".venv/lib").glob("python*/site-pack
 if VENV_SITE_PACKAGES:
     sys.path.insert(0, str(VENV_SITE_PACKAGES[0]))
 
-import fitz
+import pymupdf
 import anthropic
 
 
@@ -93,6 +93,35 @@ STOPWORDS = {
     "towards",
     "using",
     "with",
+    "also",
+    "been",
+    "could",
+    "have",
+    "into",
+    "more",
+    "most",
+    "only",
+    "other",
+    "over",
+    "should",
+    "some",
+    "such",
+    "than",
+    "that",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "what",
+    "when",
+    "where",
+    "which",
+    "while",
+    "will",
+    "would",
 }
 
 AFFILIATION_HINTS = {
@@ -335,7 +364,7 @@ CONCEPTS = [
         "title": "AI Agents",
         "group": "Agents and Reasoning",
         "description": "autonomous or semi-autonomous systems that use tools, memory, or planning loops to execute scientific tasks end to end",
-        "aliases": ["ai agent", "ai agents", "agentic", "agentic ai", "language agent", "language agents", "autonomous", "autonomous visualization agent", "research assistants"],
+        "aliases": ["ai agent", "ai agents", "agentic", "agentic ai", "language agent", "language agents", "autonomous", "autonomous visualization agent", "research assistants", "co-scientist", "ai co-scientist"],
         "related": ["large-language-models", "multi-agent-systems", "control-and-automation"],
     },
     {
@@ -482,7 +511,7 @@ CONCEPTS = [
         "title": "Semiconductor Design",
         "group": "Application Domains",
         "description": "chip, TCAD, packaging, and placement workflows where domain-adapted models and surrogates are used to guide design decisions",
-        "aliases": ["semiconductor", "chip", "tcad", "placement", "integrated circuits", "electronic packaging"],
+        "aliases": ["semiconductor", "chip", "tcad", "placement", "integrated circuits", "electronic packaging", "wafer", "physical vapor deposition"],
         "related": ["foundation-models", "surrogate-models", "control-and-automation"],
     },
     {
@@ -498,7 +527,7 @@ CONCEPTS = [
         "title": "Digital Twins",
         "group": "Application Domains",
         "description": "virtual counterparts of real systems that combine simulation, sensing, and adaptation for monitoring or control",
-        "aliases": ["digital twin", "digital twins"],
+        "aliases": ["digital twin", "digital twins", "virtual sensing", "virtual sensor", "soft sensor"],
         "related": ["control-and-automation", "scientific-machine-learning", "active-learning"],
     },
     {
@@ -534,12 +563,68 @@ CONCEPTS = [
         "related": ["scientific-datasets", "pretraining-and-transfer-learning", "uncertainty-quantification"],
     },
     {
+        "slug": "interpretability",
+        "title": "Interpretability",
+        "group": "Data and Evaluation",
+        "description": "methods and tests for explaining what a learned scientific model represents and relies on, from interpretable architectures and symbolic read-outs to probing, decodability and counterfactual checks of mechanistic use",
+        "aliases": ["interpretability", "interpretable", "mechanistic interpretability", "mechanistic fidelity", "decodability", "linear probe", "probing classifier", "counterfactual fidelity", "kolmogorov-arnold", "explainable ai", "explainability"],
+        "related": ["symbolic-regression", "benchmarks-and-evaluation", "scientific-machine-learning"],
+    },
+    {
         "slug": "cad-and-geometry-models",
         "title": "CAD and Geometry Models",
         "group": "Data and Evaluation",
         "description": "geometry-centric representations and datasets that connect visual or CAD interfaces to downstream simulation-ready assets",
         "aliases": ["cad", "geometry model", "large geometry model", "3d assets", "simulation-ready 3d assets"],
         "related": ["geometry-aware-learning", "inverse-design", "generative-models"],
+    },
+    {
+        "slug": "engineering-drawing-understanding",
+        "title": "Engineering Drawing Understanding",
+        "group": "Data and Evaluation",
+        "description": "extracting geometry, dimensions, annotations, and cross-view relationships from engineering drawings while retaining traceable evidence and unresolved ambiguity",
+        "aliases": ["engineering drawing understanding", "2d drawing understanding", "2d drawings", "engineering drawings", "drawing-to-model", "2d to 3d"],
+        "related": ["cad-and-geometry-models", "geometry-aware-learning", "control-and-automation", "visual-pair-review-harness", "provenance-legend"],
+    },
+    {
+        "slug": "classification-society-fe-contract",
+        "title": "Classification Society FE Contract",
+        "group": "Application Domains",
+        "description": "the geometry, loading, corrosion, meshing, provenance, and review requirements that connect marine structural models to classification-ready finite-element analysis",
+        "aliases": ["classification society fe contract", "classification society", "iacs csr", "cargo hold fe analysis", "sesam genie", "ocx approval", "class society", "class FE", "classification society FE", "FE contract", "net scantling", "mesh size s x s", "1+1+1 model", "eccentric beam"],
+        "related": ["cad-and-geometry-models", "simulation-acceleration", "digital-twins"],
+    },
+    {
+        "slug": "harness-engineering",
+        "title": "Harness Engineering",
+        "group": "Agents and Reasoning",
+        "description": "designing repositories, tests, tools, context, and feedback loops so coding agents can execute substantial engineering work reliably",
+        "aliases": ["harness engineering", "agent harness", "agent-first engineering", "coding agent", "full software engineer", "pin history", "seed baseline", "operator pin history"],
+        "related": ["ai-agents", "large-language-models", "control-and-automation", "visual-pair-review-harness", "provenance-legend"],
+    },
+    {
+        "slug": "visual-pair-review-harness",
+        "title": "Visual-Pair Review Harness",
+        "group": "Agents and Reasoning",
+        "description": "a recall gate for extraction pipelines: rendering the same window of a source drawing and of the derived model at the same isotropic scale, verifying the renderer numerically before any comparison, collapsing identical stations by pixel identity, reading in band crops, having one comparator per pair and two independent adversarial verifiers per finding, synthesizing confirmed findings into mechanisms, and versioning the evidence set so every finding records the render version it was made against",
+        "aliases": ["visual-pair review harness", "drawing-vs-model visual pair review", "visual pair review", "visual pair probe", "section pair probe", "drawing-vs-model pair review", "recall gate", "pair probe", "pair review", "framing check", "station renders", "known-omission list"],
+        "related": ["harness-engineering", "engineering-drawing-understanding", "ai-agents", "multi-agent-systems", "cad-and-geometry-models", "provenance-legend"],
+    },
+    {
+        "slug": "provenance-legend",
+        "title": "Provenance Legend",
+        "group": "Agents and Reasoning",
+        "description": "a per-object evidence grading for models extracted from drawings: a value axis (where the number came from) and a geometry axis (whether extent, position and cuts rest on drawn entities, a disclosed approximation or an open ledger item), fill level = the worse axis (drawn here / drawn rule or measured transfer or disclosed approximation / assumed or open) refined into eight dominant-reason classes, an edge channel recording whether a human pair-reviewed the object at its current geometry, computed from an exact-token vocabulary that raises on unknown tokens plus a station- and document-scoped open-items index and a visual review ledger, and gated by input-sensitive checks proven fallible by mutation",
+        "aliases": ["provenance legend", "evidence-level colouring", "evidence-level coloring", "three-level legend", "value axis geometry axis", "worse-axis rule", "provenance level", "open-items index", "visual review ledger", "exact-token vocabulary"],
+        "related": ["visual-pair-review-harness", "harness-engineering", "engineering-drawing-understanding", "multi-agent-systems", "cad-and-geometry-models"],
+    },
+    {
+        "slug": "render-registered-reconstruction",
+        "title": "Render-Registered Reconstruction",
+        "group": "Data and Evaluation",
+        "description": "rebuilding a structure part by part from official whole-body renders: one pinhole camera per view family from vanishing points and known 3D curves, a joint bundle adjustment on shared tie points picked by independent raters and official datum holes with metric constraints (skin-free evidence shapes the cameras, the skin only translates them), each part carved on a named support surface with one parameter measured from the render, trimmed by the other views' visual hull with the camera-uncertainty margin, and scored by a render fidelity audit (per-page IoU, depth-order agreement, uncovered-steel blobs) that stays a proxy while an independent render-pair reviewer is the truth gate",
+        "aliases": ["render-registered reconstruction", "reconstruction from official renders", "bundle adjustment with datum constraints", "tie points", "highlight carving", "support-surface carving", "visual hull trim", "page iou", "depth-order agreement", "camera resection", "resection of single renders", "held-out gate", "member ribbon", "near and far page iou"],
+        "related": ["cad-and-geometry-models", "visual-pair-review-harness", "provenance-legend", "harness-engineering", "engineering-drawing-understanding", "multi-agent-systems"],
     },
 ]
 
@@ -625,11 +710,15 @@ def load_config(root: Path) -> dict[str, Any]:
         "source_dirs": ["raw", "Clippings"],
         "wiki_dir": "wiki",
         "concepts_dir": "wiki/concepts",
+        "curated_dir": "wiki/curated",
         "source_notes_dir": "wiki/sources",
         "derived_wiki_dir": "wiki/derived",
         "projects_dir": "wiki/projects",
         "output_dir": "output",
         "html_dir": "output/html",
+        "okf_dir": "output/okf",
+        "okf_archive": "output/research-wiki-okf.zip",
+        "okf_active_project_stale_days": 90,
         "answers_dir": "output/answers",
         "slides_dir": "output/slides",
         "charts_dir": "output/charts",
@@ -685,6 +774,7 @@ def ensure_project_dirs(root: Path) -> None:
         "projects_dir",
         "output_dir",
         "html_dir",
+        "okf_dir",
         "answers_dir",
         "slides_dir",
         "charts_dir",
@@ -841,7 +931,9 @@ def compact_citation_lines(profile: dict[str, Any]) -> list[str]:
         lines.append(f"- Identifiers: {' · '.join(identifier_bits)}")
     if code_bits:
         lines.append(f"- Code: {' · '.join(code_bits)}")
-    lines.append(f"- Source: `{profile['source']}`")
+    source_files = profile.get("source_files", [profile["source"]])
+    source_label = "Sources" if len(source_files) > 1 else "Source"
+    lines.append(f"- {source_label}: " + " · ".join(f"`{path}`" for path in source_files))
     if asset_bits:
         lines.append(f"- Assets: {' · '.join(asset_bits)}")
     return lines
@@ -856,6 +948,75 @@ def dedupe_preserve_order(values: list[str]) -> list[str]:
         seen.add(value)
         ordered.append(value)
     return ordered
+
+
+def source_title_identity(profile: dict[str, Any]) -> str:
+    title = normalize_for_match(str(profile.get("title", ""))).strip()
+    title = re.sub(r"\s+[0-9a-f]{8}$", "", title)
+    meaningful_tokens = [token for token in title.split() if len(token) >= 3]
+    if len(meaningful_tokens) < 3 or title.startswith("source "):
+        return f"source:{profile.get('source', '')}"
+    return title
+
+
+def source_profile_quality(profile: dict[str, Any]) -> tuple[int, int, int, str]:
+    source_kind_score = {"raw_tex": 3, "raw_pdf": 2, "raw_markdown": 1}.get(
+        str(profile.get("source_kind", "")),
+        0,
+    )
+    stem = Path(str(profile.get("source", ""))).stem
+    readable_words = len(re.findall(r"[A-Za-z]{3,}", stem))
+    opaque_penalty = 1 if re.fullmatch(r"[A-Za-z0-9_-]{32,}", stem) else 0
+    metadata_score = sum(
+        bool(profile.get(field)) for field in ("doi", "arxiv_id", "year", "venue")
+    )
+    return (
+        source_kind_score,
+        metadata_score,
+        readable_words - (opaque_penalty * 20),
+        str(profile.get("source", "")),
+    )
+
+
+def canonical_source_profiles(
+    source_docs: dict[str, dict[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for profile in source_docs.values():
+        grouped[source_title_identity(profile)].append(profile)
+
+    canonical_docs: dict[str, dict[str, Any]] = {}
+    duplicate_sources: dict[str, str] = {}
+    for profiles in grouped.values():
+        best = max(profiles, key=source_profile_quality)
+        canonical = dict(best)
+        canonical_source = str(best["source"])
+        source_files = sorted(
+            {
+                source
+                for profile in profiles
+                for source in profile.get("source_files", [profile["source"]])
+            },
+            key=str.casefold,
+        )
+        canonical["source_files"] = source_files
+        canonical["aliases"] = dedupe_preserve_order(
+            [
+                alias
+                for profile in profiles
+                for alias in [profile.get("title", ""), *profile.get("aliases", [])]
+            ]
+        )
+        for field in ("concepts", "domains", "themes", "section_index", "github_links"):
+            canonical[field] = dedupe_preserve_order(
+                [value for profile in profiles for value in profile.get(field, [])]
+            )
+        canonical_docs[canonical_source] = canonical
+        for profile in profiles:
+            source = str(profile["source"])
+            if source != canonical_source:
+                duplicate_sources[source] = canonical_source
+    return canonical_docs, duplicate_sources
 
 
 def converted_pdf_markdown_path(root: Path, pdf_path: Path) -> Path:
@@ -1195,10 +1356,12 @@ def paper_title_from_name(name: str) -> str:
     stem = Path(name).stem
     parts = [part.strip() for part in stem.split(" - ") if part.strip()]
     if len(parts) >= 3 and re.fullmatch(r"\d{4}", parts[1]):
-        return " - ".join(parts[2:]).strip()
-    if len(parts) >= 2:
-        return " - ".join(parts[1:]).strip()
-    return stem.strip()
+        title = " - ".join(parts[2:]).strip()
+    elif len(parts) >= 2:
+        title = " - ".join(parts[1:]).strip()
+    else:
+        title = stem.strip()
+    return re.sub(r"-[0-9a-f]{8}$", "", title, flags=re.IGNORECASE).strip()
 
 
 def clean_markdown_candidate(text: str) -> str:
@@ -1574,6 +1737,7 @@ def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[s
             break
 
     authors = []
+    filename_lead = normalize_author_token(source_filename_parts(source_path).get("lead_author_text") or "").split(" ")[0].casefold()
     if title_index is not None:
         for raw in lines[title_index + 1:title_index + 25]:
             raw_line = raw.strip()
@@ -1584,6 +1748,16 @@ def extract_authors(markdown_text: str, title: str, source_path: Path) -> list[s
             if lowered in {"abstract", "article info"} or lowered.startswith(("abstract", "keywords", "introduction")):
                 break
             if stripped.startswith("#"):
+                break
+            tokens = stripped.split()
+            if (
+                filename_lead
+                and 4 <= len(tokens) <= 12
+                and len(tokens) % 2 == 0
+                and all(re.fullmatch(r"[A-Z][A-Za-z'-]+", token) for token in tokens)
+                and tokens[1].casefold() == filename_lead
+            ):
+                authors.extend(" ".join(tokens[index:index + 2]) for index in range(0, len(tokens), 2))
                 break
             parsed = split_author_line(raw_line)
             authors.extend(parsed)
@@ -1683,11 +1857,51 @@ def strip_frontmatter(text: str) -> str:
     return text
 
 
+def patent_title_candidate(markdown_text: str) -> str:
+    lines = [clean_markdown_candidate(line) for line in extracted_markdown_body(markdown_text).splitlines()]
+    for index, line in enumerate(lines):
+        normalized = normalize_text(line)
+        if not re.match(r"^WO\s+\d{4}/\d+.*\bPCT/", normalized, re.IGNORECASE):
+            continue
+        title_lines = []
+        for candidate in lines[index + 1 : index + 10]:
+            normalized_candidate = normalize_text(candidate).strip()
+            if not normalized_candidate or re.fullmatch(
+                r"Pages? \d+(?:-\d+)?", normalized_candidate, re.IGNORECASE
+            ):
+                continue
+            if normalized_candidate.upper() in {"BACKGROUND", "ABSTRACT", "FIELD"}:
+                break
+            letters = [character for character in normalized_candidate if character.isalpha()]
+            if len(letters) < 5:
+                continue
+            uppercase_ratio = sum(character.isupper() for character in letters) / len(letters)
+            if uppercase_ratio < 0.85:
+                break
+            title_lines.append(normalized_candidate)
+        if not title_lines:
+            continue
+        title = re.sub(r"(?<=[A-Za-z])-\s+(?=[A-Za-z])", "", " ".join(title_lines))
+        title = re.sub(r"\s+", " ", title).strip(" .")
+        if 20 <= len(title) <= 300:
+            if title.isupper():
+                title = title[:1] + title[1:].lower()
+            return title
+    return ""
+
+
 def detect_title(markdown_text: str, source_path: Path) -> str:
     frontmatter_match = re.search(r"^title:\s*(.+)$", markdown_text, re.MULTILINE)
     frontmatter_title = frontmatter_match.group(1).strip().strip('"') if frontmatter_match else ""
     title_hint = paper_title_from_name(source_path.name)
     is_pdf_source = source_path.suffix.lower() == ".pdf"
+    if is_pdf_source:
+        frontmatter_title = re.sub(
+            r"-[0-9a-f]{8}$",
+            "",
+            frontmatter_title,
+            flags=re.IGNORECASE,
+        ).strip()
     frontmatter_valid = (
         bool(frontmatter_title)
         and frontmatter_title.count("|") < 2
@@ -1695,6 +1909,9 @@ def detect_title(markdown_text: str, source_path: Path) -> str:
     )
     if frontmatter_valid and not (is_pdf_source and title_hint):
         return frontmatter_title
+    patent_title = patent_title_candidate(markdown_text)
+    if patent_title:
+        return patent_title
     body = extracted_markdown_body(markdown_text)
     heading_candidates = [frontmatter_title] if frontmatter_valid else []
     for raw in body.splitlines()[:40]:
@@ -2336,8 +2553,35 @@ def run_markitdown(root: Path, pdf_path: Path) -> tuple[str, Path]:
     return extracted, work_dir
 
 
+def recover_markitdown_spacing(pdf_path: Path, extracted: str) -> tuple[str, str, str]:
+    sample = extracted[:30000]
+    fused_words = len(re.findall(r"(?<![A-Za-z])[A-Za-z]{24,}(?![A-Za-z])", sample))
+    if fused_words < 30:
+        return extracted, "markitdown", "markitdown"
+    pdftotext = shutil.which("pdftotext")
+    if not pdftotext:
+        return extracted, "markitdown", "markitdown"
+    try:
+        result = subprocess.run(
+            [pdftotext, "-raw", str(pdf_path), "-"],
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return extracted, "markitdown", "markitdown"
+    recovered = result.stdout.strip()
+    if result.returncode != 0 or not recovered:
+        return extracted, "markitdown", "markitdown"
+    recovered_sample = recovered[:30000]
+    recovered_fused = len(re.findall(r"(?<![A-Za-z])[A-Za-z]{24,}(?![A-Za-z])", recovered_sample))
+    if recovered_fused * 5 >= fused_words or len(recovered_sample.split()) <= len(sample.split()) * 1.1:
+        return extracted, "markitdown", "markitdown"
+    return recovered, "markitdown+pdftotext-spacing-recovery", "pdftotext-spacing-recovery"
+
+
 def pdf_page_count(pdf_path: Path) -> int:
-    with fitz.open(pdf_path) as document:
+    with pymupdf.open(pdf_path) as document:
         return document.page_count
 
 
@@ -2392,9 +2636,9 @@ def render_pdf_with_pymupdf(root: Path, pdf_path: Path) -> tuple[list[Path], Pat
     image_dir.mkdir(parents=True, exist_ok=True)
 
     image_paths = []
-    document = fitz.open(pdf_path)
+    document = pymupdf.open(pdf_path)
     try:
-        matrix = fitz.Matrix(2.0, 2.0)
+        matrix = pymupdf.Matrix(2.0, 2.0)
         for index, page in enumerate(document, start=1):
             image_path = image_dir / f"{project_name}-{index:03d}.png"
             pixmap = page.get_pixmap(matrix=matrix, alpha=False)
@@ -2429,7 +2673,7 @@ def image_message_block(image_path: Path) -> dict[str, Any]:
 
 def fallback_markdown_from_pdf_pages(pdf_path: Path, page_start: int, page_end: int) -> str:
     snippets = []
-    with fitz.open(pdf_path) as document:
+    with pymupdf.open(pdf_path) as document:
         last_page = min(page_end, document.page_count)
         for page_number in range(page_start, last_page + 1):
             text = document.load_page(page_number - 1).get_text("text").strip()
@@ -2445,6 +2689,33 @@ def fallback_markdown_from_pdf_pages(pdf_path: Path, page_start: int, page_end: 
             "[No extractable text could be recovered from these pages.]"
         )
     return "\n\n".join(snippets).strip()
+
+
+def tesseract_markdown_from_images(image_paths: list[Path]) -> str:
+    tesseract_bin = shutil.which("tesseract")
+    if not tesseract_bin:
+        raise RuntimeError(
+            "MarkItDown returned empty Markdown and Tesseract OCR is unavailable"
+        )
+
+    chunks = []
+    for page_number, image_path in enumerate(image_paths, start=1):
+        result = subprocess.run(
+            [tesseract_bin, str(image_path), "stdout", "-l", "eng"],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "Tesseract failed").strip()
+            raise RuntimeError(f"Tesseract failed on page {page_number}: {detail}")
+        page_text = re.sub(r"\n{3,}", "\n\n", result.stdout).strip()
+        if page_text:
+            chunks.append(f"### Page {page_number}\n\n{page_text}")
+
+    if not chunks:
+        raise RuntimeError("Tesseract OCR returned empty Markdown")
+    return "\n\n".join(chunks)
 
 
 def claude_markdown_from_images(root: Path, pdf_path: Path, image_paths: list[Path]) -> str:
@@ -2667,7 +2938,7 @@ def refresh_pdf_cache_note(root: Path, pdf_path: Path) -> dict[str, Any]:
     expected_count = int(page_count_raw) if page_count_raw.isdigit() else None
     conversion_pipeline = frontmatter_scalar(existing, "conversion_pipeline") or "pdf2md+claude-vision"
     transcription_mode = frontmatter_scalar(existing, "transcription_mode")
-    if conversion_pipeline == "markitdown":
+    if conversion_pipeline.startswith("markitdown"):
         relative_image_paths = []
         expected_count = expected_count or pdf_page_count(pdf_path)
     else:
@@ -2705,16 +2976,33 @@ def convert_pdfs(root: Path, force: bool = False) -> dict[str, Any]:
                 config = load_config(root)
                 backend = str(config.get("pdf_conversion_backend", "markitdown")).strip().lower()
                 if backend == "markitdown":
-                    extracted, work_dir = run_markitdown(root, pdf_path)
-                    markdown = markdown_from_pdf(
-                        pdf_path,
-                        rel_pdf,
-                        extracted,
-                        [],
-                        "markitdown",
-                        page_count=pdf_page_count(pdf_path),
-                        transcription_mode="markitdown",
-                    )
+                    try:
+                        extracted, work_dir = run_markitdown(root, pdf_path)
+                        extracted, pipeline, transcription_mode = recover_markitdown_spacing(pdf_path, extracted)
+                        markdown = markdown_from_pdf(
+                            pdf_path,
+                            rel_pdf,
+                            extracted,
+                            [],
+                            pipeline,
+                            page_count=pdf_page_count(pdf_path),
+                            transcription_mode=transcription_mode,
+                        )
+                    except RuntimeError as error:
+                        if str(error) != "MarkItDown returned empty Markdown":
+                            raise
+                        image_paths, work_dir, render_pipeline = render_pdf_pages(root, pdf_path)
+                        extracted = tesseract_markdown_from_images(image_paths)
+                        relative_image_paths = copy_page_images(root, pdf_path, image_paths, md_path)
+                        markdown = markdown_from_pdf(
+                            pdf_path,
+                            rel_pdf,
+                            extracted,
+                            relative_image_paths,
+                            f"markitdown+{render_pipeline}+tesseract-ocr",
+                            page_count=pdf_page_count(pdf_path),
+                            transcription_mode="markitdown-ocr-fallback",
+                        )
                 elif backend == "claude-vision":
                     image_paths, work_dir, render_pipeline = render_pdf_pages(root, pdf_path)
                     extracted = claude_markdown_from_images(root, pdf_path, image_paths)
@@ -2985,10 +3273,72 @@ def render_yaml_list(key: str, values: list[str]) -> list[str]:
     return lines
 
 
-def concept_article_content(concept_slug: str, docs: list[dict[str, Any]], compile_date: str, available_slugs: set[str]) -> str:
+CURATED_NOTE_TYPE = "curated"
+CURATED_SECTION_HEADING = "## Curated notes"
+
+
+def curated_dir_path(root: Path) -> Path:
+    """Folder holding hand-maintained concept fragments (`wiki/curated/<slug>.md`)."""
+    config = load_config(root)
+    return root / config.get("curated_dir", "wiki/curated")
+
+
+def curated_note_path(root: Path, concept_slug: str) -> Path:
+    return curated_dir_path(root) / f"{concept_slug}.md"
+
+
+def is_curated_fragment(markdown_text: str) -> bool:
+    """True for `note_type: curated` fragments, which are inlined into concept pages and are never standalone wiki documents."""
+    declared = (frontmatter_scalar(markdown_text, "note_type") or "").strip().lower()
+    return declared == CURATED_NOTE_TYPE
+
+
+def curated_note_body(markdown_text: str) -> str:
+    """Body of a curated fragment: frontmatter stripped, one leading H1 dropped, wikilinks and everything else kept verbatim."""
+    lines = strip_frontmatter(markdown_text).splitlines()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    if lines and re.match(r"^#\s+\S", lines[0]):
+        lines.pop(0)
+    return "\n".join(lines).strip("\n")
+
+
+def load_curated_note(root: Path, concept_slug: str) -> dict[str, str] | None:
+    path = curated_note_path(root, concept_slug)
+    if not path.is_file():
+        return None
+    body = curated_note_body(read_text(path))
+    if not body:
+        return None
+    return {"path": path.relative_to(root).as_posix(), "body": body}
+
+
+def concept_is_pinned(root: Path, concept_slug: str) -> bool:
+    """A pinned concept is generated even with zero matching sources and is never deleted as stale."""
+    concept = CONCEPTS_BY_SLUG.get(concept_slug)
+    if not concept:
+        return False
+    if concept.get("keep_without_sources"):
+        return True
+    return curated_note_path(root, concept_slug).is_file()
+
+
+def concept_article_content(
+    concept_slug: str,
+    docs: list[dict[str, Any]],
+    compile_date: str,
+    available_slugs: set[str],
+    curated_note: dict[str, str] | None = None,
+) -> str:
     concept = CONCEPTS_BY_SLUG[concept_slug]
     docs_sorted = sorted(docs, key=lambda item: item["title"].lower())
-    source_paths = [doc["source"] for doc in docs_sorted]
+    source_paths = dedupe_preserve_order(
+        [
+            source
+            for doc in docs_sorted
+            for source in doc.get("source_files", [doc["source"]])
+        ]
+    )
     related_slugs = best_related_slugs(concept_slug, docs_sorted, available_slugs)
     related_links = [wiki_link(CONCEPTS_BY_SLUG[slug]["title"]) for slug in related_slugs]
     source_pages = [wiki_link(doc["title"]) for doc in docs_sorted]
@@ -3002,19 +3352,45 @@ def concept_article_content(concept_slug: str, docs: list[dict[str, Any]], compi
     top_keywords = [label for label, _ in keyword_counts.most_common(5) if label not in {"using", "based"}]
     concept_aliases = dedupe_preserve_order([concept["title"], *concept["aliases"]])
 
-    intro_bits = [f"[[{concept['title']}]] appears across `raw/` as {concept['description']}."]
+    if docs_sorted:
+        intro_bits = [f"[[{concept['title']}]] appears across `raw/` as {concept['description']}."]
+    else:
+        intro_bits = [
+            f"[[{concept['title']}]] is catalogued as {concept['description']}.",
+            "No source in `raw/` or `Clippings/` currently matches its aliases; the page is kept because it carries curated notes or is pinned in the concept catalog.",
+        ]
     if top_domains:
         intro_bits.append(f"The strongest source cluster is in {', '.join(top_domains)}.")
     if related_links:
         intro_bits.append(f"It is most often discussed alongside {', '.join(related_links[:3])}.")
 
-    takeaways = [
-        f"The matched sources frame {concept['title']} through {', '.join(top_themes) if top_themes else 'recurring modeling and evaluation concerns'}.",
-        f"Representative application areas include {', '.join(top_domains) if top_domains else 'multiple scientific domains'}.",
-        f"Recurring vocabulary around this concept includes {', '.join(top_keywords[:5]) if top_keywords else 'simulation, modeling, and design'}.",
-    ]
+    if docs_sorted:
+        takeaways = [
+            f"The matched sources frame {concept['title']} through {', '.join(top_themes) if top_themes else 'recurring modeling and evaluation concerns'}.",
+            f"Representative application areas include {', '.join(top_domains) if top_domains else 'multiple scientific domains'}.",
+            f"Recurring vocabulary around this concept includes {', '.join(top_keywords[:5]) if top_keywords else 'simulation, modeling, and design'}.",
+        ]
+    else:
+        takeaways = [
+            "No source currently matches this concept's aliases, so the compiler has nothing to synthesize yet.",
+            "Add a raw note or clipping that carries one of the aliases early in its body to populate this section.",
+        ]
 
-    representative = [f"- [[{doc['title']}]] from `{doc['source']}`" for doc in docs_sorted[:8]]
+    if docs_sorted:
+        representative = [f"- [[{doc['title']}]] from `{doc['source']}`" for doc in docs_sorted[:8]]
+    else:
+        representative = ["- Representative sources: none matched yet."]
+
+    curated_section: list[str] = []
+    if curated_note:
+        curated_section = [
+            CURATED_SECTION_HEADING,
+            "",
+            f"*Hand-maintained in {curated_note['path']}; the other sections are compiler output.*",
+            "",
+            curated_note["body"],
+            "",
+        ]
     related_section = [f"- {link}" for link in related_links] if related_links else ["- No related concept links yet."]
 
     lines = [
@@ -3025,6 +3401,7 @@ def concept_article_content(concept_slug: str, docs: list[dict[str, Any]], compi
         f"schema_version: {json.dumps(SCHEMA_VERSION)}",
         f"concept_group: {json.dumps(concept['group'], ensure_ascii=False)}",
         f"source_count: {len(docs_sorted)}",
+        *([f"curated_note: {json.dumps(curated_note['path'], ensure_ascii=False)}"] if curated_note else []),
         *render_yaml_list("sources", source_paths),
         *render_yaml_list("source_pages", source_pages),
         *render_yaml_list("related", related_links),
@@ -3043,6 +3420,7 @@ def concept_article_content(concept_slug: str, docs: list[dict[str, Any]], compi
             "",
             " ".join(intro_bits),
             "",
+            *curated_section,
             "## What The Sources Emphasize",
             "",
             *[f"- {item}" for item in takeaways],
@@ -3298,6 +3676,7 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
         "- Health checks: [LINT_AND_HEAL](LINT_AND_HEAL.md)",
         "- Projects: [projects/README](projects/README.md)",
         "- Filed-back notes: [derived/README](derived/README.md)",
+        f"- Open Knowledge Format export: [output/okf](../{config.get('okf_dir', 'output/okf')}/index.md)",
         "",
         "## System Pages",
         "",
@@ -3310,6 +3689,7 @@ def render_index(root: Path, source_docs: dict[str, dict[str, Any]], concept_doc
         "| [LINT_AND_HEAL](LINT_AND_HEAL.md) | Health checks, contradictions, orphans, and cleanup suggestions |",
         "| [projects/README](projects/README.md) | Active research programmes and project dossiers |",
         "| [derived/README](derived/README.md) | How query outputs get filed back into the wiki |",
+        f"| [output/okf](../{config.get('okf_dir', 'output/okf')}/index.md) | Portable OKF v0.2 bundle with standard links, provenance, trust, freshness, manifest, and conformance report |",
         "",
         "## Projects",
         "",
@@ -3490,6 +3870,20 @@ def render_page_formats(compile_date: str) -> str:
         "- Keep generated source pages compact enough for browsing and Q&A, while preserving long transcripts in cache notes.",
         "- Prefer flat scalar and list properties over deeply nested YAML so Obsidian Properties and Dataview stay easy to query.",
         "",
+        "## Open Knowledge Format Export",
+        "",
+        "The native `wiki/` schema remains optimized for Obsidian. A deterministic compatibility export under `output/okf/` targets Open Knowledge Format v0.2 without changing source or wiki documents.",
+        "",
+        "The export provides:",
+        "- required OKF `type` metadata and standard Markdown links",
+        "- structured `sources` provenance with stable identifiers and source timestamps when available",
+        "- explicit `generated`, `status`, and active-project `stale_after` signals",
+        "- optional explicit verification via flat native fields `okf_verified_by` and `okf_verified_at`",
+        "- progressive `index.md` files and a newest-first `log.md`",
+        "- `manifest.json`, `conformance.json`, and a portable ZIP archive",
+        "",
+        "Trust tiers are derived only from explicit verification events; compiler output is not mislabeled as human-reviewed content.",
+        "",
         "## PDF Cache Notes",
         "",
         "Location: `_meta/converted_sources/*.md`",
@@ -3611,6 +4005,7 @@ def render_page_formats(compile_date: str) -> str:
         "- `schema_version`",
         "- `concept_group`",
         "- `source_count`",
+        "- `curated_note` only when `wiki/curated/<slug>.md` exists",
         "- `sources`",
         "- `source_pages`",
         "- `related`",
@@ -3619,11 +4014,34 @@ def render_page_formats(compile_date: str) -> str:
         "",
         "Sections:",
         "- `## Definition`",
+        "- `## Curated notes` only when `wiki/curated/<slug>.md` exists (see Curated Concept Notes)",
         "- `## What The Sources Emphasize`",
         "- `## Coverage`",
         "- `## Related Concepts`",
         "- `## Representative sources`",
         "- `## Provenance`",
+        "",
+        "## Curated Concept Notes",
+        "",
+        "Location: `wiki/curated/<slug>.md`, at most one optional file per concept catalog slug (the slug is the file stem).",
+        "",
+        "Frontmatter:",
+        "- `title`",
+        "- `note_type: curated`",
+        "- `concept: <slug>`",
+        "- `sources` (raw paths the notes are distilled from)",
+        "- `tags`",
+        "- `last_edited`",
+        "",
+        "What compile does:",
+        "- When `wiki/curated/<slug>.md` exists, `compile` strips its frontmatter and a leading H1 and inlines the body verbatim into `wiki/concepts/<slug>.md` as `## Curated notes`, placed right after `## Definition` and preceded by the italic line `Hand-maintained in wiki/curated/<slug>.md; the other sections are compiler output.` Wikilinks inside the curated text are preserved exactly as written.",
+        "- A concept with a curated file, or with `keep_without_sources: true` in its catalog entry, is generated even when no source matches its aliases (`source_count: 0`, `Representative sources: none matched yet`) and is never deleted as stale.",
+        "- Curated files are fragments, not pages. The lint orphan scan, `INDEX.md`, the OKF and HTML exports, and the CLI search corpus enumerate only the top-level `wiki/*.md`, `wiki/concepts/`, `wiki/sources/`, `wiki/projects/`, and `wiki/derived/`, so `wiki/curated/` never appears as a standalone document; the lint additionally skips any document declaring `note_type: curated`.",
+        "- Curated text is the ONLY place hand-written concept prose survives: every other section of `wiki/concepts/*.md` is rewritten on each compile, so edit `wiki/curated/<slug>.md`, never the generated concept page.",
+        "",
+        "Writing guidance:",
+        "- Use `###` headings inside the curated body (the generated page owns `#` and `##`).",
+        "- Cite the raw source of record with a wikilink to its source page or a backticked `raw/` path; do not restate facts the source does not contain.",
         "",
         "## Project Pages",
         "",
@@ -3663,6 +4081,8 @@ def render_page_formats(compile_date: str) -> str:
 
 def render_system_overview(root: Path, compile_date: str, state: dict[str, Any]) -> str:
     config = load_config(root)
+    source_docs = state.get("source_docs", {})
+    active_source_keys = state.get("active_source_keys") or list(source_docs)
     lines = [
         "---",
         "title: \"System Overview\"",
@@ -3675,8 +4095,9 @@ def render_system_overview(root: Path, compile_date: str, state: dict[str, Any])
         "# System Overview",
         "",
         f"- Last refreshed: {compile_date}",
-        f"- Raw sources represented in the wiki: {len(state.get('source_docs', {}))}",
-        f"- Source pages: {len(state.get('source_docs', {}))}",
+        f"- Immutable source files tracked: {len(source_docs)}",
+        f"- Unique source pages: {len(active_source_keys)}",
+        f"- Duplicate source variants merged into canonical pages: {len(state.get('duplicate_sources', {}))}",
         f"- Concept articles: {len(state.get('concepts', {}))}",
         "",
         "## Main Pipeline",
@@ -3685,6 +4106,7 @@ def render_system_overview(root: Path, compile_date: str, state: dict[str, Any])
         "2. PDF transcription caches and rendered page images live under `_meta/`, not in `raw/`, so the compiler can process sources without mutating them.",
         "3. The compiler incrementally refreshes source pages, concept pages, the project catalog, `wiki/INDEX.md`, and `wiki/LOG.md`.",
         "4. The Q&A layer reads the maintained wiki, renders answers into markdown, Marp slides, or other output files, and can file valuable outputs back into `wiki/derived/`.",
+        "5. The interchange layer exports the maintained wiki as an OKF v0.2 bundle with standard links, structured provenance, lifecycle signals, progressive indexes, and deterministic conformance checks.",
         "",
         "## Three Layers",
         "",
@@ -3693,12 +4115,13 @@ def render_system_overview(root: Path, compile_date: str, state: dict[str, Any])
         "- `AGENTS.md`: the in-repo schema that tells the LLM how to ingest, query, and maintain this workspace.",
         "- `wiki/PAGE_FORMATS.md`: the canonical frontmatter and section layouts for generated cache, source, and concept notes.",
         "- `wiki/PAPER_TEMPLATE.md`: the rationale and recommended structure for PDF-derived literature notes.",
+        f"- `{config.get('okf_dir', 'output/okf')}/`: the portable Open Knowledge Format v0.2 compatibility bundle.",
         "",
         "## Support Layer",
         "",
         f"- Open `{root}` directly in Obsidian to browse `raw/`, `wiki/`, `_meta/`, and `output/` from one vault.",
         "- `LINT_AND_HEAL.md` tracks broken links, orphan pages, sparse concepts, low-coverage sources, and suggested cleanup passes.",
-        "- `_meta/scripts/wiki_cli.py` is the unified CLI for compile, watch, search, ask, lint, and filing outputs back into the wiki.",
+        "- `_meta/scripts/wiki_cli.py` is the unified CLI for compile, watch, search, ask, lint, OKF export, and filing outputs back into the wiki.",
         "",
         "## Directory Map",
         "",
@@ -3707,9 +4130,11 @@ def render_system_overview(root: Path, compile_date: str, state: dict[str, Any])
         f"| `{config['raw_dir']}/` | immutable source documents and user-managed local assets |",
         f"| `{config['wiki_dir']}/sources/` | one wiki page per source document, maintained by the compiler |",
         f"| `{config['wiki_dir']}/concepts/` | synthesized concept pages built across many sources |",
+        f"| `{config.get('curated_dir', 'wiki/curated')}/` | hand-maintained curated notes, inlined into the matching concept page at compile time (fragments, not standalone pages) |",
         f"| `{config.get('projects_dir', 'wiki/projects')}/` | active research programmes and project dossiers |",
         f"| `{config['wiki_dir']}/derived/` | valuable outputs filed back into the knowledge base |",
         f"| `{config['output_dir']}/` | generated answers, slide decks, charts, and reports |",
+        f"| `{config.get('okf_dir', 'output/okf')}/` | OKF v0.2 exchange bundle, machine-readable graph manifest, and conformance report |",
         "| `_meta/` | compiler state, cached PDF transcriptions, rendered page images, scripts, and tooling |",
         "",
         "## Working Rhythm",
@@ -3784,6 +4209,9 @@ def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any]
         + list(derived_dir.glob("*.md"))
         if path.is_file()
     )
+    # Curated fragments (wiki/curated/*.md, note_type "curated") are inlined into concept
+    # pages by the compiler and are never standalone documents for link/orphan checks.
+    wiki_docs = [path for path in wiki_docs if not is_curated_fragment(read_text(path))]
     title_owner: dict[str, str] = {}
     path_owner: dict[str, str] = {}
     for path in wiki_docs:
@@ -3825,9 +4253,12 @@ def lint_wiki(root: Path, compile_date: str | None = None, state: dict[str, Any]
         if info["source_count"] <= 1
     ]
 
+    source_state = state.get("source_docs", {})
+    active_source_keys = state.get("active_source_keys") or list(source_state)
+    active_profiles = [source_state[key] for key in active_source_keys if key in source_state]
     low_coverage_profiles = [
         profile
-        for profile in state.get("source_docs", {}).values()
+        for profile in active_profiles
         if profile.get("concepts") == ["scientific-machine-learning"]
         and not profile.get("domains")
         and not profile.get("themes")
@@ -3935,11 +4366,20 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
         source_docs[rel_path] = build_source_profile(root, item["logical_path"], item["content_path"], item["source_kind"])
         changed_sources.append(rel_path)
 
+    canonical_docs, duplicate_sources = canonical_source_profiles(source_docs)
     concept_docs: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for profile in source_docs.values():
+    for profile in canonical_docs.values():
         for slug in profile.get("concepts", []):
             if slug in CONCEPTS_BY_SLUG:
                 concept_docs[slug].append(profile)
+
+    # Concepts with a curated fragment (wiki/curated/<slug>.md) or `keep_without_sources`
+    # in their catalog entry are generated even when no source matches their aliases.
+    pinned_concepts = sorted(
+        slug for slug in CONCEPTS_BY_SLUG if slug not in concept_docs and concept_is_pinned(root, slug)
+    )
+    for slug in pinned_concepts:
+        concept_docs[slug] = []
 
     config = load_config(root)
     sources_dir = root / config["source_notes_dir"]
@@ -3950,14 +4390,14 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
     projects_dir.mkdir(parents=True, exist_ok=True)
 
     written_source_pages = []
-    for profile in sorted(source_docs.values(), key=lambda item: item["title"].lower()):
+    for profile in sorted(canonical_docs.values(), key=lambda item: item["title"].lower()):
         page_path = root / profile["page"]
         content = source_page_content(profile, current_date)
         if write_text_if_changed(page_path, content):
             written_source_pages.append(page_path.relative_to(root).as_posix())
 
     existing_source_pages = {path.name for path in sources_dir.glob("*.md")}
-    valid_source_pages = {Path(profile["page"]).name for profile in source_docs.values()}
+    valid_source_pages = {Path(profile["page"]).name for profile in canonical_docs.values()}
     removed_source_pages = []
     for stale_name in sorted(existing_source_pages - valid_source_pages):
         stale_path = sources_dir / stale_name
@@ -3966,9 +4406,16 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
 
     written_articles = []
     available_slugs = set(concept_docs)
+    curated_notes = {slug: load_curated_note(root, slug) for slug in concept_docs}
     for concept_slug, docs in sorted(concept_docs.items()):
         article_path = concepts_dir / f"{concept_slug}.md"
-        content = concept_article_content(concept_slug, docs, current_date, available_slugs)
+        content = concept_article_content(
+            concept_slug,
+            docs,
+            current_date,
+            available_slugs,
+            curated_note=curated_notes.get(concept_slug),
+        )
         if write_text_if_changed(article_path, content):
             written_articles.append(article_path.relative_to(root).as_posix())
 
@@ -3980,7 +4427,7 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
         stale_path.unlink()
         removed_articles.append(stale_path.relative_to(root).as_posix())
 
-    index_content = render_index(root, source_docs, concept_docs, current_date)
+    index_content = render_index(root, canonical_docs, concept_docs, current_date)
     index_written = write_text_if_changed(root / config["wiki_dir"] / "INDEX.md", index_content)
 
     new_state = {
@@ -3989,11 +4436,14 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
         "changed_sources": changed_sources,
         "removed_sources": removed_sources,
         "source_docs": source_docs,
+        "active_source_keys": sorted(canonical_docs),
+        "duplicate_sources": duplicate_sources,
         "concepts": {
             slug: {
                 "title": CONCEPTS_BY_SLUG[slug]["title"],
                 "article": f"wiki/concepts/{slug}.md",
                 "source_count": len(docs),
+                **({"curated_note": curated_notes[slug]["path"]} if curated_notes.get(slug) else {}),
             }
             for slug, docs in sorted(concept_docs.items())
         },
@@ -4014,6 +4464,8 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
         "removed_source_pages": removed_source_pages,
         "written_articles": written_articles,
         "removed_articles": removed_articles,
+        "pinned_concepts": pinned_concepts,
+        "curated_concepts": sorted(slug for slug, note in curated_notes.items() if note),
         "index_written": index_written,
         "log_written": log_written,
         "system_overview_written": system_overview_written,
@@ -4022,6 +4474,8 @@ def compile_wiki(root: Path, force: bool = False) -> dict[str, Any]:
         "derived_home_written": derived_home_written,
         "lint": lint_result,
         "source_count": len(current_sources),
+        "unique_source_count": len(canonical_docs),
+        "duplicate_source_count": len(duplicate_sources),
         "concept_count": len(concept_docs),
     }
 

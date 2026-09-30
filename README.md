@@ -101,8 +101,8 @@ List collections, preview an import without writing anything, then import and co
 
 ```bash
 .venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --list-collections
-.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --collection "My Collection" --include-subcollections --dry-run
-.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --collection "My Collection" --include-subcollections
+.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --collection AI --include-subcollections --dry-run
+.venv/bin/python _meta/scripts/wiki_cli.py zotero-import --root . --collection AI --include-subcollections
 .venv/bin/python _meta/scripts/wiki_cli.py compile --root .
 ```
 

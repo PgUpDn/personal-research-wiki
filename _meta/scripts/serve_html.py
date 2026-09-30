@@ -6,14 +6,48 @@ import argparse
 import hmac
 import json
 import secrets
+import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from threading import Thread
+from typing import Any, Mapping
+from urllib.parse import urlsplit
 
 from ask_wiki import codex_subscription_status, run_question
 from export_html import export_html
 from wiki_pipeline import load_config, parse_root_arg
+
+
+LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def is_same_origin_local_request(headers: Mapping[str, str]) -> bool:
+    host = str(headers.get("Host", "")).strip().lower()
+    if not host:
+        return False
+    try:
+        hostname = urlsplit(f"http://{host}").hostname
+    except ValueError:
+        return False
+    if hostname not in LOCAL_SERVER_HOSTS:
+        return False
+
+    fetch_site = str(headers.get("Sec-Fetch-Site", "")).strip().lower()
+    if fetch_site == "same-origin":
+        return True
+
+    for header_name in ("Origin", "Referer"):
+        value = str(headers.get(header_name, "")).strip()
+        if not value or value == "null":
+            continue
+        try:
+            parsed = urlsplit(value)
+        except ValueError:
+            continue
+        if parsed.scheme in {"http", "https"} and parsed.netloc.lower() == host:
+            return True
+    return False
 
 
 class WikiHtmlHandler(SimpleHTTPRequestHandler):
@@ -37,7 +71,7 @@ class WikiHtmlHandler(SimpleHTTPRequestHandler):
 
     def _authorized(self) -> bool:
         supplied = self.headers.get("X-Wiki-Token", "")
-        if hmac.compare_digest(supplied, self.api_token):
+        if hmac.compare_digest(supplied, self.api_token) or is_same_origin_local_request(self.headers):
             return True
         self._send_json({"error": "Unauthorized."}, status=401)
         return False
@@ -102,9 +136,11 @@ class WikiHtmlHandler(SimpleHTTPRequestHandler):
 
 
 def serve_html(root: Path, host: str = "127.0.0.1", port: int = 8765) -> int:
-    export_html(root)
     config = load_config(root)
     export_root = root / config.get("html_dir", "output/html")
+    needs_initial_export = not (export_root / "index.html").is_file()
+    if needs_initial_export:
+        export_html(root)
 
     WikiHtmlHandler.root = root
     WikiHtmlHandler.api_token = secrets.token_urlsafe(32)
@@ -117,8 +153,17 @@ def serve_html(root: Path, host: str = "127.0.0.1", port: int = 8765) -> int:
                 "export_root": export_root.relative_to(root).as_posix(),
             },
             ensure_ascii=False,
-        )
+        ),
+        flush=True,
     )
+    if not needs_initial_export:
+        def refresh_export() -> None:
+            try:
+                export_html(root)
+            except Exception as exc:
+                print(json.dumps({"event": "background-export-failed", "error": str(exc)}), file=sys.stderr, flush=True)
+
+        Thread(target=refresh_export, name="research-wiki-export", daemon=True).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -34,6 +34,7 @@ _meta/zotero_imports/
 _meta/scripts/import_zotero_ai.py
 _meta/clipping_mermaid_sources.json
 _meta/clipper_templates/
+_meta/scratch_archive/
 
 # The public repository keeps only its existing example research corpus.
 # New local sources and compiled research pages remain private by default.

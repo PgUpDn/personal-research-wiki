@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import fcntl
+import hashlib
 import json
 import os
 import re
@@ -24,6 +26,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+import pymupdf
 
 from wiki_pipeline import configured_source_dirs, file_hash, load_config, parse_root_arg
 
@@ -130,7 +134,7 @@ def validate_schema(connection: sqlite3.Connection) -> None:
 
 def database_snapshot_signature(database: Path) -> tuple[tuple[str, int, int, int, int], ...]:
     signature = []
-    for suffix in ("", "-wal"):
+    for suffix in ("", "-wal", "-journal"):
         path = Path(f"{database}{suffix}")
         if path.exists():
             metadata = path.stat()
@@ -140,13 +144,44 @@ def database_snapshot_signature(database: Path) -> tuple[tuple[str, int, int, in
     return tuple(signature)
 
 
+def rollback_journal_is_active(database: Path) -> bool:
+    journal = Path(f"{database}-journal")
+    try:
+        if not journal.is_file() or journal.stat().st_size == 0:
+            return False
+        with journal.open("rb") as handle:
+            has_live_header = any(handle.read(8))
+        with database.open("rb") as handle:
+            try:
+                fcntl.lockf(
+                    handle.fileno(),
+                    fcntl.LOCK_SH | fcntl.LOCK_NB,
+                    1,
+                    0x40000001,
+                    os.SEEK_SET,
+                )
+            except BlockingIOError:
+                has_reserved_lock = True
+            else:
+                has_reserved_lock = False
+                fcntl.lockf(
+                    handle.fileno(),
+                    fcntl.LOCK_UN,
+                    1,
+                    0x40000001,
+                    os.SEEK_SET,
+                )
+        return has_live_header or has_reserved_lock
+    except OSError:
+        return True
+
+
 def copy_database_snapshot(database: Path, attempts: int = 3) -> tempfile.TemporaryDirectory[str]:
     if not database.is_file():
         raise FileNotFoundError(f"Zotero database not found: {database}")
     last_error = "source changed while it was copied"
     for attempt in range(attempts):
-        journal = Path(f"{database}-journal")
-        if journal.exists() and journal.stat().st_size > 0:
+        if rollback_journal_is_active(database):
             last_error = "an active SQLite rollback journal is present"
             if attempt + 1 < attempts:
                 time.sleep(0.05)
@@ -162,7 +197,7 @@ def copy_database_snapshot(database: Path, attempts: int = 3) -> tempfile.Tempor
             if source_wal.is_file():
                 shutil.copyfile(source_wal, snapshot_dir / "zotero.sqlite-wal")
             after = database_snapshot_signature(database)
-            if before != after or (journal.exists() and journal.stat().st_size > 0):
+            if before != after or rollback_journal_is_active(database):
                 last_error = "source changed while it was copied"
                 temporary.cleanup()
                 if attempt + 1 < attempts:
@@ -511,6 +546,62 @@ def existing_pdf_hashes(root: Path) -> dict[str, str]:
     return hashes
 
 
+def source_title_key(name: str) -> str | None:
+    stem = unicodedata.normalize("NFKC", Path(name).stem)
+    parts = [part.strip() for part in stem.split(" - ") if part.strip()]
+    if len(parts) >= 3 and re.fullmatch(r"\d{4}", parts[1]):
+        stem = " - ".join(parts[2:])
+    elif len(parts) >= 2:
+        stem = " - ".join(parts[1:])
+    stem = re.sub(r"-[0-9a-f]{8}$", "", stem, flags=re.IGNORECASE)
+    normalized = re.sub(r"[^a-z0-9]+", " ", stem.casefold()).strip()
+    meaningful_tokens = [token for token in normalized.split() if len(token) >= 3]
+    if len(meaningful_tokens) < 3 or len(normalized) < 24:
+        return None
+    return normalized
+
+
+def existing_source_titles(root: Path) -> dict[str, str]:
+    titles: dict[str, str] = {}
+    for source_dir in configured_source_dirs(root):
+        if not source_dir.exists():
+            continue
+        for path in sorted(source_dir.rglob("*")):
+            if not path.is_file() or path.suffix.casefold() not in {".pdf", ".md"}:
+                continue
+            title_key = source_title_key(path.name)
+            if title_key:
+                titles.setdefault(title_key, path.relative_to(root).as_posix())
+    return titles
+
+
+def pdf_content_fingerprint(path: Path) -> str | None:
+    try:
+        with pymupdf.open(path) as document:
+            text = " ".join(
+                unicodedata.normalize("NFKC", page.get_text("text")).casefold()
+                for page in document
+            )
+            normalized_text = re.sub(r"\s+", " ", text).strip()
+            if normalized_text:
+                digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
+                return f"text-v1:{digest}"
+
+            digest = hashlib.sha256()
+            digest.update(f"pages:{document.page_count}\n".encode("ascii"))
+            for page in document:
+                pixmap = page.get_pixmap(
+                    matrix=pymupdf.Matrix(0.5, 0.5),
+                    colorspace=pymupdf.csGRAY,
+                    alpha=False,
+                )
+                digest.update(f"{pixmap.width}x{pixmap.height}:".encode("ascii"))
+                digest.update(pixmap.samples)
+            return f"visual-v1:{digest.hexdigest()}"
+    except (OSError, RuntimeError, ValueError):
+        return None
+
+
 def unique_destination(
     destination_dir: Path,
     source_name: str,
@@ -564,6 +655,7 @@ def build_import_plan(
 ) -> tuple[list[PlannedCopy], dict[str, int], list[dict[str, str]]]:
     existing_hashes = existing_pdf_hashes(options.root)
     seen_hashes = dict(existing_hashes)
+    seen_titles = existing_source_titles(options.root)
     reserved = (
         {path.name.casefold() for path in destination_dir.iterdir() if path.is_file()}
         if destination_dir.exists()
@@ -577,6 +669,8 @@ def build_import_plan(
         "would_import": 0,
         "imported": 0,
         "skipped_duplicate_hash": 0,
+        "skipped_duplicate_title": 0,
+        "skipped_duplicate_content": 0,
         "missing_files": 0,
         "unsafe_paths": 0,
         "copy_failures": 0,
@@ -587,6 +681,7 @@ def build_import_plan(
     stats["without_pdf"] = len(item_id_set - with_pdf)
     planned = []
     skipped = []
+    seen_content_fingerprints: dict[str, str] = {}
     for attachment in attachments:
         try:
             source, attachment_kind = resolve_attachment_path(
@@ -626,9 +721,41 @@ def build_import_plan(
                 }
             )
             continue
+        title_key = source_title_key(source.name)
+        duplicate_title_of = seen_titles.get(title_key) if title_key else None
+        if duplicate_title_of is not None:
+            stats["skipped_duplicate_title"] += 1
+            skipped.append(
+                {
+                    "reason": "duplicate_title",
+                    "attachment": safe_pdf_filename(source.name),
+                    "duplicate_of": duplicate_title_of,
+                }
+            )
+            continue
+        content_fingerprint = pdf_content_fingerprint(source)
+        duplicate_content_of = (
+            seen_content_fingerprints.get(content_fingerprint)
+            if content_fingerprint is not None
+            else None
+        )
+        if duplicate_content_of is not None:
+            stats["skipped_duplicate_content"] += 1
+            skipped.append(
+                {
+                    "reason": "duplicate_content",
+                    "attachment": safe_pdf_filename(source.name),
+                    "duplicate_of": duplicate_content_of,
+                }
+            )
+            continue
         destination = unique_destination(destination_dir, source.name, digest, reserved)
         relative_destination = destination.relative_to(options.root).as_posix()
         seen_hashes[digest] = relative_destination
+        if title_key:
+            seen_titles[title_key] = relative_destination
+        if content_fingerprint is not None:
+            seen_content_fingerprints[content_fingerprint] = relative_destination
         planned.append(PlannedCopy(source, destination, digest, attachment_kind))
     stats["would_import"] = len(planned)
     return planned, stats, skipped
